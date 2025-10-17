@@ -1,2 +1,2 @@
-# RMAS2025_AjlaBullic-
+# RMAS2025_AjlaBulic
 Repozitorij za predmet Razvoj mobilnih aplikacija i servisa - RMAS 2025
