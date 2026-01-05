@@ -29,6 +29,8 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Icon
@@ -38,6 +40,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -142,6 +147,11 @@ fun RemainingLeaveSection(days : Int) {
 @Composable
 fun RequestsCard(viewModel : LeaveRequestViewModel) {
     val uiState by viewModel.uiState.collectAsState()
+    val currentFilter by viewModel.currentFilter.collectAsState()
+
+    var expanded by remember { mutableStateOf(false) }
+    val filters = listOf("All", "Pending", "Approved", "Denied")
+
     Surface(
         modifier = Modifier.fillMaxWidth().fillMaxHeight(0.85f),
         color = Color(0xFFE0E0E0),
@@ -159,19 +169,36 @@ fun RequestsCard(viewModel : LeaveRequestViewModel) {
                     fontWeight = FontWeight.Bold,
                     color = Color.DarkGray
                 )
-                AssistChip(
-                    onClick = {/* Akcija za filter */ },
-                    label = {Text ("All")},
-                    trailingIcon = {Icon(Icons.Default.KeyboardArrowDown, contentDescription =  null)},
-                    shape = RoundedCornerShape(16.dp),
-                    colors = AssistChipDefaults.assistChipColors(containerColor = Color.LightGray)
-                )
+                Box {
+                    AssistChip(
+                        onClick = { expanded = true },
+                        label = { Text(currentFilter) },
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.KeyboardArrowDown,
+                                contentDescription = null
+                            )
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = AssistChipDefaults.assistChipColors(containerColor = Color.LightGray)
+                    )
+
+                    DropdownMenu(expanded = expanded,
+                                 onDismissRequest = {expanded = false}) {
+                        filters.forEach { filterName ->
+                            DropdownMenuItem( text =  {Text(filterName)},
+                                              onClick = {viewModel.setFilter(filterName)
+                                                        expanded = false})
+                        }
+                    }
+                }
             }
             Spacer(modifier = Modifier.height(16.dp))
 
+            val displayList = viewModel.getFilteredRequests()
             // Lista zahtjeva
             LazyColumn {
-                items(uiState.requestHistory){ request ->
+                items(displayList){ request ->
                     RequestItem(request = request)
                     Divider(color = Color.LightGray)
                 }
