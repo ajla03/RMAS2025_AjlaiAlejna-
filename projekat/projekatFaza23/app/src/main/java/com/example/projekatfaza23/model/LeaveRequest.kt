@@ -11,7 +11,9 @@ enum class RequestSatus{
 data class LeaveRequest(
     val id: Int = 0,
     val status: RequestSatus = RequestSatus.Pending,
-    val type: String,
-    val dateFrom: String,
-    val dateTo: String
+    val type: String  = "",
+    val explanation: String ="",
+    val fileName: String = "",
+    val dateFrom: String = "",
+    val dateTo: String =  ""
 )

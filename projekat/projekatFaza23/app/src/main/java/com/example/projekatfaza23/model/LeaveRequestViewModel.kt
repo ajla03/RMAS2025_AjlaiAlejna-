@@ -49,11 +49,51 @@ class LeaveRequestViewModel(private val repository : LeaveRepository = FakeLeave
         }
     }
 
-    fun submitLeaveRequest(){}
+    fun submitLeaveRequest(){
+        // logika za slannje na server requesta
+        val requestToSend = _uiState.value.currentRequest
+        _uiState.update { currentState ->
+            currentState.copy(
+                requestHistory = currentState.requestHistory + requestToSend,
+                currentRequest = LeaveRequest(type = "", explanation = "", fileName = "", dateFrom = "", dateTo = "")
+            )
+        }
+    }
 
     private fun calculateWorkingDays(){}
 
     fun clearError(){}
 
+    fun onTypeChange(newType: String){
+        _uiState.update { currentState ->
+            currentState.copy(
+                currentRequest = currentState.currentRequest.copy(type = newType)
+            )
+        }
+    }
+
+    fun onExplanationChange(newExplanation: String){
+        _uiState.update{ currentState ->
+            currentState.copy(
+                currentRequest = currentState.currentRequest.copy( explanation = newExplanation)
+            )
+        }
+    }
+
+    fun onDatesSelected(from: String, to: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                currentRequest = currentState.currentRequest.copy(dateFrom = from, dateTo = to)
+            )
+        }
+    }
+
+    fun onFileAttached(name: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                currentRequest = currentState.currentRequest.copy(fileName = name)
+            )
+        }
+    }
 }
 

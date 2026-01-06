@@ -25,6 +25,8 @@ fun SingleLeaveRequest(id: Int) : LeaveRequest {
         id = id,
         status = RequestSatus.entries[(1..2).random()],
         type = "Annual leave",
+        explanation = " ",
+        fileName = "",
         dateFrom = "Dec",
         dateTo = "Jan"
     )
