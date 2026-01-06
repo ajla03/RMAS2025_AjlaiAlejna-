@@ -20,7 +20,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             ProjekatFaza23Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ClientHomeScreen()
+                NewRequestScreen({})
+                //ClientHomeScreen()
                 }
             }
         }
