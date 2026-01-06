@@ -31,7 +31,7 @@ class LeaveRequestViewModel(private val repository : LeaveRepository = FakeLeave
         return if (filter == "All"){
             allRequests
         }else{
-            allRequests.filter{ it.status == filter }
+            allRequests.filter{ it.status.name == filter }
         }
     }
 
