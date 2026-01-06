@@ -11,34 +11,6 @@ import kotlinx.coroutines.launch
 
 
 
-enum class Status{
-    WorkInOffice,
-    WorkRemote,
-    SickLeave,
-    Vacay
-}
-
-
-data class LeaveUiState(
-    val totalDays: Int = 0,
-    val usedDays : Int = 0,
-    val pendingDays : Int = 0,
-    val status : Status = Status.WorkInOffice,
-    val remainingDays : Int = 0,
-    val requestHistory: List<LeaveRequest> = emptyList(),
-    val isLoading: Boolean = false,
-    val errorMsg : String? = null
-)
-
-class LeaveRequest(
-    val id: Int = 0,
-    val status : String = "",
-    val type: String = "",
-    val dateFrom : String = "",
-    val dateTo : String = ""
-){
-
-}
 
 class LeaveRequestViewModel(private val repository : LeaveRepository = FakeLeaveRepository()): ViewModel() {
     private val _uiState = MutableStateFlow(LeaveUiState())
@@ -59,7 +31,7 @@ class LeaveRequestViewModel(private val repository : LeaveRepository = FakeLeave
         return if (filter == "All"){
             allRequests
         }else{
-            allRequests.filter{ it.status == filter }
+            allRequests.filter{ it.status.name == filter }
         }
     }
 
