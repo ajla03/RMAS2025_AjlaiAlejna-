@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.LeaveRequestViewModel
+import com.example.projekatfaza23.model.RequestSatus
 
 
 @Composable
@@ -84,7 +85,7 @@ fun ClientHomeScreen() {
         ) {
             ProfileHeader()
             Spacer(modifier = Modifier.height(24.dp))
-            RemainingLeaveSection(uiState.remainingDays)
+            RemainingLeaveSection(uiState.remainingLeaveDays)
             Spacer(modifier = Modifier.height(24.dp))
             RequestsCard(viewModel = homeViewModel)
         }
@@ -214,8 +215,8 @@ fun RequestsCard(viewModel : LeaveRequestViewModel) {
 @Composable
 fun RequestItem(request : LeaveRequest) {
     val statusColor = when (request.status) {
-        "Approved" -> Color.Green
-        "Denied" -> Color.Red
+        RequestSatus.Approved  -> Color.Green
+        RequestSatus.Denied -> Color.Red
         else -> Color.Gray
     }
     Row(
@@ -225,7 +226,7 @@ fun RequestItem(request : LeaveRequest) {
         Box(modifier = Modifier.size(15.dp).background(statusColor, CircleShape))
         Spacer(modifier = Modifier.width(15.dp))
         Column {
-            Text(request.status, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(text = request.status.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Text(text = "${request.type} | ${request.dateFrom} - ${request.dateTo}", fontSize = 12.sp, color = Color.Gray)
         }
         if(request.status.equals("Pending")){
