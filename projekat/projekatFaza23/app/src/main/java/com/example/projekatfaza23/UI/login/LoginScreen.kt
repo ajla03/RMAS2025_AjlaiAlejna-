@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projekatfaza23.R
 import com.example.projekatfaza23.UI.home.TopAppBarSection
-import com.example.projekatfaza23.UI.login.LoginViewModel
+import com.example.projekatfaza23.model.LoginViewModel
 
 @Composable
 fun LoginScreen(viewModel : LoginViewModel){
@@ -44,7 +44,7 @@ fun LoginScreen(viewModel : LoginViewModel){
     Column(modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally){
 
-        TopAppBarSection({})
+        TopAppBarSection()
         Spacer(modifier = Modifier.height(60.dp))
 
         Surface(color = Color.LightGray,

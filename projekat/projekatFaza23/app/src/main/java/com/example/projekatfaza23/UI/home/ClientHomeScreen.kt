@@ -50,8 +50,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.projekatfaza23.data.LeaveRequest
-import com.example.projekatfaza23.data.RequestSatus
+import com.example.projekatfaza23.model.LeaveRequest
+import com.example.projekatfaza23.model.RequestSatus
 
 
 @Composable
