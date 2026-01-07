@@ -7,6 +7,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.rememberNavController
+import com.example.projekatfaza23.UI.navigation.AppNavigation
+import com.example.projekatfaza23.UI.navigation.Screen
 import com.example.projekatfaza23.UI.request.NewRequestScreen
 import com.example.projekatfaza23.ui.theme.ProjekatFaza23Theme
 
@@ -16,9 +19,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ProjekatFaza23Theme {
+                val navController = rememberNavController()
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                NewRequestScreen({})
-                //ClientHomeScreen()
+                    AppNavigation(navController = navController)
                 }
             }
         }

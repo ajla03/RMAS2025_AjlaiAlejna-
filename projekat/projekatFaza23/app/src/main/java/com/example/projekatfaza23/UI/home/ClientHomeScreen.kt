@@ -55,7 +55,7 @@ import com.example.projekatfaza23.model.RequestSatus
 
 
 @Composable
-fun ClientHomeScreen() {
+fun ClientHomeScreen(createNewRequest : () -> Unit) {
     val homeViewModel : InboxRequestViewModel = viewModel()
     val uiState by homeViewModel.uiState.collectAsState()
     Scaffold(
@@ -64,7 +64,8 @@ fun ClientHomeScreen() {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Akcija */ },
+                //TODO
+                onClick = {createNewRequest()},
                 containerColor = Color.LightGray,
                 shape = CircleShape
             ) {
@@ -130,7 +131,7 @@ fun ProfileHeader() {
             Text("Name LastName", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Row {
                 Text("Status: ", fontSize = 14.sp)
-                Text("Work from home", fontSize = 14.sp, color = Color.Red, fontWeight = FontWeight.Bold)
+                Text("At Work", fontSize = 14.sp, color = Color.Red, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -265,5 +266,5 @@ fun BottomContactBar() {
 @Preview(showBackground = true)
 @Composable
 fun clientHomePreview(){
-    ClientHomeScreen()
+    ClientHomeScreen({})
 }

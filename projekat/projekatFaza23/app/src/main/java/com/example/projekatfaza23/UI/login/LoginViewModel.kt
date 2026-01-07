@@ -21,14 +21,16 @@ class  LoginViewModel : ViewModel(){
         _uiState.update { it.copy(password = password) }
     }
 
-    fun login(){
+    fun login(onClick : () -> Unit){
         val currentEmail = _uiState.value.email
         val currentPassword  = _uiState.value.password
 
         _uiState.update { it.copy(isLoading = true) }
 
         if(mockUsers[currentEmail]==currentPassword){
-            _uiState.update { it.copy(isLoading = false, isLoginSuccessful = true) }
+            onClick()
+            _uiState.update { it.copy(isLoading = false, isLoginSuccessful = true)
+            }
         }else{
             _uiState.update {
                 it.copy(isLoginSuccessful = false,

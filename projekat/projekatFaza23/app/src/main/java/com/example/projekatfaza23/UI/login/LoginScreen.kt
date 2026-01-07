@@ -38,7 +38,7 @@ import com.example.projekatfaza23.UI.home.TopAppBarSection
 import com.example.projekatfaza23.model.LoginViewModel
 
 @Composable
-fun LoginScreen(viewModel : LoginViewModel){
+fun LoginScreen(viewModel : LoginViewModel, onClick : () -> Unit){
     val uiState by viewModel.uiState.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize(),
@@ -64,7 +64,7 @@ fun LoginScreen(viewModel : LoginViewModel){
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        EmailAndPassword(uiState.email, uiState.password, {viewModel.updateEmail(it)}, {viewModel.updatePassword(it)}, {viewModel.login()}, uiState.isLoading)
+        EmailAndPassword(uiState.email, uiState.password, {viewModel.updateEmail(it)}, {viewModel.updatePassword(it)}, {viewModel.login(onClick)}, uiState.isLoading)
 
         if (uiState.errorMessage != null) {
             Text(
@@ -158,5 +158,5 @@ fun EmailAndPassword(email: String, password: String, updateEmail: (String) -> U
 @Preview(showBackground =  true)
 @Composable
 fun LoginScreenPreview(){
-    LoginScreen(viewModel())
+    LoginScreen(viewModel(), {})
 }
