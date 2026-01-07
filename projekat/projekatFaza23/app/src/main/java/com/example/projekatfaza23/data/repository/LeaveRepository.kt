@@ -1,6 +1,6 @@
 package com.example.projekatfaza23.model
 
-import kotlinx.coroutines.delay
+import com.example.projekatfaza23.data.LeaveRequest
 
 interface LeaveRepository {
     suspend fun getLeaveHistory() : List<LeaveRequest>

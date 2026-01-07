@@ -1,18 +1,20 @@
-package com.example.projekatfaza23.model
+package com.example.projekatfaza23.UI.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projekatfaza23.model.FakeLeaveRepository
+import com.example.projekatfaza23.model.LeaveRepository
+import com.example.projekatfaza23.model.LeaveRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
 
 
-class LeaveRequestViewModel(private val repository : LeaveRepository = FakeLeaveRepository()): ViewModel() {
+class InboxRequestViewModel(private val repository : LeaveRepository = FakeLeaveRepository()): ViewModel() {
     private val _uiState = MutableStateFlow(LeaveUiState())
     val uiState: StateFlow<LeaveUiState> = _uiState.asStateFlow()
 
@@ -55,7 +57,13 @@ class LeaveRequestViewModel(private val repository : LeaveRepository = FakeLeave
         _uiState.update { currentState ->
             currentState.copy(
                 requestHistory = currentState.requestHistory + requestToSend,
-                currentRequest = LeaveRequest(type = "", explanation = "", fileName = "", dateFrom = "", dateTo = "")
+                currentRequest = LeaveRequest(
+                    type = "",
+                    explanation = "",
+                    fileName = "",
+                    dateFrom = "",
+                    dateTo = ""
+                )
             )
         }
     }

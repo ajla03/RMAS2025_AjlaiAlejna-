@@ -1,7 +1,5 @@
 package com.example.projekatfaza23.model
 
-import com.example.projekatfaza23.RequestItem
-
 enum class RequestSatus{
     Pending,
     Approved,

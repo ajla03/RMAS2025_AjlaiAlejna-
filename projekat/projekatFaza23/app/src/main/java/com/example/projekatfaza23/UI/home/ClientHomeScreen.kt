@@ -1,4 +1,4 @@
-package com.example.projekatfaza23
+package com.example.projekatfaza23.UI.home
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
@@ -50,14 +50,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.projekatfaza23.model.LeaveRequest
-import com.example.projekatfaza23.model.LeaveRequestViewModel
-import com.example.projekatfaza23.model.RequestSatus
+import com.example.projekatfaza23.data.LeaveRequest
+import com.example.projekatfaza23.data.RequestSatus
 
 
 @Composable
 fun ClientHomeScreen() {
-    val homeViewModel : LeaveRequestViewModel = viewModel()
+    val homeViewModel : InboxRequestViewModel = viewModel()
     val uiState by homeViewModel.uiState.collectAsState()
     Scaffold(
         topBar = {
@@ -146,7 +145,7 @@ fun RemainingLeaveSection(days : Int) {
 }
 
 @Composable
-fun RequestsCard(viewModel : LeaveRequestViewModel) {
+fun RequestsCard(viewModel : InboxRequestViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val currentFilter by viewModel.currentFilter.collectAsState()
 

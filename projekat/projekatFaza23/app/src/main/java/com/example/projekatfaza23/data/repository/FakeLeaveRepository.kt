@@ -1,5 +1,7 @@
 package com.example.projekatfaza23.model
 
+import com.example.projekatfaza23.data.LeaveRequest
+import com.example.projekatfaza23.data.RequestSatus
 import kotlinx.coroutines.delay
 
 class FakeLeaveRepository : LeaveRepository {

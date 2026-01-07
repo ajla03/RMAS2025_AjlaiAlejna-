@@ -1,4 +1,4 @@
-package com.example.projekatfaza23
+package com.example.projekatfaza23.UI.request
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,7 +35,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -51,11 +50,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.projekatfaza23.model.LeaveRequestViewModel
+import com.example.projekatfaza23.UI.home.InboxRequestViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 @Composable
-fun NewRequestScreen(onBack: () -> Unit, viewModel: LeaveRequestViewModel = viewModel()){
+fun NewRequestScreen(onBack: () -> Unit, viewModel: InboxRequestViewModel = viewModel()){
     val uiState by viewModel.uiState.collectAsState()
 
     var  showTypeMenu by remember {mutableStateOf(false)}
@@ -168,8 +170,8 @@ fun DateRangePickerPopup(onDismiss: () -> Unit, onDatesSelected: (String, String
 
 fun formatMillisToDate(millis: Long?): String{
     if(millis == null) return ""
-    val formatter = java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault())
-    return formatter.format(java.util.Date(millis))
+    val formatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+    return formatter.format(Date(millis))
 }
 @Composable
 fun DatePickerField(dateFrom: String, dateTo: String, onClick : () -> Unit){
