@@ -1,5 +1,6 @@
 package com.example.projekatfaza23.UI.login
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,9 +24,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -36,6 +39,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projekatfaza23.R
 import com.example.projekatfaza23.UI.home.TopAppBarSection
 import com.example.projekatfaza23.model.LoginViewModel
+import com.example.projekatfaza23.data.auth.GoogleAuth
+import kotlinx.coroutines.launch
+import kotlin.coroutines.coroutineContext
 
 @Composable
 fun LoginScreen(viewModel : LoginViewModel, onClick : () -> Unit){
@@ -86,24 +92,27 @@ fun LoginScreen(viewModel : LoginViewModel, onClick : () -> Unit){
 
 @Composable
 fun EmailAndPassword(email: String, password: String, updateEmail: (String) -> Unit, updatePassword: (String) -> Unit, login: () -> Unit, isLoading: Boolean){
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val googleAuth = GoogleAuth(context = context)
     Column(modifier = Modifier.fillMaxWidth().padding(12.dp)){
         Text("Email Address", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        OutlinedTextField(
-            value = email,
-            onValueChange = {updateEmail(it)},
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = {Text("Enter your email")}
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Password", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        OutlinedTextField(
-            value = password,
-            onValueChange = {updatePassword(it)},
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = {Text("Enter your password")}
-        )
+//        OutlinedTextField(
+//            value = email,
+//            onValueChange = {updateEmail(it)},
+//            modifier = Modifier.fillMaxWidth(),
+//            placeholder = {Text("Enter your email")}
+//        )
+//
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        Text("Password", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+//        OutlinedTextField(
+//            value = password,
+//            onValueChange = {updatePassword(it)},
+//            modifier = Modifier.fillMaxWidth(),
+//            placeholder = {Text("Enter your password")}
+//        )
 
         Spacer(modifier = Modifier.height(14.dp))
 
@@ -139,7 +148,11 @@ fun EmailAndPassword(email: String, password: String, updateEmail: (String) -> U
 
         //google sign in
         OutlinedButton(
-            onClick = {/* to do */ },
+            onClick = {
+                scope.launch {
+                    googleAuth.GoogleSignInFunction(context)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(4.dp)
         ) {
