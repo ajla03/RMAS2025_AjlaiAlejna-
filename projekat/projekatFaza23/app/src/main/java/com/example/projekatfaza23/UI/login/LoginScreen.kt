@@ -1,5 +1,6 @@
 package com.example.projekatfaza23.UI.login
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,9 +24,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -36,14 +39,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projekatfaza23.R
 import com.example.projekatfaza23.UI.home.TopAppBarSection
 import com.example.projekatfaza23.model.LoginViewModel
+import com.example.projekatfaza23.data.auth.GoogleAuth
+import com.example.projekatfaza23.model.LoginUIState
+import kotlinx.coroutines.launch
+import kotlin.coroutines.coroutineContext
 
 @Composable
-fun LoginScreen(viewModel : LoginViewModel, onClick : () -> Unit){
+fun LoginScreen(viewModel : LoginViewModel, navigateHome : () -> Unit){
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally){
-
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
         TopAppBarSection()
         Spacer(modifier = Modifier.height(60.dp))
 
@@ -60,13 +68,22 @@ fun LoginScreen(viewModel : LoginViewModel, onClick : () -> Unit){
         Text("Welcome to HR App!", fontSize = 22.sp, fontWeight = FontWeight.Bold)
 
         Spacer(modifier = Modifier.height(40.dp))
-        Text("Log in or create account", fontSize = 16.sp)
+        Text("Log in", fontSize = 16.sp)
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        EmailAndPassword(uiState.email, uiState.password, {viewModel.updateEmail(it)}, {viewModel.updatePassword(it)}, {viewModel.login(onClick)}, uiState.isLoading)
+        SignIn(
+            uiState = uiState,
+            onSignInWithGoogleClick = {
+                viewModel.loginWithGoogle(
+                    activityContext = context,
+                    navigateHome = navigateHome
+                )
+            }
+        )
 
         if (uiState.errorMessage != null) {
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = uiState.errorMessage!!,
                 color = Color.Red,
@@ -74,59 +91,44 @@ fun LoginScreen(viewModel : LoginViewModel, onClick : () -> Unit){
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
-
-        if (uiState.isLoginSuccessful) {
-            // Ovdje bi išao kod za prelazak na drugi ekran
-            // npr. LaunchedEffect(Unit) { navController.navigate("home") }
-            Text("Uspješno ste prijavljeni!", color = Color(0xFF4CAF50))
-        }
     }
 
 }
 
 @Composable
-fun EmailAndPassword(email: String, password: String, updateEmail: (String) -> Unit, updatePassword: (String) -> Unit, login: () -> Unit, isLoading: Boolean){
+fun SignIn(
+    uiState: LoginUIState,
+    onSignInWithGoogleClick: () -> Unit
+){
     Column(modifier = Modifier.fillMaxWidth().padding(12.dp)){
-        Text("Email Address", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        OutlinedTextField(
-            value = email,
-            onValueChange = {updateEmail(it)},
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = {Text("Enter your email")}
-        )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Password", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        OutlinedTextField(
-            value = password,
-            onValueChange = {updatePassword(it)},
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = {Text("Enter your password")}
-        )
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        Button(
-            onClick = { login() },
-            modifier = Modifier.fillMaxWidth(),
-            enabled =  !isLoading,
-            colors = ButtonDefaults.buttonColors(Color.Gray)
-        ){
-            if (isLoading) {
-                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
-            } else {
-                Text("Log in")
-            }
-        }
         Spacer(modifier = Modifier.height(24.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically){
-            HorizontalDivider(modifier = Modifier.weight(1f))
-            Text("or", modifier = Modifier.padding(horizontal = 8.dp), color = Color.Gray)
-            HorizontalDivider(modifier = Modifier.weight(1f))
+        //google sign in
+        OutlinedButton(
+            onClick = {
+                onSignInWithGoogleClick()
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp),
+            enabled = !uiState.isLoading
+        ) {
+            if (uiState.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = Color.Gray
+                )
+            } else {
+                Image(
+                    painter = painterResource(R.drawable.google_logo),
+                    contentDescription = "Google Logo",
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text("Continue with Google", color = Color.Black)
+            }
         }
-
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "By continuing, you agree to Terms of Service and acknowledge our Privacy Policy.",
@@ -134,29 +136,12 @@ fun EmailAndPassword(email: String, password: String, updateEmail: (String) -> U
             textAlign = TextAlign.Center,
             color = Color.Gray
         )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        //google sign in
-        OutlinedButton(
-            onClick = {/* to do */ },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(4.dp)
-        ) {
-            Image(
-                painter = painterResource(R.drawable.google_logo),
-                contentDescription = "Google Logo",
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text("Continue with Google", color = Color.Black)
-        }
-
     }
 }
 
 @Preview(showBackground =  true)
 @Composable
 fun LoginScreenPreview(){
+    //ovdje ce sad biti bug!!!
     LoginScreen(viewModel(), {})
 }

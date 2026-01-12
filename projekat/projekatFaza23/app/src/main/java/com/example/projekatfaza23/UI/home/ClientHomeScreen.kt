@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 
@@ -128,7 +129,9 @@ fun ProfileHeader() {
         }
         Spacer(modifier = Modifier.width(16.dp))
         Column {
-            Text("Name LastName", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("${UserManager.currentUser.collectAsState().value?.name} ${UserManager.currentUser.collectAsState().value?.lastName}",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold)
             Row {
                 Text("Status: ", fontSize = 14.sp)
                 Text("At Work", fontSize = 14.sp, color = Color.Red, fontWeight = FontWeight.Bold)
