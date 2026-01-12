@@ -1,41 +1,47 @@
 package com.example.projekatfaza23.model
 
+import android.app.Application
+import android.content.Context
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.projekatfaza23.data.auth.GoogleAuth
+import com.example.projekatfaza23.data.auth.UserManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-private val mockUsers = mapOf(
-    "admin@test.com" to "admin123",
-    "korisnik@hr.ba" to "lozinka123"
-)
-class  LoginViewModel : ViewModel(){
+class  LoginViewModel (
+    application: Application
+) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(LoginUIState())
     val uiState = _uiState.asStateFlow()
 
-    fun updateEmail(email : String){
-        _uiState.update { it.copy(email = email) }
-    }
+    private val authService = GoogleAuth(application.applicationContext)
 
-    fun updatePassword(password: String){
-        _uiState.update { it.copy(password = password) }
-    }
+    fun loginWithGoogle(activityContext: Context, navigateHome: () -> Unit) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
-    fun login(onClick : () -> Unit){
-        val currentEmail = _uiState.value.email
-        val currentPassword  = _uiState.value.password
+            try {
+                val profile = authService.GoogleSignIn(activityContext)
 
-        _uiState.update { it.copy(isLoading = true) }
-
-        if(mockUsers[currentEmail]==currentPassword){
-            onClick()
-            _uiState.update { it.copy(isLoading = false, isLoginSuccessful = true)
-            }
-        }else{
-            _uiState.update {
-                it.copy(isLoginSuccessful = false,
+                if (profile != null) {
+                    UserManager.saveUser(profile)
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    navigateHome()
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = "Sign in with Google failed. Try again!"
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = "Pogresan email ili lozinka!")
+                    errorMessage = "Error occured: ${e.message ?: "Unknown mistake"}"
+                )
             }
         }
     }
