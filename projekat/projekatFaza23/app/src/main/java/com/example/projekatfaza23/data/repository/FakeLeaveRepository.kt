@@ -1,33 +1,48 @@
 package com.example.projekatfaza23.model
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
-class FakeLeaveRepository : LeaveRepository {
-    override suspend fun getLeaveHistory(): List<LeaveRequest> {
+class FakeLeaveRepository : LeaveRepositoryI {
+    override fun getLeaveHistory(): Flow<List<LeaveRequest>> = flow {
         delay(500)
 
-        return listOf(
-            SingleLeaveRequest(1),
-            SingleLeaveRequest(2),
-            SingleLeaveRequest(3),
-            SingleLeaveRequest(4),
-            SingleLeaveRequest(5)
+        val fakeData = listOf(
+            SingleLeaveRequest("1", 1000L),
+            SingleLeaveRequest("2", 2000L),
+            SingleLeaveRequest("3", 3000L),
+            SingleLeaveRequest("4", 4000L),
+            SingleLeaveRequest("5", 5000L)
         )
+        emit(fakeData)
     }
+
+      fun getLeaveHistorySync(): List<LeaveRequest>  {
+         val fakeData = listOf(
+             SingleLeaveRequest("1", 1000L),
+             SingleLeaveRequest("2", 2000L),
+             SingleLeaveRequest("3", 3000L),
+             SingleLeaveRequest("4", 4000L),
+             SingleLeaveRequest("5", 5000L)
+        )
+        return fakeData
+    }
+
     override suspend fun submitNewRequest(request: LeaveRequest): Boolean {
         delay(500)
         return true
     }
 }
 
-fun SingleLeaveRequest(id: Int) : LeaveRequest {
+fun SingleLeaveRequest(id: String, dateFrom : Long) : LeaveRequest {
     return LeaveRequest(
         id = id,
         status = RequestSatus.entries[(1..2).random()],
         type = "Annual leave",
         explanation = " ",
         fileName = "",
-        dateFrom = "Dec",
-        dateTo = "Jan"
+        dateFrom = dateFrom,
+        dateTo = 0L
     )
 }

@@ -2,19 +2,24 @@ package com.example.projekatfaza23.UI.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.model.FakeLeaveRepository
 import com.example.projekatfaza23.model.LeaveRepository
 import com.example.projekatfaza23.model.LeaveRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
 
 
-class InboxRequestViewModel(private val repository : LeaveRepository = FakeLeaveRepository()): ViewModel() {
+class InboxRequestViewModel(): ViewModel() {
+    private val currentUserEmail = UserManager.currentUser.value?.email ?: "test@example.com"
+    private val repository = LeaveRepository(userEmail = currentUserEmail)
+
     private val _uiState = MutableStateFlow(LeaveUiState())
     val uiState: StateFlow<LeaveUiState> = _uiState.asStateFlow()
 
@@ -26,7 +31,31 @@ class InboxRequestViewModel(private val repository : LeaveRepository = FakeLeave
         _currentFilter.value = filter
     }
 
+    fun sendRequest(){
+        val requestToSend = _uiState.value.currentRequest
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, isSuccess = false, isError = false) }
 
+            val success = repository.submitNewRequest(requestToSend)
+
+            if(success){
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        isLoading = false,
+                        isSuccess = true,
+                        currentRequest = LeaveRequest()
+                    )
+
+                }
+            }else{
+                _uiState.update { it.copy(
+                    isLoading = false,
+                    isError = true,
+                    errorMsg = "Failed to send request"
+                ) }
+            }
+        }
+    }
     fun getFilteredRequests():List<LeaveRequest> {
         val allRequests = _uiState.value.requestHistory
         val filter = _currentFilter.value
@@ -40,33 +69,27 @@ class InboxRequestViewModel(private val repository : LeaveRepository = FakeLeave
     init {
         loadUserLeaveData()
     }
+
+
     private fun loadUserLeaveData(){
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val data = repository.getLeaveHistory()
-            _uiState.update { it.copy(
-                requestHistory = data,
-                isLoading = false
-            ) }
+            repository.getLeaveHistory()
+                .catch { error ->
+                    _uiState.update { it.copy(isLoading = false, isError = true) }
+                }.collect { novaLista ->
+                _uiState.update {
+                    currentState ->
+                    currentState.copy(
+                        requestHistory = novaLista
+                            .sortedByDescending { it.dateFrom },
+                        isLoading = false
+                    )
+                }
+            }
         }
     }
 
-    fun submitLeaveRequest(){
-        // logika za slannje na server requesta
-        val requestToSend = _uiState.value.currentRequest
-        _uiState.update { currentState ->
-            currentState.copy(
-                requestHistory = currentState.requestHistory + requestToSend,
-                currentRequest = LeaveRequest(
-                    type = "",
-                    explanation = "",
-                    fileName = "",
-                    dateFrom = "",
-                    dateTo = ""
-                )
-            )
-        }
-    }
 
     private fun calculateWorkingDays(){}
 
@@ -88,11 +111,13 @@ class InboxRequestViewModel(private val repository : LeaveRepository = FakeLeave
         }
     }
 
-    fun onDatesSelected(from: String, to: String) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                currentRequest = currentState.currentRequest.copy(dateFrom = from, dateTo = to)
-            )
+    fun onDatesSelected(from: Long?, to: Long?) {
+        _uiState.update { it.copy(
+                currentRequest = it.currentRequest.copy(
+                    dateFrom = from ?: 0L,
+                    dateTo = to ?: 0L
+                )
+          )
         }
     }
 
@@ -102,6 +127,10 @@ class InboxRequestViewModel(private val repository : LeaveRepository = FakeLeave
                 currentRequest = currentState.currentRequest.copy(fileName = name)
             )
         }
+    }
+
+    fun resetSuccessState() {
+        _uiState.update { it.copy(isSuccess = false) }
     }
 }
 

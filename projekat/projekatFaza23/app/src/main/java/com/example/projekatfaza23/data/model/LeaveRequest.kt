@@ -7,11 +7,12 @@ enum class RequestSatus{
 }
 
 data class LeaveRequest(
-    val id: Int = 0,
+    val id: String = "",
     val status: RequestSatus = RequestSatus.Pending,
     val type: String  = "",
     val explanation: String ="",
     val fileName: String = "",
-    val dateFrom: String = "",
-    val dateTo: String =  ""
+    val dateFrom: Long? = null,
+    val dateTo: Long? = null,
+    val userEmail : String = ""
 )

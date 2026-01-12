@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "325285970932-qrpqb8s32bhnqcijufg5rreuajm1fuso.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.projekatfaza23",
+            "certificate_hash": "f8e5e49d93da2a9ddf08fa2495aa81aaf0bdd0f1"
+          }
+        },
+        {
           "client_id": "325285970932-rphm2q12ttkhlma47optj5dttqu580sn.apps.googleusercontent.com",
           "client_type": 3
         }

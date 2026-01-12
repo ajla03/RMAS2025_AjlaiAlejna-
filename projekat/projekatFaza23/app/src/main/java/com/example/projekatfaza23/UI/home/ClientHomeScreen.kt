@@ -50,15 +50,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.projekatfaza23.UI.request.formatMillisToDate
 import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 
 
 @Composable
-fun ClientHomeScreen(createNewRequest : () -> Unit) {
-    val homeViewModel : InboxRequestViewModel = viewModel()
-    val uiState by homeViewModel.uiState.collectAsState()
+fun ClientHomeScreen(viewModel: InboxRequestViewModel, createNewRequest : () -> Unit) {
+    val uiState by viewModel.uiState.collectAsState()
     Scaffold(
         topBar = {
             TopAppBarSection()
@@ -88,7 +88,7 @@ fun ClientHomeScreen(createNewRequest : () -> Unit) {
             Spacer(modifier = Modifier.height(24.dp))
             RemainingLeaveSection(uiState.remainingLeaveDays)
             Spacer(modifier = Modifier.height(24.dp))
-            RequestsCard(viewModel = homeViewModel)
+            RequestsCard(viewModel = viewModel)
         }
     }
 }
@@ -202,7 +202,9 @@ fun RequestsCard(viewModel : InboxRequestViewModel) {
             val displayList = viewModel.getFilteredRequests()
             // Lista zahtjeva
             LazyColumn {
-                items(displayList){ request ->
+                items(
+                    items = displayList,
+                    key = {it.id}){ request ->
                     RequestItem(request = request)
                     Divider(color = Color.LightGray)
                 }
@@ -230,7 +232,7 @@ fun RequestItem(request : LeaveRequest) {
         Spacer(modifier = Modifier.width(15.dp))
         Column {
             Text(text = request.status.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text(text = "${request.type} | ${request.dateFrom} - ${request.dateTo}", fontSize = 12.sp, color = Color.Gray)
+            Text(text = "${request.type} | ${formatMillisToDate(request.dateFrom)} - ${formatMillisToDate(request.dateTo)}", fontSize = 12.sp, color = Color.Gray)
         }
         if(request.status.equals("Pending")){
             Surface(
@@ -269,5 +271,5 @@ fun BottomContactBar() {
 @Preview(showBackground = true)
 @Composable
 fun clientHomePreview(){
-    ClientHomeScreen({})
+    ClientHomeScreen(viewModel(), {})
 }

@@ -17,6 +17,7 @@ data class LeaveUiState(
     val requestHistory: List<LeaveRequest> = emptyList(),
     val currentRequest: LeaveRequest = LeaveRequest(),
     val isLoading: Boolean = false,
+    val isSuccess : Boolean = false,
     val isError: Boolean = false,
     val errorMsg : String? = null
 )

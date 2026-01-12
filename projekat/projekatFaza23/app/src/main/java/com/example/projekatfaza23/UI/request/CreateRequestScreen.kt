@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.DropdownMenu
@@ -37,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -90,8 +92,8 @@ fun NewRequestScreen(onBack: () -> Unit, viewModel: InboxRequestViewModel = view
             Spacer(modifier = Modifier.height(16.dp))
 
             DatePickerField(
-                dateFrom = uiState.currentRequest.dateFrom,
-                dateTo = uiState.currentRequest.dateTo,
+                dateFrom = formatMillisToDate(uiState.currentRequest.dateFrom),
+                dateTo = formatMillisToDate(uiState.currentRequest.dateTo),
                 onClick = {showDatePicker = true})
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -106,16 +108,28 @@ fun NewRequestScreen(onBack: () -> Unit, viewModel: InboxRequestViewModel = view
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = { viewModel.submitLeaveRequest()
-                            onBack()
+                onClick = {
+                    android.util.Log.d("PROVJERA", "KLIKNUT JE SEND!")
+                    viewModel.sendRequest()
                           },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(55.dp),
+                enabled = !uiState.isLoading,
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF004D61), contentColor = Color.White)
-            ){
-                Text("Send Request", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            ) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Send Request", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            LaunchedEffect(uiState.isSuccess) {
+                if(uiState.isSuccess){
+                        onBack()
+                        viewModel.resetSuccessState()
+                }
             }
 
             if(showDatePicker){
@@ -149,15 +163,13 @@ fun AttachmentSection(){
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DateRangePickerPopup(onDismiss: () -> Unit, onDatesSelected: (String, String) -> Unit){
+fun DateRangePickerPopup(onDismiss: () -> Unit, onDatesSelected: (Long?, Long?) -> Unit){
     val state = rememberDateRangePickerState()
 
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = {
-            val from = formatMillisToDate(state.selectedStartDateMillis)
-            val to = formatMillisToDate(state.selectedEndDateMillis)
-            onDatesSelected(from, to)
+            onDatesSelected(state.selectedStartDateMillis, state.selectedEndDateMillis)
             onDismiss()
         }){Text("OK")}},
         dismissButton = { TextButton(onClick = onDismiss){Text("CANCEL")}}

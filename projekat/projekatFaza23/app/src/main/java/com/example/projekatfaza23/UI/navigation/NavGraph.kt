@@ -6,11 +6,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.projekatfaza23.UI.home.ClientHomeScreen
+import com.example.projekatfaza23.UI.home.InboxRequestViewModel
 import com.example.projekatfaza23.UI.login.LoginScreen
 import com.example.projekatfaza23.UI.request.NewRequestScreen
 
 @Composable
 fun AppNavigation (navController : NavHostController) {
+    val sharedViewModel : InboxRequestViewModel = viewModel()
     NavHost (
         navController = navController,
         startDestination = Screen.Login
@@ -22,13 +24,14 @@ fun AppNavigation (navController : NavHostController) {
         }
 
         composable<Screen.Home>{
-            ClientHomeScreen({
-                navController.navigate(Screen.CreateRequest)
+            ClientHomeScreen(
+                viewModel = sharedViewModel,
+                {navController.navigate(Screen.CreateRequest)
             })
         }
 
         composable<Screen.CreateRequest> {
-            NewRequestScreen({})
+            NewRequestScreen(viewModel = sharedViewModel, onBack = {navController.popBackStack()})
         }
     }
 }
