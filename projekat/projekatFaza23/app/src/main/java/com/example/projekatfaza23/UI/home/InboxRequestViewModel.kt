@@ -1,6 +1,7 @@
 package com.example.projekatfaza23.UI.home
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -19,27 +21,39 @@ import kotlinx.coroutines.launch
 
 
 class InboxRequestViewModel(): ViewModel() {
-    private val currentUserEmail = UserManager.currentUser.value?.email ?: "test@example.com"
-
-    private val repository = LeaveRepository(userEmail = currentUserEmail)
+    private val _repository = MutableStateFlow<LeaveRepository?>(null)
 
     private val _uiState = MutableStateFlow(LeaveUiState())
     val uiState: StateFlow<LeaveUiState> = _uiState.asStateFlow()
-
-
     private val _currentFilter = MutableStateFlow("All")
     val currentFilter : StateFlow<String> = _currentFilter.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            UserManager.currentUser.collect{ user ->
+                if (user != null && user.email != null){
+                    _repository.value = LeaveRepository(userEmail = user.email)
+                    loadUserLeaveData()
+                }
+            }
+        }
+    }
+
 
     fun setFilter(filter: String) {
         _currentFilter.value = filter
     }
 
     fun sendRequest(){
+        val repo = _repository.value
+        if (repo == null) return
+
         val requestToSend = _uiState.value.currentRequest
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, isSuccess = false, isError = false) }
 
-            val success = repository.submitNewRequest(requestToSend)
+            val success = repo.submitNewRequest(requestToSend)
 
             if(success){
                 _uiState.update { currentState ->
@@ -75,9 +89,14 @@ class InboxRequestViewModel(): ViewModel() {
 
 
     private fun loadUserLeaveData(){
+        val repo = _repository.value
+        if (repo == null) return
+
+        Log.d("test#################################3", "${UserManager.currentUser.value?.email}")
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            repository.getLeaveHistory()
+            repo.getLeaveHistory()
                 .catch { error ->
                     _uiState.update { it.copy(isLoading = false, isError = true) }
                 }.collect { novaLista ->
