@@ -29,6 +29,11 @@ class  LoginViewModel (
 
                 if (profile != null) {
                     UserManager.saveUser(profile)
+                    if (profile != null) {
+                        UserManager.saveUser(profile)
+                        _uiState.value = _uiState.value.copy(isLoading = false)
+                        navigateHome()
+                    }
                     _uiState.value = _uiState.value.copy(isLoading = false)
                     navigateHome()
                 } else {
