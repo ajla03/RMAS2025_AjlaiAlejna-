@@ -1,4 +1,5 @@
 package com.example.projekatfaza23.UI.home
+import androidx.compose.foundation.BorderStroke
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
@@ -46,14 +47,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.projekatfaza23.R
 import com.example.projekatfaza23.UI.request.formatMillisToDate
 import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.layout.ContentScale
 
 
 @Composable
@@ -95,20 +102,24 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel, createNewRequest : () -> 
 
 @Composable
 fun TopAppBarSection(){
-    Surface(color = Color(0xFFE0E0E0)){
+    Surface(
+           color = Color(0xFFE0E0E0),
+           modifier = Modifier.fillMaxWidth().statusBarsPadding(),
+           shadowElevation = 4.dp){
         Row(modifier = Modifier.fillMaxWidth()
-            .statusBarsPadding()
             .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically){
             Surface(
-                color = Color.Gray,
-                shape = RoundedCornerShape(4.dp),
-                modifier = Modifier.size(40.dp)
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.size(40.dp),
             ) {
-                Text("HR", modifier = Modifier.wrapContentSize(), fontWeight = FontWeight.Bold)
+                 Image(painter = painterResource(R.drawable.hrapp_logo),
+                      contentDescription = "Small logo",
+                     modifier = Modifier.size(28.dp).clip(RoundedCornerShape(4.dp)).scale(1.8f),
+                     contentScale = ContentScale.Fit)
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Text("App name", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text("HR App", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
         }
 
     }
