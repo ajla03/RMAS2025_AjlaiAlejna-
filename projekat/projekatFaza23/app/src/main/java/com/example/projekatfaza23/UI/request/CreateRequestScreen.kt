@@ -1,5 +1,5 @@
 package com.example.projekatfaza23.UI.request
-
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,7 +44,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -63,7 +62,18 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
@@ -147,6 +157,35 @@ fun NewRequestContent(
             )
             Spacer(modifier = Modifier.weight(1f))
 
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = uiState.isError && !uiState.errorMsg.isNullOrEmpty(),
+                    enter = fadeIn(animationSpec = tween(500)),
+                    exit = fadeOut(animationSpec = tween(500)),
+                ) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF44336)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        //let da zarobimo poruku, ako postane null tokom animacije, da koristi zadnju poznatu vrijednost
+                        uiState.errorMsg?.let { message ->
+                            Text(
+                                text = message,
+                                color = Color.White,
+                                modifier = Modifier.padding(16.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
             Button(
                 onClick = {
                     android.util.Log.d("PROVJERA", "KLIKNUT JE SEND!")
@@ -155,7 +194,7 @@ fun NewRequestContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(55.dp),
-                enabled = !uiState.isLoading,
+                enabled = !uiState.isLoading || uiState.isError,
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF004D61), contentColor = Color.White)
             ) {

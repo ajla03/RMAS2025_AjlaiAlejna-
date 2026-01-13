@@ -9,6 +9,7 @@ import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.model.FakeLeaveRepository
 import com.example.projekatfaza23.model.LeaveRepository
 import com.example.projekatfaza23.model.LeaveRequest
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,26 +50,42 @@ class InboxRequestViewModel(): ViewModel() {
         if (repo == null) return
 
         val requestToSend = _uiState.value.currentRequest
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, isSuccess = false, isError = false) }
-
-            val success = repo.submitNewRequest(requestToSend)
-
-            if(success){
-                _uiState.update { currentState ->
-                    currentState.copy(
-                        isLoading = false,
-                        isSuccess = true,
-                        currentRequest = LeaveRequest()
+            if(requestToSend.type.isEmpty() || requestToSend.dateFrom==null || requestToSend.dateTo==null) {
+                _uiState.update {
+                    it.copy(
+                        isSuccess = false,
+                        isError = true,
+                        errorMsg = "Date and Type fields are mandatory!"
                     )
-
                 }
-            }else{
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    isError = true,
-                    errorMsg = "Failed to send request"
-                ) }
+                 delay(3000)
+                _uiState.update { it.copy(isError = false, errorMsg = null) }
+                return@launch
+            }else {
+                _uiState.update { it.copy(isLoading = true, isSuccess = false, isError = false) }
+
+                val success = repo.submitNewRequest(requestToSend)
+
+                if (success) {
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            isLoading = false,
+                            isSuccess = true,
+                            currentRequest = LeaveRequest()
+                        )
+
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isError = true,
+                            errorMsg = "Failed to send request"
+                        )
+                    }
+                }
             }
         }
     }
