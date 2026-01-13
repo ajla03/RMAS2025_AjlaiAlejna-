@@ -1,6 +1,7 @@
 package com.example.projekatfaza23.UI.home
 
 import android.net.Uri
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projekatfaza23.data.auth.UserManager
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 
 class InboxRequestViewModel(): ViewModel() {
     private val currentUserEmail = UserManager.currentUser.value?.email ?: "test@example.com"
+
     private val repository = LeaveRepository(userEmail = currentUserEmail)
 
     private val _uiState = MutableStateFlow(LeaveUiState())

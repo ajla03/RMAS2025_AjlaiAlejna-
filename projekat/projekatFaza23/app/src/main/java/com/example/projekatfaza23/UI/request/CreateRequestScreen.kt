@@ -96,7 +96,7 @@ fun NewRequestContent(
     resetSuccessState: () -> Unit
 ){
     val context = LocalContext.current
-    val filePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) {
+    val filePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { //kreiramo launcher  za file picker
         uri : Uri? ->
         uri?.let {
             val fileName = getFileName(context, it) ?: "Unknown file"
@@ -202,7 +202,7 @@ fun AttachmentSection(fileName: String, onAddClick: ()-> Unit){
 fun getFileName(context: Context, uri: Uri): String?{
     var result: String? = null
     if (uri.scheme == "content") {
-        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        val cursor = context.contentResolver.query(uri, null, null, null, null) //vraca metapodatke za taj uri
         try {
             if (cursor != null && cursor.moveToFirst()) {
                 val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
@@ -228,18 +228,18 @@ fun getFileName(context: Context, uri: Uri): String?{
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateRangePickerPopup(onDismiss: () -> Unit, onDatesSelected: (Long?, Long?) -> Unit){
-    val state = rememberDateRangePickerState()
+    val state = rememberDateRangePickerState() //cuva  selectedStartDateMillis i EndDateMillis
 
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = {
             onDatesSelected(state.selectedStartDateMillis, state.selectedEndDateMillis)
-            onDismiss()
+            onDismiss() //zatvara popup
         }){Text("OK")}},
         dismissButton = { TextButton(onClick = onDismiss){Text("CANCEL")}}
     ) {
         DateRangePicker(state = state,
-                        modifier = Modifier.weight(1f).padding(16.dp),
+                        modifier = Modifier.padding(16.dp),
                         title = {Text("SELECT DATES")})
     }
 }

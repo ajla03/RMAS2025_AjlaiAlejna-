@@ -8,6 +8,7 @@ enum class RequestSatus{
     Denied
 }
 
+
 data class LeaveRequest(
     val id: String = "",
     val status: RequestSatus = RequestSatus.Pending,

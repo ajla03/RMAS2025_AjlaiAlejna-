@@ -1,5 +1,4 @@
 package com.example.projekatfaza23.UI.home
-import androidx.compose.foundation.BorderStroke
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -72,7 +70,6 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel, createNewRequest : () -> 
         },
         floatingActionButton = {
             FloatingActionButton(
-                //TODO
                 onClick = {createNewRequest()},
                 containerColor = Color.LightGray,
                 shape = CircleShape
