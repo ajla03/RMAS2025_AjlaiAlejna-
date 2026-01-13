@@ -56,6 +56,7 @@ import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
@@ -71,10 +72,10 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel, createNewRequest : () -> 
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {createNewRequest()},
-                containerColor = Color.LightGray,
+                containerColor = Color(0xFF116379),
                 shape = CircleShape
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
+                Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White)
             }
         },
         bottomBar = {
@@ -88,6 +89,7 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel, createNewRequest : () -> 
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
             ProfileHeader()
             Spacer(modifier = Modifier.height(24.dp))
             RemainingLeaveSection(uiState.remainingLeaveDays)
@@ -100,7 +102,7 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel, createNewRequest : () -> 
 @Composable
 fun TopAppBarSection(){
     Surface(
-           color = Color(0xFFE0E0E0),
+           color = Color(0xFF116379),
            modifier = Modifier.fillMaxWidth().statusBarsPadding(),
            shadowElevation = 4.dp){
         Row(modifier = Modifier.fillMaxWidth()
@@ -111,12 +113,12 @@ fun TopAppBarSection(){
                 modifier = Modifier.size(40.dp),
             ) {
                  Image(painter = painterResource(R.drawable.hrapp_logo),
-                      contentDescription = "Small logo",
-                     modifier = Modifier.size(28.dp).clip(RoundedCornerShape(4.dp)).scale(1.8f),
+                      contentDescription = "HR App logo",
+                     modifier = Modifier.size(28.dp).border(1.dp, Color.LightGray,RoundedCornerShape(8.dp)).clip(RoundedCornerShape(4.dp)).scale(1.8f),
                      contentScale = ContentScale.Fit)
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Text("HR App", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+            Text("HR App", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
         }
 
     }
@@ -142,7 +144,7 @@ fun ProfileHeader() {
                 fontWeight = FontWeight.Bold)
             Row {
                 Text("Status: ", fontSize = 14.sp)
-                Text("At Work", fontSize = 14.sp, color = Color.Red, fontWeight = FontWeight.Bold)
+                Text("At Work", fontSize = 14.sp, color = Color(80,150,100), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -162,12 +164,13 @@ fun RequestsCard(viewModel : InboxRequestViewModel) {
     val currentFilter by viewModel.currentFilter.collectAsState()
 
     var expanded by remember { mutableStateOf(false) }
+
     val filters = listOf("All", "Pending", "Approved", "Denied")
 
     Surface(
-        modifier = Modifier.fillMaxWidth().fillMaxHeight(0.85f),
-        color = Color(0xFFE0E0E0),
-        shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp, bottomStart = 40.dp, bottomEnd = 40.dp)
+        modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+        color = Color(0x6FE0E0E0),
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomStart = 20.dp, bottomEnd = 20.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row (
@@ -191,8 +194,8 @@ fun RequestsCard(viewModel : InboxRequestViewModel) {
                                 contentDescription = null
                             )
                         },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = AssistChipDefaults.assistChipColors(containerColor = Color.LightGray)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = AssistChipDefaults.assistChipColors(containerColor = Color(0xFFE0E0E0))
                     )
 
                     DropdownMenu(expanded = expanded,
@@ -242,21 +245,22 @@ fun RequestItem(request : LeaveRequest) {
             Text(text = request.status.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Text(text = "${request.type} | ${formatMillisToDate(request.dateFrom)} - ${formatMillisToDate(request.dateTo)}", fontSize = 12.sp, color = Color.Gray)
         }
-        if(request.status.equals("Pending")){
-            Surface(
-                modifier = Modifier.padding(start = 20.dp),
-                color = Color.White.copy(alpha = 0.6f),
-                shape = RoundedCornerShape(12.dp)
-            ){
-                TextButton(onClick = {},
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                    modifier = Modifier.height(30.dp)
-                ) { 
-                    Text("Cancel", color = Color.Gray, fontSize = 12.sp)
-                }
-            }
-
-        }
+        //TODO ovakav cancel je ruzan, dodaj ga u karticu kad se otvori zahtjev
+//        if(request.status.name.equals("Pending")){
+//            Surface(
+//                modifier = Modifier.padding(start = 20.dp),
+//                color = Color.White.copy(alpha = 0.6f),
+//                shape = RoundedCornerShape(12.dp)
+//            ){
+//                TextButton(onClick = {},
+//                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+//                    modifier = Modifier.height(30.dp)
+//                ) {
+//                    Text("Cancel", color = Color.Gray, fontSize = 12.sp)
+//                }
+//            }
+//
+//        }
     }
 }
 
@@ -264,15 +268,15 @@ fun RequestItem(request : LeaveRequest) {
 fun BottomContactBar() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color(0xFFEEEEEE)
+        color = Color(0xFFE3E1E1)
     ) {
         Row(
             modifier = Modifier.padding(12.dp).navigationBarsPadding(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Text("Contact: 012 345 6789", fontSize = 10.sp)
-            Text("|", fontSize = 10.sp)
-            Text("Email: hr@domain.com", fontSize = 10.sp)
+            Text("Contact: 012 345 6789", fontSize = 10.sp, color = Color.White)
+            Text("|", fontSize = 10.sp, color = Color.White)
+            Text("Email: hr.app.untz@gmail.com", fontSize = 10.sp, color = Color.White)
         }
     }
 }
