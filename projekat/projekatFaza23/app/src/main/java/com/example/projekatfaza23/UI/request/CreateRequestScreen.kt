@@ -76,6 +76,46 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 
+enum class RequestType(val displayName: String, val maxDays: Int) {
+    // Brak
+    MARRIAGE("Stupanje u brak", 5),
+    MARRIAGE_CHILD("Brak djeteta", 2),
+
+    // Porodica i zdravlje
+    BIRTH_WIFE("Porođaj supruge", 5),
+    DEATH_FAMILY("Smrt člana porodice", 5),
+    ILLNESS_FAMILY("Teža bolest u porodici", 5),
+    NURSING_FAMILY("Njega člana nakon operacije", 5),
+    BLOOD_DONATION("Dobrovoljno davanje krvi", 1),
+
+    // Privatni poslovi i imovina
+    RELOCATION("Selidba", 3),
+    HOUSE_CONSTRUCTION("Gradnja/adaptacija kuće", 7),
+    NATURAL_DISASTER("Elementarna nepogoda", 3),
+    PRIVATE_GOV_BUSINESS("Privatni posao kod organa", 2),
+
+    // Usavršavanje i kultura
+    SPORT_CULTURE("Kulturni/sportski susreti", 7),
+    EXAM_PREP("Stručni ili drugi ispit", 5),
+    THESIS_PREP("Magistarski/doktorski rad", 5),
+
+    // Godisnji odmor
+    ANNUAL_LEAVE("Godišnji odmor", 0),
+
+    // Bolovanje
+    SICK_LEAVE("Bolovanje", 0),
+
+    // Neplaceno odsustvo
+    UNPAID_LEAVE("Neplaćeno odsustvo", 0);
+
+    companion object {
+        val allOptions = entries.map { it.displayName }
+
+        fun getMaxDaysFor(name: String): Int {
+            return entries.find { it.displayName == name }?.maxDays ?: 0
+        }
+    }
+}
 @Composable
 fun NewRequestScreen(onBack: () -> Unit, viewModel: InboxRequestViewModel = viewModel()){
     val uiState by viewModel.uiState.collectAsState()
@@ -327,7 +367,8 @@ fun RequestTypeSelector(
     onTypeSelected: (String) -> Unit
 ){
     val textToShow = if (selectedType.isNotEmpty()) selectedType else "Type of Request"
-    Box{
+    Box(modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center){
         OutlinedCard (onClick = {onExpandChange(true)},
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
@@ -346,12 +387,12 @@ fun RequestTypeSelector(
         }
         DropdownMenu(expanded = isExpanded,
                     onDismissRequest = {onExpandChange(false)},
-                    modifier = Modifier.fillMaxWidth(0.85f)) {
+                    modifier = Modifier.fillMaxWidth(0.8f).height(280.dp)) {
 
             //treba mozda vise tipova ovdje
-            listOf("Bolovanje", "Godisnji odmor").forEach { type ->
-                DropdownMenuItem(text = {Text(type)},
-                                onClick = {
+            RequestType.allOptions.forEach { type ->
+                DropdownMenuItem(text = {Text(type)}, 
+                                 onClick = {
                                     onTypeSelected(type)
                                     onExpandChange(false)
                                 })
