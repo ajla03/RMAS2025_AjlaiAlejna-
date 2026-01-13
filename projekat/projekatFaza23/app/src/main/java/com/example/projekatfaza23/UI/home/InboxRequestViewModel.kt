@@ -1,5 +1,6 @@
 package com.example.projekatfaza23.UI.home
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projekatfaza23.data.auth.UserManager
@@ -121,10 +122,11 @@ class InboxRequestViewModel(): ViewModel() {
         }
     }
 
-    fun onFileAttached(name: String) {
+    fun onFileAttached(uri: android.net.Uri?, name: String) {
         _uiState.update { currentState ->
             currentState.copy(
-                currentRequest = currentState.currentRequest.copy(fileName = name)
+                currentRequest = currentState.currentRequest.copy(fileName = name,
+                    fileUri = uri?.toString())
             )
         }
     }

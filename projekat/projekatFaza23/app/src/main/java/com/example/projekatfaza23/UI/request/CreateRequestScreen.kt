@@ -53,27 +53,63 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projekatfaza23.UI.home.InboxRequestViewModel
+import com.example.projekatfaza23.UI.home.LeaveUiState
+import com.example.projekatfaza23.UI.home.TopAppBarSection
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
 fun NewRequestScreen(onBack: () -> Unit, viewModel: InboxRequestViewModel = viewModel()){
     val uiState by viewModel.uiState.collectAsState()
 
-    var  showTypeMenu by remember {mutableStateOf(false)}
+
+    NewRequestContent(
+        uiState = uiState,
+        onBack = onBack,
+        onTypeChange = { viewModel.onTypeChange(it) },
+        onDatesSelected = { from, to -> viewModel.onDatesSelected(from, to) },
+        onExplanationChange = { viewModel.onExplanationChange(it) },
+        sendRequest = { viewModel.sendRequest() },
+        onFileSelected = {uri, name -> viewModel.onFileAttached(uri, name)},
+        resetSuccessState = { viewModel.resetSuccessState() }
+    )
+
+}
+
+@Composable
+fun NewRequestContent(
+    uiState: LeaveUiState,
+    onBack: () -> Unit,
+    onTypeChange: (String) -> Unit,
+    onDatesSelected: (Long?, Long?) -> Unit,
+    onFileSelected: (Uri?, String) -> Unit,
+    onExplanationChange: (String) -> Unit,
+    sendRequest: () -> Unit,
+    resetSuccessState: () -> Unit
+){
+    val context = LocalContext.current
+    val filePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) {
+        uri : Uri? ->
+        uri?.let {
+            val fileName = getFileName(context, it) ?: "Unknown file"
+            onFileSelected(it, fileName)
+        }
+    }
+
+    var showTypeMenu by remember { mutableStateOf(false) }
     var  showDatePicker  by remember {mutableStateOf(false)}
 
     Scaffold(topBar = {
         Column{
-            TopAppBarSection(onBack)
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-                    .background(Color.White)
-            )
+            TopAppBarSection()
             RequestHeader(onBack)
 
         }}){ padding ->
@@ -86,7 +122,7 @@ fun NewRequestScreen(onBack: () -> Unit, viewModel: InboxRequestViewModel = view
                 selectedType = uiState.currentRequest.type,
                 isExpanded = showTypeMenu,
                 onExpandChange = {showTypeMenu = it},
-                onTypeSelected = { viewModel.onTypeChange(it)}
+                onTypeSelected = { onTypeChange(it)}
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -97,21 +133,25 @@ fun NewRequestScreen(onBack: () -> Unit, viewModel: InboxRequestViewModel = view
                 onClick = {showDatePicker = true})
 
             Spacer(modifier = Modifier.height(16.dp))
-
+            Text("Details", color = Color.Gray, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Spacer(modifier = Modifier.height(8.dp))
             ExplanationField(
                 value = uiState.currentRequest.explanation,
-                onValueChange = {viewModel.onExplanationChange(it)}
+                onValueChange = { onExplanationChange(it)}
             )
 
             Spacer(modifier = Modifier.height(24.dp))
-            AttachmentSection()
+            AttachmentSection(
+                fileName = uiState.currentRequest.fileName,
+                onAddClick = {filePickerLauncher.launch("*/*")}
+            )
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
                 onClick = {
                     android.util.Log.d("PROVJERA", "KLIKNUT JE SEND!")
-                    viewModel.sendRequest()
-                          },
+                    sendRequest()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(55.dp),
@@ -127,14 +167,14 @@ fun NewRequestScreen(onBack: () -> Unit, viewModel: InboxRequestViewModel = view
             }
             LaunchedEffect(uiState.isSuccess) {
                 if(uiState.isSuccess){
-                        onBack()
-                        viewModel.resetSuccessState()
+                    onBack()
+                    resetSuccessState()
                 }
             }
 
             if(showDatePicker){
                 DateRangePickerPopup(onDismiss = {showDatePicker = false},
-                                     onDatesSelected = {from, to -> viewModel.onDatesSelected(from, to)})
+                    onDatesSelected = {from, to -> onDatesSelected(from, to)})
             }
 
 
@@ -142,24 +182,48 @@ fun NewRequestScreen(onBack: () -> Unit, viewModel: InboxRequestViewModel = view
         }
     }
 }
-
 @Composable
-fun AttachmentSection(){
+fun AttachmentSection(fileName: String, onAddClick: ()-> Unit){
     Column{
         Text("Attachments", fontWeight = FontWeight.Bold, fontSize = 18.sp)
         Spacer(modifier = Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically){
-            AssistChip(onClick = {/* open file picker*/ },
+            AssistChip(onClick =  onAddClick,
                       label = {Text("Add a file")},
                       leadingIcon = {Icon(Icons.Default.Add, null)},
                       shape  = RoundedCornerShape(50.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("file_name.pdf", color = Color.Gray, fontSize = 12.sp)
+            Text(text = if(fileName.isEmpty()) "No file selected" else fileName, color = if (fileName.isEmpty()) Color.Gray else Color(0xFF004D61), fontSize = 12.sp)
         }
     }
 
 }
 
+fun getFileName(context: Context, uri: Uri): String?{
+    var result: String? = null
+    if (uri.scheme == "content") {
+        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (index != -1) {
+                    result = cursor.getString(index)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            cursor?.close()
+        }
+    }
+
+    if (result == null) {
+        result = uri.path
+        val cut = result?.lastIndexOf('/') ?: -1
+        if (cut != -1) result = result?.substring(cut + 1)
+    }
+    return result
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -270,30 +334,18 @@ fun RequestHeader(onBack: () -> Unit){
     }
 
 }
-@Composable
-fun TopAppBarSection(onBack: () -> Unit){
-    Surface(color = Color(0xFFE0E0E0)){
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically){
-            Surface(
-                color = Color.Gray,
-                shape = RoundedCornerShape(4.dp),
-                modifier = Modifier.size(40.dp)
-            ) {
-                Text("HR", modifier = Modifier.wrapContentSize(), fontWeight = FontWeight.Bold)
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Text("App name", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        }
 
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
 fun NewRequestPreview(){
-    NewRequestScreen({})
+  NewRequestContent(uiState = LeaveUiState(),
+      onBack = {},
+      onTypeChange = {},
+      onDatesSelected = {_,_ -> },
+      onExplanationChange = {},
+      sendRequest = {},
+      resetSuccessState = {},
+      onFileSelected = {_, _ -> }
+  )
 }

@@ -1,5 +1,7 @@
 package com.example.projekatfaza23.model
 
+import android.net.Uri
+
 enum class RequestSatus{
     Pending,
     Approved,
@@ -12,6 +14,7 @@ data class LeaveRequest(
     val type: String  = "",
     val explanation: String ="",
     val fileName: String = "",
+    val fileUri : String? = null,
     val dateFrom: Long? = null,
     val dateTo: Long? = null,
     val userEmail : String = ""

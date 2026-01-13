@@ -52,7 +52,6 @@ import kotlin.coroutines.coroutineContext
 fun LoginScreen(viewModel : LoginViewModel = viewModel(), navigateHome : () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-
         LoginContent(
             uiState = uiState,
             onLoginClick = {
