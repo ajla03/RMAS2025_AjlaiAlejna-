@@ -36,6 +36,7 @@ class InboxRequestViewModel(): ViewModel() {
 
     fun sendRequest(){
         val requestToSend = _uiState.value.currentRequest
+        println(currentUserEmail)
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, isSuccess = false, isError = false) }
 
