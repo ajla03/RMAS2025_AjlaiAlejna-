@@ -1,4 +1,4 @@
-MAS2025_AjlaiAlejna
+RMAS2025_AjlaiAlejna
 Repozitorij za predmet Razvoj mobilnih aplikacija i servisa - RMAS 2025
 
 ### Commiti - Alejna 
@@ -10,4 +10,6 @@ Repozitorij za predmet Razvoj mobilnih aplikacija i servisa - RMAS 2025
 * fixan `NewRequestScreen.kt` , dodana nova polja u `LeaveRequest.kt` tj u `data class LeaveRequest`. Dodane nove funkcionalnosti u `LeaveRequestViewModel.kt` koje handluju promjenu polja za opis , datume i tip requesta. U `LeaveUIState` dodan `currentRequest : LeaveRequest` kao atribut kojem se cuva stanje u state-u tj. viewModelu 
 * U `NewRequestScreen.kt` dodane Composable funkcije za date picking i attaching files. 
 *Dodan `LoginScreen.kt` `LoginUIState.kt` 
-* dodan Repository `LeaveRepository.kt` , update-an `InboxRequestViewModel.kt` u skladu sa tim i dodana veza na Firebase Firestore 
+* dodan Repository `LeaveRepository.kt` , update-an `InboxRequestViewModel.kt` u skladu sa tim i dodana veza na Firebase Firestore
+* dodan aplikacije - generisan sa Gemini alatom
+* dodana funkcionalnost dodavanja fileova u request, treba prepravku, ali to je zadatak sljedece faze. Cisto sada je dodano da button radi ono sto treba da radi. 
