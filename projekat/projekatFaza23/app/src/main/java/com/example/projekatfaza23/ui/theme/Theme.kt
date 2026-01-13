@@ -40,6 +40,7 @@ fun ProjekatFaza23Theme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    /*
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
@@ -49,7 +50,8 @@ fun ProjekatFaza23Theme(
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
-
+*/
+    val colorScheme = LightColorScheme
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
