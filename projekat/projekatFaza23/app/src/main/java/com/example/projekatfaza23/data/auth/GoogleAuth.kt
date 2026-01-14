@@ -37,6 +37,7 @@ class GoogleAuth(private val context: Context) {
                 context = activityContext
             )
             val googleTokenCredentialData = GoogleIdTokenCredential.createFrom(result.credential.data)
+
             return UserProfile(
                 name = googleTokenCredentialData.givenName,
                 lastName = googleTokenCredentialData.familyName,
