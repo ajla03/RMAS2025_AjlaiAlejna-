@@ -38,6 +38,7 @@ class GoogleAuth(private val context: Context) {
                 context = activityContext
             )
             val googleTokenCredentialData = GoogleIdTokenCredential.createFrom(result.credential.data)
+            Log.d("test##", "slika: ${googleTokenCredentialData.profilePictureUri}")
 
             val profile = UserProfile(
                 name = googleTokenCredentialData.givenName,
