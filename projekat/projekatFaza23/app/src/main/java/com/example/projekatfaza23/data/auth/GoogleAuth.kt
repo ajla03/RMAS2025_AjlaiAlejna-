@@ -44,7 +44,8 @@ class GoogleAuth(private val context: Context) {
                 name = googleTokenCredentialData.givenName,
                 lastName = googleTokenCredentialData.familyName,
                 email = googleTokenCredentialData.id,
-                profilePictureURL = null,
+                profilePictureURL = googleTokenCredentialData.profilePictureUri,
+                //TODO provjeri ima li i broj telefona kod Ajle
                 phoneNumber = null,
                 idToken = googleTokenCredentialData.idToken
             )

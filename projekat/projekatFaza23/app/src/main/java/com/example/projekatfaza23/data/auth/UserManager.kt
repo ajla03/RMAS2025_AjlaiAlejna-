@@ -1,5 +1,6 @@
 package com.example.projekatfaza23.data.auth
 
+import androidx.core.net.toUri
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -16,6 +17,6 @@ object UserManager {
     }
 
     fun addProfilePhoto(url: String){
-        _currentUser.value = _currentUser.value?.copy(profilePictureURL = url)
+        _currentUser.value = _currentUser.value?.copy(profilePictureURL = url.toUri())
     }
 }

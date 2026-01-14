@@ -7,8 +7,8 @@ data class UserProfile(
     val name: String?,
     val lastName: String?,
     val email: String?,
-    val profilePictureURL: String?,
+    val profilePictureURL: Uri?,
     val phoneNumber: String?,
-    //idToken je oauthToken koji se koristi za slanje req na Google API endpoint
+    //idToken je JWT
     val idToken: String
 )

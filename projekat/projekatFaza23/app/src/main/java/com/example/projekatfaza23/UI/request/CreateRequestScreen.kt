@@ -349,7 +349,7 @@ fun ExplanationField(value: String, onValueChange: (String) -> Unit){
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        placeholder = {Text("Explanation")},
+        placeholder = {Text("Explanation", color = Color.Gray)},
         modifier = Modifier
             .fillMaxWidth()
             .height(150.dp),
