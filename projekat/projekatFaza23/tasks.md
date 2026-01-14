@@ -16,7 +16,7 @@
 >   - dodane nove funkcionalnosti u `LeaceRequestViewModel` za handling polja za opis, datume i tip zahtjeva
 >   - dodano polje `currentRequest` u `LeaveUiState`
 
-> 4. dodana Composable funkcija za date pickig i attacking files
+> 4. dodana Composable funkcija za date pickig i attaching files
 > u `NewRequestScreen`
 
 > 5. dodan Repository `LeaveRepository`
@@ -32,6 +32,8 @@
 >   - dodana animacija za error
 
 > 9. bugfixes
+
+> 10. dodana `enum class RequestType(val displayName : String, val maxDays : Int)` za tipove mogucih zahtjeva za odustvo, placenih i neplacenih. `maxDays` se odnosi na zakonski predviden broj dana za placeno odsustvo. 
 
 ---
 
