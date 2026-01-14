@@ -1,5 +1,7 @@
 package com.example.projekatfaza23.model
 
+import com.example.projekatfaza23.data.auth.UserManager
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -41,8 +43,10 @@ fun SingleLeaveRequest(id: String, dateFrom : Long) : LeaveRequest {
         status = RequestSatus.entries[(1..2).random()],
         type = "Annual leave",
         explanation = " ",
-        fileName = "",
-        dateFrom = dateFrom,
-        dateTo = 0L
+        userEmail = UserManager.currentUser.value?.email ?: "",
+        leave_dates = listOf<LeaveDates>(
+            LeaveDates(com.google.firebase.Timestamp(java.util.Date(dateFrom)), Timestamp(0L,0))
+        ),
+        file_info = FileInfo("", "", "")
     )
 }

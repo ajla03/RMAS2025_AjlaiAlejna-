@@ -1,6 +1,7 @@
 package com.example.projekatfaza23.model
 
 import android.net.Uri
+import com.google.firebase.Timestamp
 
 enum class RequestSatus{
     Pending,
@@ -8,15 +9,25 @@ enum class RequestSatus{
     Denied
 }
 
-
 data class LeaveRequest(
     val id: String = "",
     val status: RequestSatus = RequestSatus.Pending,
-    val type: String  = "",
-    val explanation: String ="",
-    val fileName: String = "",
-    val fileUri : String? = null,
-    val dateFrom: Long? = null,
-    val dateTo: Long? = null,
-    val userEmail : String = ""
+    val type: String = "",
+    val explanation: String = "",
+    val userEmail: String = "",
+
+    val leave_dates: List<LeaveDates?>? = null,
+
+    val file_info: FileInfo? = null
+)
+
+data class LeaveDates(
+    val start: Timestamp? = null,
+    val end: Timestamp? = null
+)
+
+data class FileInfo(
+    val file_name: String = "",
+    val file_type: String = "",
+    val uri: String = ""
 )

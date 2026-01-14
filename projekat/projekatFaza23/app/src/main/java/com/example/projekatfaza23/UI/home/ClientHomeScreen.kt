@@ -51,7 +51,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.projekatfaza23.R
-import com.example.projekatfaza23.UI.request.formatMillisToDate
 import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
@@ -61,6 +60,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
+import com.example.projekatfaza23.UI.request.InboxRequestViewModel
 
 
 @Composable
@@ -140,8 +140,8 @@ fun ProfileHeader() {
             AsyncImage(
                 model = UserManager.currentUser.collectAsState().value?.profilePictureURL?.toString()?.replace("http://", "https://"),
                 contentDescription = "Profilna slika",
-                placeholder = painterResource(R.drawable.hrapp_logo),
-                error = painterResource(R.drawable.hrapp_logo),
+                placeholder = painterResource(R.drawable.no_photo),
+                error = painterResource(R.drawable.no_photo),
                 modifier = Modifier.clip(CircleShape)
             )
             //Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.padding(10.dp))
@@ -251,8 +251,16 @@ fun RequestItem(request : LeaveRequest) {
         Box(modifier = Modifier.size(15.dp).background(statusColor, CircleShape))
         Spacer(modifier = Modifier.width(15.dp))
         Column {
-            Text(text = request.status.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text(text = "${request.type} | ${formatMillisToDate(request.dateFrom)} - ${formatMillisToDate(request.dateTo)}", fontSize = 12.sp, color = Color.Gray)
+            Text(
+                text = request.status.name,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp)
+            Text(
+                text = "${request.type} | " +
+                        "${formatTimestampToDate(request.leave_dates?.firstOrNull()?.start)} - " +
+                        "${formatTimestampToDate(request.leave_dates?.firstOrNull()?.end)}",
+                fontSize = 12.sp,
+                color = Color.Gray)
         }
         //TODO ovakav cancel je ruzan, dodaj ga u karticu kad se otvori zahtjev
 //        if(request.status.name.equals("Pending")){

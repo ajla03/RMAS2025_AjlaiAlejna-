@@ -6,7 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.projekatfaza23.UI.home.ClientHomeScreen
-import com.example.projekatfaza23.UI.home.InboxRequestViewModel
+import com.example.projekatfaza23.UI.request.InboxRequestViewModel
 import com.example.projekatfaza23.UI.login.LoginScreen
 import com.example.projekatfaza23.UI.request.NewRequestScreen
 
@@ -35,7 +35,7 @@ fun AppNavigation (navController : NavHostController) {
         }
 
         composable<Screen.CreateRequest> {
-            NewRequestScreen(viewModel = sharedViewModel, onBack = {navController.popBackStack()})
+            NewRequestScreen(viewModel = sharedViewModel, navigateHome = {navController.popBackStack()})
         }
     }
 }

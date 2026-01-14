@@ -1,26 +1,23 @@
-package com.example.projekatfaza23.UI.home
+package com.example.projekatfaza23.UI.request
 
 import android.net.Uri
-import android.util.Log
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projekatfaza23.UI.home.LeaveUiState
 import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.data.repository.GoogleProfileRepository
-import com.example.projekatfaza23.model.FakeLeaveRepository
+import com.example.projekatfaza23.model.FileInfo
+import com.example.projekatfaza23.model.LeaveDates
 import com.example.projekatfaza23.model.LeaveRepository
 import com.example.projekatfaza23.model.LeaveRequest
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-
-
 
 class InboxRequestViewModel(): ViewModel() {
     private val _repository = MutableStateFlow<LeaveRepository?>(null)
@@ -61,7 +58,7 @@ class InboxRequestViewModel(): ViewModel() {
         val requestToSend = _uiState.value.currentRequest
 
         viewModelScope.launch {
-            if(requestToSend.type.isEmpty() || requestToSend.dateFrom==null || requestToSend.dateTo==null) {
+            if(requestToSend.type.isEmpty() || requestToSend.leave_dates?.firstOrNull()?.start == null || requestToSend.leave_dates?.firstOrNull()?.end ==null) {
                 _uiState.update {
                     it.copy(
                         isSuccess = false,
@@ -69,7 +66,7 @@ class InboxRequestViewModel(): ViewModel() {
                         errorMsg = "Date and Type fields are mandatory!"
                     )
                 }
-                 delay(3000)
+                delay(3000)
                 _uiState.update { it.copy(isError = false, errorMsg = null) }
                 return@launch
             }else {
@@ -117,8 +114,6 @@ class InboxRequestViewModel(): ViewModel() {
         val repo = _repository.value
         if (repo == null) return
 
-        Log.d("test#################################3", "${UserManager.currentUser.value?.email}")
-
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             repo.getLeaveHistory()
@@ -129,7 +124,7 @@ class InboxRequestViewModel(): ViewModel() {
                     currentState ->
                     currentState.copy(
                         requestHistory = novaLista
-                            .sortedByDescending { it.dateFrom },
+                            .sortedByDescending { it.leave_dates?.firstOrNull()?.start?.seconds ?: 0L },
                         isLoading = false
                     )
                 }
@@ -159,20 +154,36 @@ class InboxRequestViewModel(): ViewModel() {
     }
 
     fun onDatesSelected(from: Long?, to: Long?) {
-        _uiState.update { it.copy(
-                currentRequest = it.currentRequest.copy(
-                    dateFrom = from ?: 0L,
-                    dateTo = to ?: 0L
+        _uiState.update { currentState ->
+            //TODO kada se ui popravi da prima vise rangeova ovo je potrebno ispraviti takodje
+            val oldList = currentState.currentRequest.leave_dates?.firstOrNull() ?: LeaveDates()
+            val newDates = oldList.copy(
+                start = if (from != null) {
+                    Timestamp(java.util.Date(from))
+                } else null,
+                end = if (to != null){
+                    Timestamp(java.util.Date(to))
+                } else null
+            )
+
+            currentState.copy(
+                currentRequest = currentState.currentRequest.copy(
+                    leave_dates = listOf(newDates)
                 )
           )
         }
     }
 
-    fun onFileAttached(uri: android.net.Uri?, name: String) {
+    fun onFileAttached(uri: Uri?, name: String) {
         _uiState.update { currentState ->
             currentState.copy(
-                currentRequest = currentState.currentRequest.copy(fileName = name,
-                    fileUri = uri?.toString())
+                currentRequest = currentState.currentRequest.copy(
+                    file_info = FileInfo(
+                        file_name = name,
+                        file_type = "",
+                        uri = uri.toString()
+                    )
+                )
             )
         }
     }
@@ -181,4 +192,3 @@ class InboxRequestViewModel(): ViewModel() {
         _uiState.update { it.copy(isSuccess = false) }
     }
 }
-

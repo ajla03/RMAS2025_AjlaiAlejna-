@@ -51,7 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.projekatfaza23.UI.home.InboxRequestViewModel
+import com.example.projekatfaza23.UI.request.InboxRequestViewModel
 import com.example.projekatfaza23.UI.home.LeaveUiState
 import com.example.projekatfaza23.UI.home.TopAppBarSection
 import java.text.SimpleDateFormat
@@ -75,8 +75,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.projekatfaza23.UI.home.formatTimestampToDate
 
 enum class RequestType(val displayName: String, val maxDays: Int) {
+    // Godisnji odmor
+    ANNUAL_LEAVE("Godišnji odmor", 0),
     // Brak
     MARRIAGE("Stupanje u brak", 5),
     MARRIAGE_CHILD("Brak djeteta", 2),
@@ -99,8 +102,6 @@ enum class RequestType(val displayName: String, val maxDays: Int) {
     EXAM_PREP("Stručni ili drugi ispit", 5),
     THESIS_PREP("Magistarski/doktorski rad", 5),
 
-    // Godisnji odmor
-    ANNUAL_LEAVE("Godišnji odmor", 0),
 
     // Bolovanje
     SICK_LEAVE("Bolovanje", 0),
@@ -117,13 +118,13 @@ enum class RequestType(val displayName: String, val maxDays: Int) {
     }
 }
 @Composable
-fun NewRequestScreen(onBack: () -> Unit, viewModel: InboxRequestViewModel = viewModel()){
+fun NewRequestScreen(navigateHome: () -> Unit, viewModel: InboxRequestViewModel = viewModel()){
     val uiState by viewModel.uiState.collectAsState()
 
 
     NewRequestContent(
         uiState = uiState,
-        onBack = onBack,
+        navigateHome = navigateHome,
         onTypeChange = { viewModel.onTypeChange(it) },
         onDatesSelected = { from, to -> viewModel.onDatesSelected(from, to) },
         onExplanationChange = { viewModel.onExplanationChange(it) },
@@ -137,7 +138,7 @@ fun NewRequestScreen(onBack: () -> Unit, viewModel: InboxRequestViewModel = view
 @Composable
 fun NewRequestContent(
     uiState: LeaveUiState,
-    onBack: () -> Unit,
+    navigateHome: () -> Unit,
     onTypeChange: (String) -> Unit,
     onDatesSelected: (Long?, Long?) -> Unit,
     onFileSelected: (Uri?, String) -> Unit,
@@ -161,7 +162,7 @@ fun NewRequestContent(
     Scaffold(topBar = {
         Column{
             TopAppBarSection()
-            RequestHeader(onBack)
+            RequestHeader(navigateHome)
 
         }}){ padding ->
         Column(modifier = Modifier
@@ -179,8 +180,8 @@ fun NewRequestContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             DatePickerField(
-                dateFrom = formatMillisToDate(uiState.currentRequest.dateFrom),
-                dateTo = formatMillisToDate(uiState.currentRequest.dateTo),
+                dateFrom = formatTimestampToDate(uiState.currentRequest.leave_dates?.firstOrNull()?.start),
+                dateTo = formatTimestampToDate(uiState.currentRequest.leave_dates?.firstOrNull()?.end),
                 onClick = {showDatePicker = true})
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -193,7 +194,7 @@ fun NewRequestContent(
 
             Spacer(modifier = Modifier.height(24.dp))
             AttachmentSection(
-                fileName = uiState.currentRequest.fileName,
+                fileName = uiState.currentRequest.file_info?.file_name,
                 onAddClick = {filePickerLauncher.launch("*/*")}
             )
             Spacer(modifier = Modifier.weight(1f))
@@ -247,7 +248,7 @@ fun NewRequestContent(
             }
             LaunchedEffect(uiState.isSuccess) {
                 if(uiState.isSuccess){
-                    onBack()
+                    navigateHome()
                     resetSuccessState()
                 }
             }
@@ -263,7 +264,7 @@ fun NewRequestContent(
     }
 }
 @Composable
-fun AttachmentSection(fileName: String, onAddClick: ()-> Unit){
+fun AttachmentSection(fileName: String?, onAddClick: ()-> Unit){
     Column{
         Text("Attachments", fontWeight = FontWeight.Bold, fontSize = 18.sp)
         Spacer(modifier = Modifier.height(8.dp))
@@ -273,7 +274,7 @@ fun AttachmentSection(fileName: String, onAddClick: ()-> Unit){
                       leadingIcon = {Icon(Icons.Default.Add, null)},
                       shape  = RoundedCornerShape(50.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = if(fileName.isEmpty()) "No file selected" else fileName, color = if (fileName.isEmpty()) Color.Gray else Color(0xFF004D61), fontSize = 12.sp)
+            Text(text = if(fileName.isNullOrEmpty()) "No file selected" else fileName, color = if (fileName.isNullOrEmpty()) Color.Gray else Color(0xFF004D61), fontSize = 12.sp)
         }
     }
 
@@ -324,11 +325,6 @@ fun DateRangePickerPopup(onDismiss: () -> Unit, onDatesSelected: (Long?, Long?) 
     }
 }
 
-fun formatMillisToDate(millis: Long?): String{
-    if(millis == null) return ""
-    val formatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
-    return formatter.format(Date(millis))
-}
 @Composable
 fun DatePickerField(dateFrom: String, dateTo: String, onClick : () -> Unit){
     val textToShow = if (dateFrom.isNotEmpty()) "$dateFrom - $dateTo" else "Date (from - to)"
@@ -342,7 +338,7 @@ fun DatePickerField(dateFrom: String, dateTo: String, onClick : () -> Unit){
             .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically){
-            Text(textToShow, color = if(dateFrom.isEmpty()) Color.Gray else Color.Black)
+            Text(textToShow, color = if(dateFrom == "Date") Color.Gray else Color.Black)
             Icon(Icons.Default.KeyboardArrowDown,null)
         }
     }
@@ -402,13 +398,13 @@ fun RequestTypeSelector(
     }
 }
 @Composable
-fun RequestHeader(onBack: () -> Unit){
+fun RequestHeader(navigateHome: () -> Unit){
     Surface(color = Color(0xFF004D61), modifier = Modifier.fillMaxWidth()){
         Row(modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically){
             Icon(Icons.Default.ArrowBack, contentDescription = null,
                 tint = Color.White,
-                modifier = Modifier.clickable{onBack()})
+                modifier = Modifier.clickable{navigateHome()})
             Spacer(modifier = Modifier.width(24.dp))
             Text("New Request", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         }
@@ -421,7 +417,7 @@ fun RequestHeader(onBack: () -> Unit){
 @Composable
 fun NewRequestPreview(){
   NewRequestContent(uiState = LeaveUiState(),
-      onBack = {},
+      navigateHome = {},
       onTypeChange = {},
       onDatesSelected = {_,_ -> },
       onExplanationChange = {},
