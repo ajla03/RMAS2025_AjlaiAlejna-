@@ -26,6 +26,13 @@
 > 6. dodana funkcionalnost dodavanja fileova u request
 >   - potrebna prepravka u sljedecoj fazi (ovo je minimalna implementacija da button radi sta je predvidjeno)
 
+> 7. izmjena login screena i new request screena
+
+> 8. dodana ogranicenja na tip i datume kod zahtjeva
+>   - dodana animacija za error
+
+> 9. bugfixes
+
 ---
 
 ### Alejna Hodzic:
@@ -37,6 +44,7 @@
 > 2. navigacija projekta
 >   - dodan sealed interface Screen
 >   - implementirana AppNavigation funkcija (wrappan NavHost)
+>   - onemogucen povratak na login screen nakon prijave
 >   - izmjena potpisa funkcija za prikazivanje ekrana i prosljiedjena lambda za navigaciju
 
 > 3. projekt dodan na Google CLoud \ Firebase
@@ -49,3 +57,16 @@
 > 6. ispravljena potpuna funkcionalnost LoginScreen-a
 >   - ViewModelu dodana funkcija za `GoogleSingIn` 
 >   - prepravljene Compose funkcije
+
+> 7. dodan logo i izmjenjen homescreen izgled
+
+> 8. bugfixes
+
+> 9. prepravljena data klasa `LeaveRepository` i fileovi koji su ju koristili
+
+> 10. pripremila Retfofit, okHttpClient, interface i
+> repozitorij za poziv ka apiju - turns out nije nam 
+> ni trebalo :/
+
+> 11. dodana offline database support koristeci 
+> firebase 
