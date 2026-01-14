@@ -124,7 +124,7 @@ class InboxRequestViewModel(): ViewModel() {
                     currentState ->
                     currentState.copy(
                         requestHistory = novaLista
-                            .sortedByDescending { it.leave_dates?.firstOrNull()?.start?.seconds ?: 0L },
+                            .sortedBy { it.leave_dates?.firstOrNull()?.start?.seconds ?: 0L },
                         isLoading = false
                     )
                 }
