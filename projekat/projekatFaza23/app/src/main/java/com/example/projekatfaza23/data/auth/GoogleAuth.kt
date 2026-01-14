@@ -14,6 +14,7 @@ import com.example.projekatfaza23.R
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import java.security.SecureRandom
+import com.example.projekatfaza23.data.repository.GoogleProfileRepository
 
 
 class GoogleAuth(private val context: Context) {
@@ -38,14 +39,16 @@ class GoogleAuth(private val context: Context) {
             )
             val googleTokenCredentialData = GoogleIdTokenCredential.createFrom(result.credential.data)
 
-            return UserProfile(
+            val profile = UserProfile(
                 name = googleTokenCredentialData.givenName,
                 lastName = googleTokenCredentialData.familyName,
                 email = googleTokenCredentialData.id,
-                profilePictureURL = googleTokenCredentialData.profilePictureUri,
-                phoneNumber = googleTokenCredentialData.phoneNumber,
+                profilePictureURL = null,
+                phoneNumber = null,
                 idToken = googleTokenCredentialData.idToken
             )
+            UserManager.saveUser(profile)
+            return profile
         } catch (e: GetCredentialException){
             Log.e("GoogleAuth", "${e.message}")
             return null

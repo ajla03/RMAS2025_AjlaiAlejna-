@@ -6,6 +6,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projekatfaza23.data.auth.UserManager
+import com.example.projekatfaza23.data.repository.GoogleProfileRepository
 import com.example.projekatfaza23.model.FakeLeaveRepository
 import com.example.projekatfaza23.model.LeaveRepository
 import com.example.projekatfaza23.model.LeaveRequest
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 
 class InboxRequestViewModel(): ViewModel() {
     private val _repository = MutableStateFlow<LeaveRepository?>(null)
+    private val googleProfileRepository = GoogleProfileRepository()
 
     private val _uiState = MutableStateFlow(LeaveUiState())
     val uiState: StateFlow<LeaveUiState> = _uiState.asStateFlow()
@@ -35,6 +37,13 @@ class InboxRequestViewModel(): ViewModel() {
                 if (user != null && user.email != null){
                     _repository.value = LeaveRepository(userEmail = user.email)
                     loadUserLeaveData()
+//
+//                    launch {
+//                        val url = googleProfileRepository.getProfilePictureUrl()
+//                        if (url!=null){
+//                            UserManager.addProfilePhoto(url)
+//                        }
+//                    }
                 }
             }
         }

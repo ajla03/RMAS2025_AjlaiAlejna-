@@ -19,7 +19,11 @@ fun AppNavigation (navController : NavHostController) {
     ) {
         composable<Screen.Login> {
             LoginScreen(viewModel(), {
-                navController.navigate(Screen.Home)
+                navController.navigate(Screen.Home){
+                    popUpTo<Screen.Login> {
+                        inclusive = true
+                    }
+                }
             })
         }
 

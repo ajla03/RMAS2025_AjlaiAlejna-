@@ -52,12 +52,12 @@ import kotlin.coroutines.coroutineContext
 fun LoginScreen(viewModel : LoginViewModel = viewModel(), navigateHome : () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-        LoginContent(
-            uiState = uiState,
-            onLoginClick = {
-                viewModel.loginWithGoogle(context, navigateHome)
-            }
-        )
+    LoginContent(
+        uiState = uiState,
+        onLoginClick = {
+            viewModel.loginWithGoogle(context, navigateHome)
+        }
+    )
 }
 
 
@@ -145,7 +145,7 @@ fun SignIn(
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(12.dp),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF116379), contentColor = Color.White),
             enabled = !uiState.isLoading
         ) {
             if (uiState.isLoading) {
@@ -161,7 +161,7 @@ fun SignIn(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Text("Continue with Google", color = Color.Black, fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                Text("Continue with Google", color = Color.White, fontWeight = FontWeight.Medium, fontSize = 16.sp)
             }
         }
 
