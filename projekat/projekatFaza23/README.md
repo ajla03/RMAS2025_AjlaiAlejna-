@@ -22,7 +22,98 @@ HR sluzbenik moze obradjivati zahtjeve i voditi evidenciju, a dekan daje konacno
 
 ### Opis implementiranih funkcionalnosti:
 
-(Ovdje dodati opis funkcionalnosti)
+#### Alejna:
+
+> **Navigation**
+> 
+> Najprije je dodan sealed interface (u kombinaciji sa Serialization-om)
+> kako bi se type-safe
+> moglo navigirati kroz ekrane s minimanlim mogucnostima za
+> pravljenje greske. 
+> 
+> Sealed interface sadrzi (zasad) samo singletone za
+> Home, Login i Create Request screen-ove. Po prosirenju
+> aplikacije biti ce dodano jos singletona.
+> 
+> Funkcija `AppNavigation` je esencijalno wrapper za 
+> `NavHost` koja nam omogucava jednostavniji i 
+> modularniji pristup navigaciji kako se NavHost ne bi 
+> morao implementirati u MainActivity.kt. 
+> 
+> Navigacija krece od Login screen-a i za njega je
+> definisana samo jedna ruta i to prema Home screen-u.
+> 
+> Navigacija kroz ekrane je implementrirana tako da se
+> pozivu compose funkcije za screen proslijedi lambda
+> u kojoj je definisana navigacija putem funkcije .navigate().
+> 
+> Ta lambda propagira u Compose funkciji do UI elementa
+> koji na event treba da istu trigeruje i izvrsi.
+> 
+> Isti postupak je odradjen i za ostale Screenove. 
+> 
+
+> **Google Authentication**
+> 
+> Dodana funkcija za genersanje nasumicnog nonce-a, koji 
+> je zapravo enkodirani string i sluzi kao sigurnosni mehanizam.
+> 
+> Dalje u procesu Google autentikacije slijedi konfiguracija
+> zahtjeva prema Google serveru koristeci `Credential Manager`.
+> 
+> `setFilterByAuthorizedAccounts` je postavljen na false
+> kako bi se omogucio prikaz svih accounta usera.
+> 
+> `setServerClientId` funkciji prosljedjujemo WEB client id
+> koji se dobije preko Google Cloud Console i sluzi za
+> dobijanje tokena i verifikaciju da zahtjev dolazi od
+> registrovane aplikacije. Smjesten je u resursima kako ne
+> bi bio hard-coded u aplikaciji, a da ipak nema potrebe za
+> dodatnom distribucijom podataka kako bi se aplikacija
+> mogla samo pokrenuti.
+> 
+> Potom s enapravi zahtjev i dohvate kredencijali 
+> pri cemu se koristi i app Context zbog cega isti mora
+> propagirati kroz login view model do ove funkcije (kako
+> bi bio koristen isti kontekst).
+> 
+> Dodane su klase UserProfile i UserManager. UserProfile
+> sluzi kako bismo povratne podatke iz kredencijala 
+> spremili, a UserManager nam sluzi kao singleton koji
+> cuva trenutnog korisnika prijavljenog na aplikaciju.
+> Zasad na taj nacin imamo korisnika u aplikaciji obzirom
+> da za ovu fazu nije bilo zahtjevano pisanje u bazu.
+> U narednim fazama jednom kada se dobiju kredencijali
+> isti ce biti spremljeni na Firebase Firestore.
+> 
+
+> **Offline Firebase Firestore**
+> U init bloku se inicijaliziraju postavke za Firestore offline bazu podataka
+> . Postavi se cache na 100MB i te portavke se apliciraju na 
+> vec inicijaliziranu bazu podataka.
+> 
+> Dalje je samo bilo potrebno na ekranu prikazivati sve 
+> ono sto se nalazi u cache-u kada snapshot listener ne
+> dobija podatke od baze. Poziva se `snapshot.metadata.isFromCache`.
+
+> **Organizacija podataka u bazi**
+> Napravila sam da je moguce odabrati vise rangeova 
+> datuma (data klasa uzima listu Datuma), ali to jos nije implementirano
+> na UI, samo u pozadini. Dodala sam novi tip za spremanje podataka vezanih
+> za fajlove koji se mogu ucitati kao dokaz na zahtjev za odsustvo.
+
+> **Support za API pozive**
+> Dodan OkHttpKlijent, RetrofitInstance, GoogleAPIInterface,
+> repozitorij za google podatke i pomocna funkcija za OkHttpClient.
+> Slicno zadaci3, na kraju nije iskoristeno ni za sta, jer smo podatak
+> vec imale kroz kredencijale (meni je slika bila null jer je postavljena
+> na private pa sam debuggirala to dug vremenski period, jer nisam znala sta
+> je bilo u pitanju).
+> 
+> Kod ostaje za potencijalne upotrebe kasnije. Ako se ne bude koristio biti ce 
+> izbrisan.
+> 
+
 
 ---
 
