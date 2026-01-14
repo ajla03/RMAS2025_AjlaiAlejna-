@@ -114,7 +114,50 @@ HR sluzbenik moze obradjivati zahtjeve i voditi evidenciju, a dekan daje konacno
 > izbrisan.
 > 
 
-
+#### Ajla:
+> **Repository**
+> 
+>  Inicijalno je implementiran `FakeLeaveRepository` koji predstavlja fake tj. dummy podatke koji se koriste ako
+> nema nista na Firebase serveru ili lokalno ( lokalna baza jos nije implementirana ). Ovi dummy podaci su super
+>  sluzili da se prati tok dolaska podataka sa servera ( ako se poslao request, automatski se vise dummy podaci
+> ne prikazuju nego se prikazuju podaci sa servera ).
+> 
+> Nakon toga, implementiran je `LeaveRepository` koji sluzi kao Single Source of Truth, kojeg view model koristi da
+>  dobije podatke koji mu trebaju. LeaveRepository drzi instancu na Firebase Firestore koja mu sluzi za dohvatanje
+> podataka sa Firestore-a. Posto se koristi Flow podataka, podaci se azuriraju In Real Time.
+> 
+>
+> **Firebase Firestore**
+>
+> Za dohvatanje podataka u firebase kolekciji `leave_requests` koristi se i relevantan `userEmail` sa kojim je asociran
+> trenutni ulogovani korisnik aplikacije. To omogucava da korisnik dobije samo svoje requeste sa Firestore-a. S druge
+> strane, dekan koji bi ih odobravao bi imao pristup svim zahtjevima na Firestore-u.
+> 
+> Kao sto sam i navela, ako je ne moguce pristupiti podacima na serveru, ili ce se prikazati oni koji su sacuvani
+> lokalno (nakon implementacije Room-a) ili aktivna offline Firestore podrska.
+>
+> **Dodavanje file-ova u request**
+>
+> Da bi se omogucila funkcionalnost dodavanja file-ova u Request dodata su nova polja u LeaveRequest data class,
+>  a ticu se imena file-a, tipa file-a i uri-ja.
+>
+> Fajl se dohvata pomocu filePickerLaunchera pozivom funkcije launch koja otvara sistemski file picker za biranje
+> fileova. Nema ogranicenja na tip file-a koji mozemo izabrati ( za sad ), a to se postiglo pozivom launch("*/*") gdje
+> je "*/*" argument koji znaci "dozvoli bilo koju vrstu fajla".
+>
+> `getfileName` funkcija sluzi da na osnovu Uri objekta kojeg vrati sistemski file picker, pokusa dobiti metapodatke
+> fajla. Ako je `uri.scheme == "content"` u tom slucaju se koristi ContentResolver da se procita ime fajla, a to se
+> vrsi preko cursora.
+>
+> Ako se ime fajla ne moze dobiti preko ContentProvidera funkcija prelazi na rezervni nacin. U tom slucaju, uzima se
+> putanja iz URI-ja.
+>
+> **Napomena**
+>
+>  Posto na Firebase saljemo lokalni uri a ne javni url implementacija je nepotpuna. Da bi korisnik na
+> drugoj strani imao pristup fajlu, fajl ce se morati uploadati na Firebase Storage i onda na Firebase poslati javni
+> url fajla. Implementacija je uradena radi kompletiranja funkcionalnosti slanja zahtjeva i dodavanja file-ova.
+> 
 ---
 
 ### Opis arhitekture aplikacije
