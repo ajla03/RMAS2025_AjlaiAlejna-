@@ -59,6 +59,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 
 
 @Composable
@@ -133,7 +134,15 @@ fun ProfileHeader() {
             shape = CircleShape,
             color = Color.LightGray
         ) {
-            Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.padding(10.dp))
+
+            AsyncImage(
+                model = UserManager.currentUser.collectAsState().value?.profilePictureURL?.toString()?.replace("http://", "https://"),
+                contentDescription = "Profilna slika",
+                placeholder = painterResource(R.drawable.hrapp_logo),
+                error = painterResource(R.drawable.hrapp_logo),
+                modifier = Modifier.clip(CircleShape)
+            )
+            //Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.padding(10.dp))
         }
         Spacer(modifier = Modifier.width(16.dp))
         Column {
