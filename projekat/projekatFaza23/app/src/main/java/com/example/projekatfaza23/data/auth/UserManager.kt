@@ -14,4 +14,8 @@ object UserManager {
     fun logOutUser(){
         _currentUser.value = null
     }
+
+    fun addProfilePhoto(url: String){
+        _currentUser.value = _currentUser.value?.copy(profilePictureURL = url)
+    }
 }
