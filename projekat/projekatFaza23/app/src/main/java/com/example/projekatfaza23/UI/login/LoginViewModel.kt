@@ -5,12 +5,21 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projekatfaza23.UI.navigation.Screen
 import com.example.projekatfaza23.data.auth.GoogleAuth
 import com.example.projekatfaza23.data.auth.UserManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+
+fun getUserRoleRoute(email : String?): Screen {
+    return when {
+        email == "ayla62553@gmail.com" -> Screen.DeanHome
+        else -> Screen.Home
+    }
+}
 
 class  LoginViewModel (
     application: Application
@@ -20,7 +29,7 @@ class  LoginViewModel (
 
     private val authService = GoogleAuth(application.applicationContext)
 
-    fun loginWithGoogle(activityContext: Context, navigateHome: () -> Unit) {
+    fun loginWithGoogle(activityContext: Context, navigateHome: (Screen) -> Unit) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
@@ -29,12 +38,13 @@ class  LoginViewModel (
 
                 if (profile != null) {
                     UserManager.saveUser(profile)
+                    val destination = getUserRoleRoute(profile.email)
                     if (profile != null) {
                         _uiState.value = _uiState.value.copy(isLoading = false)
-                        navigateHome()
+                        navigateHome(destination)
                     }
                     _uiState.value = _uiState.value.copy(isLoading = false)
-                    navigateHome()
+                    navigateHome(destination)
                 } else {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,

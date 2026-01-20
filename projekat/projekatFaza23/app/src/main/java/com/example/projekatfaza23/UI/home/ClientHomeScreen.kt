@@ -103,7 +103,7 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel, createNewRequest : () -> 
 @Composable
 fun TopAppBarSection(){
     Surface(
-           color = Color(0xFF116379),
+           color = Color.White,
            modifier = Modifier.fillMaxWidth().statusBarsPadding(),
            shadowElevation = 4.dp){
         Row(modifier = Modifier.fillMaxWidth()
@@ -119,7 +119,7 @@ fun TopAppBarSection(){
                      contentScale = ContentScale.Fit)
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Text("HR App", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+            Text("HR App", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black)
         }
 
     }

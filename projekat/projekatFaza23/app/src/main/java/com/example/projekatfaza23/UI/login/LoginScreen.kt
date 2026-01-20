@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projekatfaza23.R
 import com.example.projekatfaza23.UI.home.TopAppBarSection
+import com.example.projekatfaza23.UI.navigation.Screen
 import com.example.projekatfaza23.model.LoginViewModel
 import com.example.projekatfaza23.data.auth.GoogleAuth
 import com.example.projekatfaza23.model.LoginUIState
@@ -49,13 +50,13 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.coroutineContext
 
 @Composable
-fun LoginScreen(viewModel : LoginViewModel = viewModel(), navigateHome : () -> Unit) {
+fun LoginScreen(viewModel : LoginViewModel = viewModel(), onLoginSuccess : (Screen) -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     LoginContent(
         uiState = uiState,
         onLoginClick = {
-            viewModel.loginWithGoogle(context, navigateHome)
+            viewModel.loginWithGoogle(context, onLoginSuccess)
         }
     )
 }

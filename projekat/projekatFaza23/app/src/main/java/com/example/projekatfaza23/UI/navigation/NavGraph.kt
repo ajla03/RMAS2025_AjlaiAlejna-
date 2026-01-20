@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.projekatfaza23.UI.dean.DeanHomeScreen
 import com.example.projekatfaza23.UI.home.ClientHomeScreen
 import com.example.projekatfaza23.UI.request.InboxRequestViewModel
 import com.example.projekatfaza23.UI.login.LoginScreen
@@ -19,7 +20,8 @@ fun AppNavigation (navController : NavHostController) {
     ) {
         composable<Screen.Login> {
             LoginScreen(viewModel(), {
-                navController.navigate(Screen.Home){
+                destinationScreen ->
+                navController.navigate(destinationScreen){
                     popUpTo<Screen.Login> {
                         inclusive = true
                     }
@@ -37,5 +39,11 @@ fun AppNavigation (navController : NavHostController) {
         composable<Screen.CreateRequest> {
             NewRequestScreen(viewModel = sharedViewModel, navigateHome = {navController.popBackStack()})
         }
+
+        composable<Screen.DeanHome>{
+            DeanHomeScreen()
+        }
+
+
     }
 }

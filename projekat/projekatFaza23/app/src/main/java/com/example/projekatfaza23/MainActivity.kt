@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import com.example.projekatfaza23.UI.dean.DeanHomeScreen
 import com.example.projekatfaza23.UI.navigation.AppNavigation
 import com.example.projekatfaza23.UI.navigation.Screen
 import com.example.projekatfaza23.UI.request.NewRequestScreen
@@ -21,7 +22,7 @@ class MainActivity : ComponentActivity() {
             ProjekatFaza23Theme {
                 val navController = rememberNavController()
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    AppNavigation(navController = navController)
+                AppNavigation(navController = navController)
                 }
             }
         }

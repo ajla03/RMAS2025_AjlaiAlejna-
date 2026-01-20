@@ -11,4 +11,8 @@ sealed interface Screen {
 
     @Serializable
     object CreateRequest : Screen
+
+    @Serializable
+    object DeanHome : Screen
+
 }
