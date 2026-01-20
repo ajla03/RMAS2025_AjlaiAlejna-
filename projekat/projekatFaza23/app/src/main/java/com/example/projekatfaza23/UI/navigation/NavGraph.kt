@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.projekatfaza23.UI.dean.DeanHomeScreen
+import com.example.projekatfaza23.UI.dean.DeanViewModel
 import com.example.projekatfaza23.UI.home.ClientHomeScreen
 import com.example.projekatfaza23.UI.request.InboxRequestViewModel
 import com.example.projekatfaza23.UI.login.LoginScreen
@@ -41,7 +42,8 @@ fun AppNavigation (navController : NavHostController) {
         }
 
         composable<Screen.DeanHome>{
-            DeanHomeScreen()
+            val viewModel : DeanViewModel = viewModel()
+            DeanHomeScreen(viewModel = viewModel)
         }
 
 

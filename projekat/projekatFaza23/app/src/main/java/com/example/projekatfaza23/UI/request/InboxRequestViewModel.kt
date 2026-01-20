@@ -9,6 +9,7 @@ import com.example.projekatfaza23.data.repository.GoogleProfileRepository
 import com.example.projekatfaza23.model.FileInfo
 import com.example.projekatfaza23.model.LeaveDates
 import com.example.projekatfaza23.model.LeaveRepository
+import com.example.projekatfaza23.model.LeaveRepositoryI
 import com.example.projekatfaza23.model.LeaveRequest
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.delay
@@ -20,20 +21,21 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class InboxRequestViewModel(): ViewModel() {
-    private val _repository = MutableStateFlow<LeaveRepository?>(null)
+    private val _repository : LeaveRepositoryI = LeaveRepository()
     private val googleProfileRepository = GoogleProfileRepository()
 
     private val _uiState = MutableStateFlow(LeaveUiState())
     val uiState: StateFlow<LeaveUiState> = _uiState.asStateFlow()
     private val _currentFilter = MutableStateFlow("All")
     val currentFilter : StateFlow<String> = _currentFilter.asStateFlow()
+    private var currentUserEmail: String? = null
 
     init {
         viewModelScope.launch {
             UserManager.currentUser.collect{ user ->
                 if (user != null && user.email != null){
-                    _repository.value = LeaveRepository(userEmail = user.email)
-                    loadUserLeaveData()
+                    currentUserEmail = user.email
+                    loadUserLeaveData(user.email)
 //
 //                    launch {
 //                        val url = googleProfileRepository.getProfilePictureUrl()
@@ -52,9 +54,12 @@ class InboxRequestViewModel(): ViewModel() {
     }
 
     fun sendRequest(){
-        val repo = _repository.value
-        if (repo == null) return
 
+        val email = currentUserEmail
+        if(email == null){
+            _uiState.update { it.copy(isError = true, errorMsg = "User not logged in!") }
+            return
+        }
         val requestToSend = _uiState.value.currentRequest
 
         viewModelScope.launch {
@@ -72,7 +77,7 @@ class InboxRequestViewModel(): ViewModel() {
             }else {
                 _uiState.update { it.copy(isLoading = true, isSuccess = false, isError = false) }
 
-                val success = repo.submitNewRequest(requestToSend)
+                val success = _repository.submitNewRequest(requestToSend, email)
 
                 if (success) {
                     _uiState.update { currentState ->
@@ -105,18 +110,12 @@ class InboxRequestViewModel(): ViewModel() {
         }
     }
 
-    init {
-        loadUserLeaveData()
-    }
 
 
-    private fun loadUserLeaveData(){
-        val repo = _repository.value
-        if (repo == null) return
-
+    private fun loadUserLeaveData(email: String){
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            repo.getLeaveHistory()
+            _repository.getLeaveHistory(email)
                 .catch { error ->
                     _uiState.update { it.copy(isLoading = false, isError = true) }
                 }.collect { novaLista ->

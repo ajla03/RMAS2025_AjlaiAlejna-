@@ -7,7 +7,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 class FakeLeaveRepository : LeaveRepositoryI {
-    override fun getLeaveHistory(): Flow<List<LeaveRequest>> = flow {
+
+    override fun getAllRequests(): Flow<List<LeaveRequest>> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun updateReqeustStatus(requestId: String, newStatus: RequestSatus): Boolean {
+        TODO("Not yet implemented")
+    }
+    override fun getLeaveHistory(userEmail: String): Flow<List<LeaveRequest>> = flow {
         delay(500)
 
         val fakeData = listOf(
@@ -31,7 +39,7 @@ class FakeLeaveRepository : LeaveRepositoryI {
         return fakeData
     }
 
-    override suspend fun submitNewRequest(request: LeaveRequest): Boolean {
+    override suspend fun submitNewRequest(request: LeaveRequest, userEmail: String): Boolean {
         delay(500)
         return true
     }

@@ -12,13 +12,17 @@ import kotlinx.coroutines.tasks.await
 
 
 interface LeaveRepositoryI {
-    fun getLeaveHistory() : Flow<List<LeaveRequest>>
-    suspend fun submitNewRequest(request: LeaveRequest) : Boolean
+    fun getLeaveHistory(userEmail: String) : Flow<List<LeaveRequest>>
+    suspend fun submitNewRequest(request: LeaveRequest, userEmail: String) : Boolean
+
+    //za dekana
+    fun getAllRequests() : Flow<List<LeaveRequest>>
+    suspend fun updateReqeustStatus(requestId: String, newStatus: RequestSatus): Boolean
 }
 
 class LeaveRepository(
     //private val leaveDao : LeaveDao,
-    private val userEmail : String
+   // private val userEmail : String
 ) : LeaveRepositoryI {
     private val firestore = FirebaseFirestore.getInstance()
 init {
@@ -32,7 +36,7 @@ init {
     firestore.firestoreSettings = settings
 }
     private val fakeRepo = FakeLeaveRepository()
-    override fun getLeaveHistory(): Flow<List<LeaveRequest>> =
+    override fun getLeaveHistory(userEmail: String): Flow<List<LeaveRequest>> =
         callbackFlow {
             // val localData = localDao.getAllRequests(userEmail)
             val listener = firestore.collection("leave_request")
@@ -81,7 +85,71 @@ init {
         }
 
 
-    override suspend fun submitNewRequest(request: LeaveRequest): Boolean {
+    override fun getAllRequests(): Flow<List<LeaveRequest>> = callbackFlow{
+        val listener = firestore.collection("leave_request")
+            //dodati sortiranje po datumu kreiranja , dodati u requeste
+            .addSnapshotListener { snapshot, error ->
+             if(error!=null) {
+                 Log.e("DEBUG_DEAN", "CRITICAL ERROR: ${error.message}")
+                 return@addSnapshotListener
+             }
+                if(snapshot != null){
+                    val rawCount = snapshot.documents.size
+                    Log.d("DEBUG_DEAN", "Firestore kaže da ima $rawCount dokumenata.")
+
+                    if (rawCount == 0) {
+                        Log.w("DEBUG_DEAN", "Baza je vratila 0 dokumenata! Provjeri Rules ili ime kolekcije.")
+                    }
+
+                    val isFromCache = snapshot.metadata.isFromCache
+
+                    val remoteData = snapshot.documents.mapNotNull { doc ->
+                        try {
+                            val req = doc.toObject(LeaveRequest::class.java)
+                            if (req == null) {
+                                Log.e("DEBUG_DEAN", "Dokument ${doc.id} je NULL nakon konverzije.")
+                            }
+                            req?.copy(id = doc.id)
+                        } catch (e: Exception) {
+                            Log.e("DEBUG_DEAN", "GREŠKA MAPIRANJA ID ${doc.id}: ${e.message}")
+                            null
+                        }
+                    }
+                    Log.d("DEBUG_DEAN", "Uspješno mapirano: ${remoteData.size} od $rawCount")
+                    if (remoteData.isNotEmpty()) {
+                        // localDao.insertAll(remoteData) // refresh lokalne baze
+                        trySend(remoteData) // salje podatke sa servera
+                        Log.d("DEBUG_DEAN", "Uspješno mapirano: ${remoteData.size} od $rawCount")
+
+                    } else if (!isFromCache){
+                        Log.e("DEBUG_DEAN", "Snapshot je null!")
+                        /*
+                   if(localData.isEmpty()){
+                    trySend(fakeRepo.getLeaveHistory())
+                   }else{
+                       trySend(localData)
+                       }
+                    */
+                        trySend(emptyList())
+                    }
+                }
+            }
+        awaitClose { listener.remove() }
+    }
+
+    override suspend fun updateReqeustStatus(requestId: String, newStatus: RequestSatus): Boolean {
+        return try{
+            firestore.collection("leave_request")
+                .document(requestId)
+                .update("status", newStatus)
+                .await()
+            true
+        }catch (e: Exception){
+            e.printStackTrace()
+            false
+        }
+    }
+    override suspend fun submitNewRequest(request: LeaveRequest, userEmail: String): Boolean {
        val finalRequest = request.copy( userEmail = userEmail)
        return  try{
            val result = firestore.collection("leave_request").add(finalRequest).await()

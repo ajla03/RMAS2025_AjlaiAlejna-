@@ -1,7 +1,9 @@
 package com.example.projekatfaza23.UI.dean
 
 import android.R
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -31,14 +34,26 @@ import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -49,7 +64,14 @@ import com.example.projekatfaza23.UI.request.RequestType
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Date
-
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.semantics.SemanticsProperties.ImeAction
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 //mock podaci za prikaz, da vidim kako ce preview izgledati
 fun getMockRequests(): List<LeaveRequest> {
@@ -113,17 +135,32 @@ fun getMockRequests(): List<LeaveRequest> {
     )
 }
 
+val filterMap = mapOf(
+    "Svi" to "All",
+    "Odobreni" to "Approved",
+    "Na čekanju" to "Pending",
+    "Odbijeni" to "Denied"
+)
 
 //main screen
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeanHomeScreen(){
+fun DeanHomeScreen(viewModel: DeanViewModel){
+    val uiState by viewModel.uiState.collectAsState()
+
+    var showFilterSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+    var selectedStatusChip by remember { mutableStateOf("Svi") }
+
+    val requestToDisplay = viewModel.filteredRequests.collectAsState()
+
     Scaffold(
         topBar =  {TopAppBarSection()},
         containerColor = Color(0xFFF5F7FA),
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Open Directory */ },
-                containerColor = Color(0xFF1E2A47), // Tamno plava
+                onClick = { /* Otvori direktorij  */ },
+                containerColor = Color(0xFF1E2A47),
                 contentColor = Color.White,
                 shape = CircleShape
             ) {
@@ -146,35 +183,210 @@ fun DeanHomeScreen(){
                 color = Color.Black
             )
 
+
             Spacer(modifier = Modifier.height(12.dp))
 
-            //filteri
+            //status filteri
             LazyRow (
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ){
-                item{ FilterChipItem("Svi", selected = true) }
-                item { FilterChipItem("Odobreni", selected = false) }
-                item { FilterChipItem("Na čekanju", selected = false) }
-                item { FilterChipItem("Odbijeni", selected = false) }
+
+                item {
+                    FilterButton(onClick = { showFilterSheet = true })
+                }
+
+                if(uiState.isActiveFilter == true){
+                    item{
+                        ResetButton(onClick = {viewModel.resetFilters()
+                        selectedStatusChip = "Svi"})
+                    }
+                }
+
+                item {
+                    Box(modifier = Modifier
+                        .height(24.dp)
+                        .width(1.dp)
+                        .background(Color.LightGray))
+                }
+
+                val filters = listOf("Svi", "Odobreni", "Na čekanju", "Odbijeni")
+                items(filters){filter ->
+                    FilterChipItem(
+                        text = filter,
+                        selected = selectedStatusChip == filter,
+                        onClick = {
+                            selectedStatusChip = filter
+                            viewModel.setStatusFilter(filterMap[filter]!!)
+                        }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             //lista zahtjeva
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 80.dp)
-            ){
-                val requests = getMockRequests()
-                items(requests){
-                    request ->
-                    RequestCardDean(request)
+            if(uiState.isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                    CircularProgressIndicator()
+                }
+            }else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 80.dp)
+                ) {
+                    items(requestToDisplay.value) { request ->
+                        RequestCardDean(request)
+                    }
                 }
             }
+        }
+        if(showFilterSheet){
+            ModalBottomSheet(
+                onDismissRequest = {showFilterSheet = false},
+                sheetState = sheetState,
+
+            ) { FilterBottomSheetContent(
+                onApply = { date, name -> viewModel.setAdvancedFilter(date, name)
+                showFilterSheet = false }
+            )}
         }
     }
 }
 
+@Composable
+fun ResetButton(onClick: () -> Unit){
+    Surface(
+        onClick = onClick,
+        color = Color(0xFFFFEBEE),
+        shape = CircleShape,
+        modifier = Modifier.size(32.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Poništi filtere",
+                tint = Color(0xFFC62828),
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun FilterBottomSheetContent(onApply: (String, String) -> Unit) {
+    var dateText by remember { mutableStateOf("") }
+    var nameText by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 48.dp)
+    ) {
+        Text(
+            text = "Filtriraj po",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            "Datum",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = dateText,
+            onValueChange = { newText -> dateText = newText },
+            placeholder = { Text("dd/mm/yyyy") },  //should be a pop up calendar
+            singleLine = true,
+            trailingIcon = {
+                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color.Gray)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedContainerColor = Color.White,
+                focusedContainerColor = Color.White,
+                focusedBorderColor = Color(0xFF1E2A47),
+                unfocusedBorderColor = Color.Gray
+            )
+        )
+        /* TODO - popup kalendar umjesto upisivanja daatuma  */
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text("Ime", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = nameText,
+            onValueChange = { newText -> nameText = newText },
+            placeholder = { Text("Ime Prezime") },
+            singleLine = true,
+            leadingIcon = {
+                Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedContainerColor = Color.White,
+                focusedContainerColor = Color.White,
+                focusedBorderColor = Color(0xFF1E2A47),
+                unfocusedBorderColor = Color.Gray
+            )
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = { onApply(dateText, nameText)
+                dateText = ""
+                nameText = ""},
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E2A47)),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text("Primijeni", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
+
+
+    }
+}
+
+@Composable
+fun FilterButton(onClick:() -> Unit){
+    Surface(
+        onClick = onClick,
+        color = Color(0xFF1E2A47),
+        shape  = RoundedCornerShape(50),
+        modifier = Modifier.height(32.dp)) {
+
+        Row(verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 12.dp))
+        {
+            Icon(
+                imageVector = Icons.Default.FilterList,
+                contentDescription = "filter",
+                tint = Color.White,
+                modifier = Modifier.size(16.dp)
+            )
+
+            Spacer(modifier = Modifier.width(6.dp))
+
+            Text(
+                text = "Filter",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold
+            )
+
+        }
+    }
+
+
+}
 @Composable
 fun RequestCardDean(request: LeaveRequest) {
     val displayName = request.userEmail.substringBefore("@")
@@ -279,17 +491,18 @@ fun formatLeaveDates(dates: List<LeaveDates?>? ):String{
     val end = firstRange.end?.toDate()
 
     if(start == null || end ==null) return "Invalid date"
-    val format = SimpleDateFormat("MMM dd")
+    val format = SimpleDateFormat("YYYY MMM dd")
     return "${format.format(start)} - ${format.format(end)}"
 }
 
 @Composable
-fun FilterChipItem(text: String, selected : Boolean) {
+fun FilterChipItem(text: String, selected : Boolean, onClick: () -> Unit) {
     val backgroundColor = if (selected) Color(0xFF1976D2) else Color.White
     val contentColor = if(selected) Color.White else Color.Gray
     val borderColor = if(selected) Color.Transparent else Color.LightGray
 
     Surface(
+        onClick = onClick,
         color = backgroundColor,
         contentColor = contentColor,
         shape = RoundedCornerShape(50),
@@ -315,5 +528,5 @@ fun FilterChipItem(text: String, selected : Boolean) {
 @Preview(showBackground = true)
 @Composable
 fun HRAppPreview() {
-    DeanHomeScreen()
+    DeanHomeScreen(viewModel())
 }
