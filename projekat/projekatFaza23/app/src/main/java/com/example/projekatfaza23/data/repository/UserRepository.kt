@@ -16,8 +16,10 @@ class UserRepository(private val leaveDao : LeaveDao) {
 
     suspend fun syncUserAfterLogin(googleProfile: UserProfile) : Boolean {
         return try {
-            val firestoreUser =
-                firestore.collection("users").document(googleProfile.email).get().await()
+            val firestoreUser = firestore.collection("users")
+                .document(googleProfile.email)
+                .get()
+                .await()
 
             val role = firestoreUser.getString("role")
                 ?: (if (googleProfile.email == "hr.app.untz@google.com") Role.Dean.name else Role.Professor.name)
