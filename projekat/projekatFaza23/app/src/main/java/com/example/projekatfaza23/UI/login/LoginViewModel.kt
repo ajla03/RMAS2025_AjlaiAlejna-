@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.projekatfaza23.UI.navigation.Screen
 import com.example.projekatfaza23.data.auth.GoogleAuth
 import com.example.projekatfaza23.data.auth.UserManager
+import com.example.projekatfaza23.data.db.AppDatabase
+import com.example.projekatfaza23.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -26,6 +28,8 @@ class  LoginViewModel (
 ) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(LoginUIState())
     val uiState = _uiState.asStateFlow()
+    private val database = AppDatabase.getInstance(application)
+    private val userRepository = UserRepository(database.leaveDao())
 
     private val authService = GoogleAuth(application.applicationContext)
 
