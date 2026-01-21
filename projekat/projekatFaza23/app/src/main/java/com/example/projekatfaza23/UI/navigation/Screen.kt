@@ -15,4 +15,7 @@ sealed interface Screen {
     @Serializable
     object DeanHome : Screen
 
+    @Serializable
+    object DeanDirectory : Screen
+
 }

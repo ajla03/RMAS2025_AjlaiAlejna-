@@ -4,6 +4,7 @@ import android.R
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,7 @@ import com.example.projekatfaza23.model.RequestSatus
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Search
@@ -43,6 +45,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -65,13 +70,20 @@ import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Date
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.semantics.SemanticsProperties.ImeAction
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.compose
+import java.util.Locale
 
 //mock podaci za prikaz, da vidim kako ce preview izgledati
 fun getMockRequests(): List<LeaveRequest> {
@@ -145,21 +157,23 @@ val filterMap = mapOf(
 //main screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeanHomeScreen(viewModel: DeanViewModel){
+fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit){
     val uiState by viewModel.uiState.collectAsState()
 
     var showFilterSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
-    var selectedStatusChip by remember { mutableStateOf("Svi") }
 
-    val requestToDisplay = viewModel.filteredRequests.collectAsState()
+    val searchName by viewModel.searchName.collectAsState()
+    val dateRange by viewModel.filterDateRange.collectAsState()
+    val requestToDisplay by viewModel.filteredRequests.collectAsState()
+    val selectedStatusChip by viewModel.filterStatus.collectAsState()
 
     Scaffold(
         topBar =  {TopAppBarSection()},
         containerColor = Color(0xFFF5F7FA),
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Otvori direktorij  */ },
+                onClick = { navigateDirectory() },
                 containerColor = Color(0xFF1E2A47),
                 contentColor = Color.White,
                 shape = CircleShape
@@ -198,8 +212,7 @@ fun DeanHomeScreen(viewModel: DeanViewModel){
 
                 if(uiState.isActiveFilter == true){
                     item{
-                        ResetButton(onClick = {viewModel.resetFilters()
-                        selectedStatusChip = "Svi"})
+                        ResetButton(onClick = {viewModel.resetFilters()})
                     }
                 }
 
@@ -214,9 +227,8 @@ fun DeanHomeScreen(viewModel: DeanViewModel){
                 items(filters){filter ->
                     FilterChipItem(
                         text = filter,
-                        selected = selectedStatusChip == filter,
+                        selected = selectedStatusChip == filterMap[filter]!!,
                         onClick = {
-                            selectedStatusChip = filter
                             viewModel.setStatusFilter(filterMap[filter]!!)
                         }
                     )
@@ -235,7 +247,7 @@ fun DeanHomeScreen(viewModel: DeanViewModel){
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(bottom = 80.dp)
                 ) {
-                    items(requestToDisplay.value) { request ->
+                    items(requestToDisplay) { request ->
                         RequestCardDean(request)
                     }
                 }
@@ -247,8 +259,13 @@ fun DeanHomeScreen(viewModel: DeanViewModel){
                 sheetState = sheetState,
 
             ) { FilterBottomSheetContent(
-                onApply = { date, name -> viewModel.setAdvancedFilter(date, name)
-                showFilterSheet = false }
+                currentName = searchName,
+                currentStartMillis = dateRange.first,
+                currentEndMillis = dateRange.second,
+                onNameChange = { viewModel.updateNameFilter(it) },
+                onDateRangeChange = { start, end -> viewModel.updateDateRangeFilter(start, end) },
+                onApply = { viewModel.checkActiveFilter()
+                            showFilterSheet = false }
             )}
         }
     }
@@ -274,9 +291,14 @@ fun ResetButton(onClick: () -> Unit){
 }
 
 @Composable
-fun FilterBottomSheetContent(onApply: (String, String) -> Unit) {
-    var dateText by remember { mutableStateOf("") }
-    var nameText by remember { mutableStateOf("") }
+fun FilterBottomSheetContent(
+    currentName: String,
+    currentStartMillis: Long?,
+    currentEndMillis: Long?,
+    onNameChange: (String) -> Unit,
+    onDateRangeChange: (Long?, Long?) -> Unit,
+    onApply: () -> Unit
+) {
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -297,32 +319,20 @@ fun FilterBottomSheetContent(onApply: (String, String) -> Unit) {
             fontWeight = FontWeight.SemiBold
         )
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = dateText,
-            onValueChange = { newText -> dateText = newText },
-            placeholder = { Text("dd/mm/yyyy") },  //should be a pop up calendar
-            singleLine = true,
-            trailingIcon = {
-                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color.Gray)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = Color.White,
-                focusedContainerColor = Color.White,
-                focusedBorderColor = Color(0xFF1E2A47),
-                unfocusedBorderColor = Color.Gray
-            )
+
+        DateRangeFilterField(
+            startMillis = currentStartMillis,
+            endMillis = currentEndMillis,
+            onDateSelected = onDateRangeChange
         )
-        /* TODO - popup kalendar umjesto upisivanja daatuma  */
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text("Ime", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
-            value = nameText,
-            onValueChange = { newText -> nameText = newText },
+            value = currentName,
+            onValueChange = onNameChange,
             placeholder = { Text("Ime Prezime") },
             singleLine = true,
             leadingIcon = {
@@ -341,9 +351,7 @@ fun FilterBottomSheetContent(onApply: (String, String) -> Unit) {
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { onApply(dateText, nameText)
-                dateText = ""
-                nameText = ""},
+            onClick = onApply,
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E2A47)),
             shape = RoundedCornerShape(12.dp)
@@ -355,13 +363,101 @@ fun FilterBottomSheetContent(onApply: (String, String) -> Unit) {
     }
 }
 
+
+@Composable
+fun DateRangeFilterField(
+    startMillis: Long?,
+    endMillis: Long?,
+    onDateSelected : (Long?, Long?) -> Unit
+){
+    var showDatePicker by remember {mutableStateOf(false)}
+
+    val displayText = if(startMillis!=null && endMillis!=null){
+        "${convertMillisToDate(startMillis)} - ${convertMillisToDate(endMillis)}"
+    }else{
+        ""
+    }
+
+    OutlinedTextField(
+        value = displayText,
+        onValueChange = {},
+        placeholder = { Text("Datum od - do") },
+        label = {Text("Raspon datuma")},
+        readOnly = true,
+        trailingIcon = {
+            IconButton(onClick = {showDatePicker = true}) {
+                Icon(Icons.Default.DateRange, contentDescription = "Odaberi datum")
+            }
+        },
+        modifier = Modifier.fillMaxWidth().clickable{showDatePicker=true},
+        shape = RoundedCornerShape(12.dp),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White
+        ),
+        enabled = false
+    )
+
+    if(showDatePicker){
+        val dateRangePickerState = rememberDateRangePickerState(
+            initialSelectedStartDateMillis  = startMillis,
+            initialSelectedEndDateMillis = endMillis
+        )
+
+        DatePickerDialog(
+            onDismissRequest = {showDatePicker = false},
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDateSelected(
+                            dateRangePickerState.selectedStartDateMillis,
+                            dateRangePickerState.selectedEndDateMillis
+                        )
+                        showDatePicker = false
+                    }
+                ){
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {showDatePicker = false}){
+                    Text("Otkaži")
+                }
+            }
+        ) {
+            DateRangePicker(state = dateRangePickerState,
+                title = null,
+                headline = {
+                Row(modifier = Modifier.padding(16.dp)) {
+                    val startText = dateRangePickerState.selectedStartDateMillis?.let { convertMillisToDate(it) } ?: "Početak"
+                    val endText = dateRangePickerState.selectedEndDateMillis?.let { convertMillisToDate(it) } ?: "Kraj"
+                    Box(Modifier.weight(1f)) {
+                        Text(text = startText)
+                    }
+                    Box(Modifier.weight(1f)) {
+                        Text(text = endText)
+                    }
+                }
+            },
+                showModeToggle = false,
+                modifier = Modifier.height(400.dp))
+        }
+    }
+}
+
+fun convertMillisToDate(millis: Long): String {
+    val formatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+    return formatter.format(Date(millis))
+}
+
 @Composable
 fun FilterButton(onClick:() -> Unit){
     Surface(
         onClick = onClick,
         color = Color(0xFF1E2A47),
         shape  = RoundedCornerShape(50),
-        modifier = Modifier.height(32.dp)) {
+        modifier = Modifier.height(32.dp),
+        ) {
 
         Row(verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 12.dp))
@@ -384,8 +480,6 @@ fun FilterButton(onClick:() -> Unit){
 
         }
     }
-
-
 }
 @Composable
 fun RequestCardDean(request: LeaveRequest) {
@@ -528,5 +622,5 @@ fun FilterChipItem(text: String, selected : Boolean, onClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun HRAppPreview() {
-    DeanHomeScreen(viewModel())
+    DeanHomeScreen(viewModel(),{})
 }
