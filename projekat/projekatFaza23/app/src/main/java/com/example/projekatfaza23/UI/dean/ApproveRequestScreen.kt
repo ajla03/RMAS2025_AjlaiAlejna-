@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -25,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +37,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,15 +46,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projekatfaza23.UI.home.TopAppBarSection
 import com.example.projekatfaza23.UI.request.RequestHeader
+import com.example.projekatfaza23.model.LeaveRequest
+import com.google.firebase.Timestamp
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 val primaryColor = Color(0xFF004D61)
 
 
 /* TODO - make prettier screen, adjust spacing */ 
 @Composable
-fun ApproveRequestScreen(navigateHome: () -> Unit){
+fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
+    val selectedRequest by viewModel.selectedRequest.collectAsState()
+
+    if (selectedRequest == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+    val request = selectedRequest!!
     Scaffold(
         containerColor = Color(0xFFF5F7FA),
         topBar = {
@@ -58,18 +76,17 @@ fun ApproveRequestScreen(navigateHome: () -> Unit){
             TopAppBarSection()
             RequestHeader("Pregled zahtjeva", navigateHome = navigateHome)
         }},
-        bottomBar = { BottomBar() }){ paddingValues ->
+        bottomBar = { BottomBar(resetSelectedRequest = {viewModel.resetSelectedRequest()}) }){ paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)
             .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(24.dp)) {
             Spacer(modifier = Modifier.height(4.dp))
 
-            UserProfileHeader()
+            UserProfileHeader(selectedRequest?.userEmail ?: "")
             Divider(color = Color.LightGray.copy(0.5f), thickness = 1.dp)
 
-
-                RequestDetailsCard()
+            RequestDetailsCard(request = request)
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)){
                 //komentar zaposlenika
@@ -79,7 +96,7 @@ fun ApproveRequestScreen(navigateHome: () -> Unit){
                     color = Color.Gray,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                EmployeeCommentBox()
+                EmployeeCommentBox(selectedRequest?.explanation ?: "")
             }
 
             //odluka dekana
@@ -112,9 +129,18 @@ fun ApproveRequestScreen(navigateHome: () -> Unit){
     }
 }
 
+fun timeStampToString(tmp : Timestamp):String{
+    val date = tmp.toDate()
+    val formatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+    return formatter.format(date)
+}
+
 @Composable
-fun RequestDetailsCard(){
+fun RequestDetailsCard(request: LeaveRequest){
     //kartica sa detaljima zahtjeva
+    val dates = request.leave_dates?.firstOrNull()
+    val startDateString = dates?.start?.let { timeStampToString(it) } ?: "-"
+    val endDateString = dates?.end?.let { timeStampToString(it) } ?: "-"
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(16.dp),
@@ -133,7 +159,7 @@ fun RequestDetailsCard(){
                     shape = RoundedCornerShape(8.dp)
                 ){
                     Text(
-                        text = "Bolovanje",
+                        text = request.type,
                         color = Color(0xFFE65100),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
@@ -142,9 +168,10 @@ fun RequestDetailsCard(){
                 }
 
                 Text(
-                    text = "9 dana",
+                    text = calculateDaysBetween(dates?.start, dates?.end),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,)
+                    fontWeight = FontWeight.ExtraBold
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -154,7 +181,8 @@ fun RequestDetailsCard(){
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ){
-                DateColumn("Početak", "16. Jun 2025")
+
+                DateColumn("Početak", startDateString)
 
                 Box(
                     modifier = Modifier.weight(1f),
@@ -170,7 +198,7 @@ fun RequestDetailsCard(){
                     )
                 }
 
-                DateColumn("Kraj","25. Jun 2025" )
+                DateColumn("Kraj",endDateString)
 
             }
         }
@@ -179,7 +207,7 @@ fun RequestDetailsCard(){
 }
 
 @Composable
-fun BottomBar(){
+fun BottomBar(resetSelectedRequest: () -> Unit){
     Surface(
         shadowElevation = 16.dp,
         color = Color.White,
@@ -211,8 +239,36 @@ fun BottomBar(){
     }
 }
 
+fun calculateDaysBetween(start: Timestamp?, end: Timestamp?): String {
+    if (start == null || end == null) return "0 dana"
+    val diffInMillis = end.toDate().time - start.toDate().time
+    val days = (diffInMillis / (1000 * 60 * 60 * 24)).toInt() + 1
+    return "$days dana"
+}
+fun extractNameFromEmail(email: String):String{
+    if (!email.contains("@")) return email
+
+    val fullName = email.substringBefore("@")
+        .split(".", "_")
+        .joinToString(" "){ part ->
+            part.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()            }
+        }
+    return fullName
+}
+
+
+fun extractInitials(email: String):String{
+    val name = extractNameFromEmail(email)
+    val parts = name.split(" ")
+    val initials = if(parts.isEmpty()) ""
+                    else if (parts.size==1) parts[0].take(1).uppercase()
+                    else (parts[0].take(1) + parts[1].take(1)).uppercase()
+    return initials
+}
+
 @Composable
-fun EmployeeCommentBox() {
+fun EmployeeCommentBox(comment: String) {
     Surface(
         color = Color.White,
         shape = RoundedCornerShape(12.dp),
@@ -227,7 +283,7 @@ fun EmployeeCommentBox() {
             Spacer(modifier = Modifier.width(12.dp))
 
             Text(
-                text = "Osjećam se loše, imam visoku temperaturu i ne mogu doći na posao.",
+                text = comment,
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.DarkGray,
                 lineHeight = 20.sp
@@ -236,7 +292,7 @@ fun EmployeeCommentBox() {
     }
 }
 @Composable
-fun UserProfileHeader() {
+fun UserProfileHeader(email: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Surface(
             shape = CircleShape,
@@ -245,7 +301,7 @@ fun UserProfileHeader() {
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
-                    "NS",
+                    extractInitials(email),
                     color = primaryColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
@@ -256,12 +312,12 @@ fun UserProfileHeader() {
 
         Column {
             Text(
-                "Name Surname",
+                extractNameFromEmail(email),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                "Software Engineer",
+                email,
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
             )
@@ -292,5 +348,5 @@ fun DateColumn(label: String, date : String){
 @Preview(showBackground = true)
 @Composable
 fun ApproveRequestPreview(){
-    ApproveRequestScreen({})
+    ApproveRequestScreen(viewModel(), {})
 }

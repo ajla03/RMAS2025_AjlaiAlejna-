@@ -248,7 +248,7 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
                     contentPadding = PaddingValues(bottom = 80.dp)
                 ) {
                     items(requestToDisplay) { request ->
-                        RequestCardDean(request, navigateRequest)
+                        RequestCardDean(request, navigateRequest, {viewModel.setSelectedRequest(it)})
                     }
                 }
             }
@@ -482,7 +482,7 @@ fun FilterButton(onClick:() -> Unit){
     }
 }
 @Composable
-fun RequestCardDean(request: LeaveRequest, navigateRequest: () -> Unit) {
+fun RequestCardDean(request: LeaveRequest, navigateRequest: () -> Unit, setRequest: (LeaveRequest) -> Unit) {
     val displayName = request.userEmail.substringBefore("@")
         .replace(".", " ")
         .split(" ")
@@ -500,7 +500,8 @@ fun RequestCardDean(request: LeaveRequest, navigateRequest: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().clickable{ navigateRequest() },
+        modifier = Modifier.fillMaxWidth().clickable{  setRequest(request)
+            navigateRequest() },
     ){
         Column(
             modifier = Modifier.padding(16.dp)

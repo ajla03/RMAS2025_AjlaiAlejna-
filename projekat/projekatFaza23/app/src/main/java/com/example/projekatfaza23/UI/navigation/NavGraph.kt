@@ -56,7 +56,7 @@ fun AppNavigation (navController : NavHostController) {
         }
 
         composable<Screen.ApproveRequestScreen>{
-            ApproveRequestScreen(navigateHome = {navController.popBackStack()})
+            ApproveRequestScreen(sharedDeanViewModel, navigateHome = {navController.popBackStack()})
         }
 
 

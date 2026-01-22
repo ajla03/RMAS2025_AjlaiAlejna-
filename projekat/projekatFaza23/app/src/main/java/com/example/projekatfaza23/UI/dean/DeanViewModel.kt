@@ -38,6 +38,9 @@ class DeanViewModel(): ViewModel() {
     private val _filterDateRange = MutableStateFlow<Pair<Long?, Long?>>(null to null)
     val filterDateRange: StateFlow<Pair<Long?, Long?>> = _filterDateRange.asStateFlow()
 
+    private val _selectedRequest = MutableStateFlow<LeaveRequest?>(null)
+    val selectedRequest : StateFlow<LeaveRequest?> = _selectedRequest.asStateFlow()
+
     val filteredRequests: StateFlow<List<LeaveRequest>> = combine(
         _uiState,
         _filterStatus,
@@ -112,6 +115,14 @@ class DeanViewModel(): ViewModel() {
         viewModelScope.launch {
             _repository.updateReqeustStatus(request.id, RequestSatus.Denied)
         }
+    }
+
+    fun resetSelectedRequest(){
+        _selectedRequest.value = null
+    }
+
+    fun setSelectedRequest(request: LeaveRequest){
+        _selectedRequest.value = request
     }
 
     //filtriranje funckije
