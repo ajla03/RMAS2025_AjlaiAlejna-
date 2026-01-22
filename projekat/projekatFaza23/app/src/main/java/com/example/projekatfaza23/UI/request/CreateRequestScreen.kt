@@ -162,7 +162,7 @@ fun NewRequestContent(
     Scaffold(topBar = {
         Column{
             TopAppBarSection()
-            RequestHeader(navigateHome)
+            RequestHeader("New Request", navigateHome)
 
         }}){ padding ->
         Column(modifier = Modifier
@@ -398,7 +398,7 @@ fun RequestTypeSelector(
     }
 }
 @Composable
-fun RequestHeader(navigateHome: () -> Unit){
+fun RequestHeader(label: String, navigateHome: () -> Unit){
     Surface(color = Color(0xFF004D61), modifier = Modifier.fillMaxWidth()){
         Row(modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically){
@@ -406,7 +406,7 @@ fun RequestHeader(navigateHome: () -> Unit){
                 tint = Color.White,
                 modifier = Modifier.clickable{navigateHome()})
             Spacer(modifier = Modifier.width(24.dp))
-            Text("New Request", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(label, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         }
     }
 

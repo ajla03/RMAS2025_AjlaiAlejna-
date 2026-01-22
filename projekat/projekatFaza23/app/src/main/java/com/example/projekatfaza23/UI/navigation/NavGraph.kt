@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.projekatfaza23.UI.dean.ApproveRequestScreen
 import com.example.projekatfaza23.UI.dean.DeanDirectoryScreen
 import com.example.projekatfaza23.UI.dean.DeanHomeScreen
 import com.example.projekatfaza23.UI.dean.DeanViewModel
@@ -45,11 +46,17 @@ fun AppNavigation (navController : NavHostController) {
         }
 
         composable<Screen.DeanHome>{
-            DeanHomeScreen(viewModel = sharedDeanViewModel, navigateDirectory = {navController.navigate((Screen.DeanDirectory))})
+            DeanHomeScreen(viewModel = sharedDeanViewModel,
+                navigateDirectory = {navController.navigate((Screen.DeanDirectory))},
+                navigateRequest = {navController.navigate(Screen.ApproveRequestScreen)})
         }
 
         composable<Screen.DeanDirectory>{
             DeanDirectoryScreen(navigateHome = {navController.popBackStack()})
+        }
+
+        composable<Screen.ApproveRequestScreen>{
+            ApproveRequestScreen(navigateHome = {navController.popBackStack()})
         }
 
 

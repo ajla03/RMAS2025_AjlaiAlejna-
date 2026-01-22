@@ -157,7 +157,7 @@ val filterMap = mapOf(
 //main screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit){
+fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navigateRequest: () -> Unit){
     val uiState by viewModel.uiState.collectAsState()
 
     var showFilterSheet by remember { mutableStateOf(false) }
@@ -248,7 +248,7 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit){
                     contentPadding = PaddingValues(bottom = 80.dp)
                 ) {
                     items(requestToDisplay) { request ->
-                        RequestCardDean(request)
+                        RequestCardDean(request, navigateRequest)
                     }
                 }
             }
@@ -482,7 +482,7 @@ fun FilterButton(onClick:() -> Unit){
     }
 }
 @Composable
-fun RequestCardDean(request: LeaveRequest) {
+fun RequestCardDean(request: LeaveRequest, navigateRequest: () -> Unit) {
     val displayName = request.userEmail.substringBefore("@")
         .replace(".", " ")
         .split(" ")
@@ -500,7 +500,7 @@ fun RequestCardDean(request: LeaveRequest) {
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().clickable{ navigateRequest() },
     ){
         Column(
             modifier = Modifier.padding(16.dp)
@@ -622,5 +622,5 @@ fun FilterChipItem(text: String, selected : Boolean, onClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun HRAppPreview() {
-    DeanHomeScreen(viewModel(),{})
+    DeanHomeScreen(viewModel(),{},{})
 }

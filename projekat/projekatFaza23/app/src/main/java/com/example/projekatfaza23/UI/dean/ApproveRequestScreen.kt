@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.DateRange
@@ -46,18 +48,20 @@ import com.example.projekatfaza23.UI.request.RequestHeader
 val primaryColor = Color(0xFF004D61)
 
 
-/* TODO - change the function RequestHeader */
+/* TODO - make prettier screen, adjust spacing */ 
 @Composable
-fun ApproveRequestScreen(){
+fun ApproveRequestScreen(navigateHome: () -> Unit){
     Scaffold(
         containerColor = Color(0xFFF5F7FA),
         topBar = {
         Column{
             TopAppBarSection()
-            RequestHeader({})
+            RequestHeader("Pregled zahtjeva", navigateHome = navigateHome)
         }},
         bottomBar = { BottomBar() }){ paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues).padding(horizontal = 20.dp),
+        Column(modifier = Modifier.padding(paddingValues)
+            .padding(horizontal = 20.dp)
+            .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(24.dp)) {
             Spacer(modifier = Modifier.height(4.dp))
 
@@ -102,6 +106,7 @@ fun ApproveRequestScreen(){
                 minLines = 4
             )
             }
+            Spacer(modifier = Modifier.height(24.dp))
         }
 
     }
@@ -178,7 +183,7 @@ fun BottomBar(){
     Surface(
         shadowElevation = 16.dp,
         color = Color.White,
-        modifier = Modifier.fillMaxWidth().height(100.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Row(
@@ -287,5 +292,5 @@ fun DateColumn(label: String, date : String){
 @Preview(showBackground = true)
 @Composable
 fun ApproveRequestPreview(){
-    ApproveRequestScreen()
+    ApproveRequestScreen({})
 }
