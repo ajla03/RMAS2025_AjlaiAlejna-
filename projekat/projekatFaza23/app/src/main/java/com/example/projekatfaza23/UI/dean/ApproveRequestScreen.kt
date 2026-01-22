@@ -63,11 +63,9 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
     val selectedRequest by viewModel.selectedRequest.collectAsState()
 
     if (selectedRequest == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
         return
     }
+
     val request = selectedRequest!!
     Scaffold(
         containerColor = Color(0xFFF5F7FA),
@@ -76,7 +74,7 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
             TopAppBarSection()
             RequestHeader("Pregled zahtjeva", navigateHome = navigateHome)
         }},
-        bottomBar = { BottomBar(resetSelectedRequest = {viewModel.resetSelectedRequest()}) }){ paddingValues ->
+        bottomBar = { BottomBar( navigateHome) }){ paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)
             .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState()),
@@ -207,7 +205,7 @@ fun RequestDetailsCard(request: LeaveRequest){
 }
 
 @Composable
-fun BottomBar(resetSelectedRequest: () -> Unit){
+fun BottomBar(onBack: () -> Unit){
     Surface(
         shadowElevation = 16.dp,
         color = Color.White,
@@ -219,7 +217,7 @@ fun BottomBar(resetSelectedRequest: () -> Unit){
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ){
             OutlinedButton(
-                onClick = {},
+                onClick = {  onBack() },
                 modifier = Modifier.weight(1f).height(52.dp),
                 border = BorderStroke(1.5.dp, Color(0xFFD32F2F).copy(alpha = 0.8f)),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD32F2F)),
@@ -227,7 +225,7 @@ fun BottomBar(resetSelectedRequest: () -> Unit){
                 ) { Text("Odbij", fontWeight = FontWeight.Bold) }
 
             Button(
-                onClick = { },
+                onClick = { onBack() },
                 modifier = Modifier.weight(1f).height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = primaryColor ),

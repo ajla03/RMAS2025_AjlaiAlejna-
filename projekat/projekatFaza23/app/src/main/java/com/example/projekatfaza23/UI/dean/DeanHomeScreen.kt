@@ -78,10 +78,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberDateRangePickerState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.semantics.SemanticsProperties.ImeAction
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.compose
 import java.util.Locale
 
@@ -158,6 +160,13 @@ val filterMap = mapOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navigateRequest: () -> Unit){
+/*
+     mozda cemo trebati ako se podaci budu fetchali sa interneta kada kliknemo na request
+    LaunchedEffect(Unit) {
+        delay(400)
+        viewModel.resetSelectedRequest()
+    }
+*/
     val uiState by viewModel.uiState.collectAsState()
 
     var showFilterSheet by remember { mutableStateOf(false) }
