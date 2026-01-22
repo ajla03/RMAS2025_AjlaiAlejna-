@@ -16,17 +16,46 @@ class UserRepository(private val leaveDao : LeaveDao) {
 
     suspend fun syncUserAfterLogin(googleProfile: UserProfile) : Boolean {
         return try {
-            val firestoreUser = firestore.collection("users")
-                .document(googleProfile.email)
+
+            val firestoreUser = firestore.collection("user_info")
+                .whereEqualTo("email", googleProfile.email)
                 .get()
                 .await()
 
-            val role = firestoreUser.getString("role")
-                ?: (if (googleProfile.email == "hr.app.untz@google.com") Role.Dean.name else Role.Professor.name)
-            val totalDays = firestoreUser.getLong("totalDays")?.toInt() ?: 20
-            val usedDays = firestoreUser.getLong("usedDays")?.toInt() ?: 0
-            val empStatus = firestoreUser.getString("employeeStatus") ?: Status.AtWork.name
+            val role : String
+            val totalDays: Int
+            val usedDays: Int
+            val userStatus: String
 
+            if(firestoreUser.isEmpty) {
+                role = if (googleProfile.email == "hr.app.untz@google.com") Role.Dean.name else Role.Professor.name
+                totalDays = 20
+                usedDays = 0
+                userStatus = Status.AtWork.name
+
+                val newUserMap = mapOf(
+                    "email" to googleProfile.email,
+                    "firstName" to googleProfile.name,
+                    "lastName" to googleProfile.lastName,
+                    "role" to role,
+                    "totalDays" to totalDays,
+                    "usedDays" to usedDays,
+                    "employeeStatus" to userStatus,
+                    "imageUrl" to googleProfile.profilePictureURL?.toString()
+                )
+
+                firestore.collection("user_info")
+                    .add(newUserMap)
+                    .await()
+            } else {
+                val user = firestoreUser.documents[0]
+
+                role = user.getString("role")
+                    ?: (if (googleProfile.email == "hr.app.untz@google.com") Role.Dean.name else Role.Professor.name)
+                totalDays = user.getLong("totalDays")?.toInt() ?: 20
+                usedDays = user.getLong("usedDays")?.toInt() ?: 0
+                userStatus = user.getString("employeeStatus") ?: Status.AtWork.name
+            }
             val entity = UserEntity(
                 email = googleProfile.email,
                 firstName = googleProfile.name,
@@ -35,7 +64,7 @@ class UserRepository(private val leaveDao : LeaveDao) {
                 role = role,
                 totalDays = totalDays,
                 usedDays = usedDays,
-                userStatus = empStatus
+                userStatus = userStatus
             )
 
             leaveDao.insertUser(entity)
