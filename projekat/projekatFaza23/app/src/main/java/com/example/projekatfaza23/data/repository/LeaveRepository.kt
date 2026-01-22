@@ -20,45 +20,28 @@ interface LeaveRepositoryI {
     suspend fun updateReqeustStatus(requestId: String, newStatus: RequestSatus): Boolean
 }
 
-class LeaveRepository(
-    //private val leaveDao : LeaveDao,
-   // private val userEmail : String
-) : LeaveRepositoryI {
+class LeaveRepository() : LeaveRepositoryI {
     private val firestore = FirebaseFirestore.getInstance()
-init {
-    val settings = firestoreSettings {
-        setLocalCacheSettings(
-            PersistentCacheSettings.newBuilder()
-                .setSizeBytes(100 * 1024 * 1024)
-                .build()
-        )
-    }
-    firestore.firestoreSettings = settings
-}
-    private val fakeRepo = FakeLeaveRepository()
+
     override fun getLeaveHistory(userEmail: String): Flow<List<LeaveRequest>> =
         callbackFlow {
-            // val localData = localDao.getAllRequests(userEmail)
             val listener = firestore.collection("leave_request")
                 .whereEqualTo("userEmail", userEmail)
                 .addSnapshotListener { snapshot, error ->
                     //ako se desi greska, npr nema interneta
                     if(error != null){
+                        close(error)
                         /*
-                        //ili da koristimo Firebase Offline podrsku i da nemamo lokalne baze ??
                         if(localData.isEmpty()){
                          trySend(fakeRepo.getLeaveHistory())
                         }else{
                             trySend(localData)
                             }
                          */
-//                        trySend(fakeRepo.getLeaveHistorySync())
                         return@addSnapshotListener // Dodano da ne ide dalje u slučaju greške
                     }
 
                     if(snapshot != null){
-                        val isFromCache = snapshot.metadata.isFromCache
-
                         val remoteData = snapshot.documents.mapNotNull { doc ->
                             doc.toObject(LeaveRequest::class.java)?.copy(
                                 // Firebase ID dokumenta kao unikatni ključ
@@ -66,19 +49,7 @@ init {
                             )
                         }
 
-                        if (remoteData.isNotEmpty()) {
-                            // localDao.insertAll(remoteData) // refresh lokalne baze
-                            trySend(remoteData) // salje podatke sa servera
-                        } else if (!isFromCache){
-                            /*
-                       if(localData.isEmpty()){
-                        trySend(fakeRepo.getLeaveHistory())
-                       }else{
-                           trySend(localData)
-                           }
-                        */
-                        trySend(emptyList())
-                        }
+                        trySend(remoteData)
                     }
                 }
             awaitClose { listener.remove() }

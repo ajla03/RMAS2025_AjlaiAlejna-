@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.projekatfaza23.UI.navigation.Screen
 import com.example.projekatfaza23.data.auth.GoogleAuth
 import com.example.projekatfaza23.data.auth.UserManager
+import com.example.projekatfaza23.data.db.AppDatabase
+import com.example.projekatfaza23.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -26,6 +28,8 @@ class  LoginViewModel (
 ) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(LoginUIState())
     val uiState = _uiState.asStateFlow()
+    private val database = AppDatabase.getInstance(application)
+    private val userRepository = UserRepository(database.leaveDao())
 
     private val authService = GoogleAuth(application.applicationContext)
 
@@ -37,19 +41,19 @@ class  LoginViewModel (
                 val profile = authService.GoogleSignIn(activityContext)
 
                 if (profile != null) {
-                    UserManager.saveUser(profile)
-                    val destination = getUserRoleRoute(profile.email)
-                    if (profile != null) {
+                    val success = userRepository.syncUserAfterLogin(profile)
+
+                    if(success){
+                        UserManager.saveUser(profile)
+                        val destination = getUserRoleRoute(profile.email)
                         _uiState.value = _uiState.value.copy(isLoading = false)
                         navigateHome(destination)
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = "Syncing user data with database data failed"
+                        )
                     }
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                    navigateHome(destination)
-                } else {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = "Sign in with Google failed. Try again!"
-                    )
                 }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(

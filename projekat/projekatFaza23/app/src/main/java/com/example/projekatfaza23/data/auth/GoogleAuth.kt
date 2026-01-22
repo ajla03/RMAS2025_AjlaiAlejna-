@@ -41,8 +41,8 @@ class GoogleAuth(private val context: Context) {
             Log.d("test##", "slika: ${googleTokenCredentialData.profilePictureUri}")
 
             val profile = UserProfile(
-                name = googleTokenCredentialData.givenName,
-                lastName = googleTokenCredentialData.familyName,
+                name = googleTokenCredentialData.givenName ?: throw Exception("Google Login failed: Name missing"),
+                lastName = googleTokenCredentialData.familyName ?: throw Exception("Google Login failed"),
                 email = googleTokenCredentialData.id,
                 profilePictureURL = googleTokenCredentialData.profilePictureUri,
                 //TODO provjeri ima li i broj telefona kod Ajle
