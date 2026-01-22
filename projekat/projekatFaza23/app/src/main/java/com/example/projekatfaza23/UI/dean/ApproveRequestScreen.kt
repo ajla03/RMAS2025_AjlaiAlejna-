@@ -1,0 +1,291 @@
+package com.example.projekatfaza23.UI.dean
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.projekatfaza23.UI.home.TopAppBarSection
+import com.example.projekatfaza23.UI.request.RequestHeader
+
+val primaryColor = Color(0xFF004D61)
+
+
+/* TODO - change the function RequestHeader */
+@Composable
+fun ApproveRequestScreen(){
+    Scaffold(
+        containerColor = Color(0xFFF5F7FA),
+        topBar = {
+        Column{
+            TopAppBarSection()
+            RequestHeader({})
+        }},
+        bottomBar = { BottomBar() }){ paddingValues ->
+        Column(modifier = Modifier.padding(paddingValues).padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            Spacer(modifier = Modifier.height(4.dp))
+
+            UserProfileHeader()
+            Divider(color = Color.LightGray.copy(0.5f), thickness = 1.dp)
+
+
+                RequestDetailsCard()
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)){
+                //komentar zaposlenika
+                Text(
+                    text = "Razlog / Napomena",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                EmployeeCommentBox()
+            }
+
+            //odluka dekana
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = "Odluka dekana",
+                style = MaterialTheme.typography.labelLarge,
+                color = Color.Gray,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            OutlinedTextField(
+                value = "",
+                onValueChange = {}, 
+                placeholder = { Text("Upiši razlog odbijanja ili napomenu...", style = MaterialTheme.typography.bodyMedium)},
+                modifier = Modifier.fillMaxWidth(),
+                shape =  RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = Color.White,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedBorderColor = primaryColor
+                ),
+                minLines = 4
+            )
+            }
+        }
+
+    }
+}
+
+@Composable
+fun RequestDetailsCard(){
+    //kartica sa detaljima zahtjeva
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier.fillMaxWidth()
+    ){
+        Column(modifier = Modifier.padding(20.dp)){
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Surface(
+                    color = Color(0xFFFFF3E0),
+                    shape = RoundedCornerShape(8.dp)
+                ){
+                    Text(
+                        text = "Bolovanje",
+                        color = Color(0xFFE65100),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+
+                Text(
+                    text = "9 dana",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            //datumi
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                DateColumn("Početak", "16. Jun 2025")
+
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center,
+                ){
+                    Divider(color = Color.LightGray.copy(0.5f), thickness = 1.dp,
+                        modifier = Modifier.padding(start = 4.dp, end = 4.dp))
+                    Icon(
+                        Icons.Default.ArrowForward,
+                        null,
+                        tint = primaryColor,
+                        modifier = Modifier.background(Color.White).padding(4.dp).size(16.dp)
+                    )
+                }
+
+                DateColumn("Kraj","25. Jun 2025" )
+
+            }
+        }
+
+    }
+}
+
+@Composable
+fun BottomBar(){
+    Surface(
+        shadowElevation = 16.dp,
+        color = Color.White,
+        modifier = Modifier.fillMaxWidth().height(100.dp),
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp).navigationBarsPadding(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ){
+            OutlinedButton(
+                onClick = {},
+                modifier = Modifier.weight(1f).height(52.dp),
+                border = BorderStroke(1.5.dp, Color(0xFFD32F2F).copy(alpha = 0.8f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD32F2F)),
+                shape = RoundedCornerShape(12.dp)
+                ) { Text("Odbij", fontWeight = FontWeight.Bold) }
+
+            Button(
+                onClick = { },
+                modifier = Modifier.weight(1f).height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor ),
+                elevation = ButtonDefaults.buttonElevation(4.dp)
+            ) {
+                Text("Odobri", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+fun EmployeeCommentBox() {
+    Surface(
+        color = Color.White,
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.05f)),
+        modifier = Modifier.fillMaxWidth()
+    ){
+        Row(modifier = Modifier.padding(16.dp)){
+            Box(modifier = Modifier
+                .width(4.dp)
+                .height(40.dp)
+                .background(Color.Gray.copy(alpha = 0.3f), shape = CircleShape))
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Text(
+                text = "Osjećam se loše, imam visoku temperaturu i ne mogu doći na posao.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.DarkGray,
+                lineHeight = 20.sp
+            )
+        }
+    }
+}
+@Composable
+fun UserProfileHeader() {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Surface(
+            shape = CircleShape,
+            color = primaryColor.copy(alpha = 0.2f),
+            modifier = Modifier.size(56.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    "NS",
+                    color = primaryColor,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column {
+            Text(
+                "Name Surname",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "Software Engineer",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray
+            )
+
+        }
+    }
+
+}
+@Composable
+fun DateColumn(label: String, date : String){
+    Column(
+        horizontalAlignment = Alignment.Start
+    ){
+        Row(verticalAlignment = Alignment.CenterVertically){
+                Icon(Icons.Default.DateRange, null, modifier = Modifier.size(14.dp), tint = Color.Gray)
+                Spacer(modifier = Modifier.width(4.dp))
+            Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(date, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+
+    }
+}
+
+
+
+@Preview(showBackground = true)
+@Composable
+fun ApproveRequestPreview(){
+    ApproveRequestScreen()
+}
