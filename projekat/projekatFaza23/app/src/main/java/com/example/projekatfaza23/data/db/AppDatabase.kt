@@ -4,8 +4,10 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 
-@Database(entities = [UserEntity::class, LeaveRequestEntity::class], version = 2)
+@Database(entities = [UserEntity::class, LeaveRequestEntity::class], version = 3)
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun leaveDao() : LeaveDao
 

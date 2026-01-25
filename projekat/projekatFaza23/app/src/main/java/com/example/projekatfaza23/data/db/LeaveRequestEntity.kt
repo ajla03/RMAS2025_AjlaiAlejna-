@@ -4,6 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.projekatfaza23.model.FileInfo
+import com.example.projekatfaza23.model.LeaveDates
 import com.example.projekatfaza23.model.RequestSatus
 
 @Entity(tableName = "leave_request")
@@ -14,10 +15,11 @@ data class LeaveRequestEntity(
     val explanation: String?,
     val status: String,
 
-    //TODO za datume mozda jos jedna tabela
+    val leaveDates: List<LeaveDates?>?,
 
     @Embedded(prefix = "file_")
-    val fileInfo: FileInfoSimple?
+    val fileInfo: FileInfoSimple?,
+    val createdAt: Long? = null
 )
 
 data class FileInfoSimple(
