@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -122,7 +123,10 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             launch {
-                    _repository.syncRequestsWithFirestore(email)
+                    //_repository.syncRequestsWithFirestore(email)
+                _repository.startRealtimeSync(email)
+                    .catch { e -> Log.e("RealTimeSync", "Sync error: ${e.message}") }
+                    .collect()
             }
             _repository.getLeaveHistory(email)
                 .catch { error ->

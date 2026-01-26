@@ -27,6 +27,7 @@ interface LeaveRepositoryI {
     fun getAllRequests() : Flow<List<LeaveRequest>>
     suspend fun updateReqeustStatus(requestId: String, newStatus: RequestSatus): Boolean
     suspend fun syncRequestsWithFirestore(userEmail: String)
+    fun startRealtimeSync(userEmail: String): Flow<Unit>
 }
 
 class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
@@ -148,6 +149,33 @@ class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
             }
         } catch (e: Exception) {
             Log.e("syncRequestsWithFirestore", "Error in sync func: ${e.message}")
+        }
+    }
+
+    override fun startRealtimeSync(userEmail: String): Flow<Unit> = callbackFlow {
+        if (userEmail.isEmpty()) {
+            close()
+            return@callbackFlow
+        }
+
+        val listenerRegistration = firestore.collection("leave_request")
+            .whereEqualTo("userEmail", userEmail)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && !snapshot.isEmpty) {
+                    launch {
+                        val entities = snapshot.documents.mapNotNull { doc ->
+                            doc.toObject(LeaveRequest::class.java)?.copy(id = doc.id)?.toEntity()
+                        }
+                        leaveDao.insertRequests(entities)
+                    }
+                }
+            }
+        awaitClose {
+            listenerRegistration.remove()
         }
     }
 }
