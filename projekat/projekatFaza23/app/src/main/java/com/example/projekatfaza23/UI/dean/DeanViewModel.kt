@@ -1,9 +1,12 @@
 package com.example.projekatfaza23.UI.dean
 
+import android.app.Application
 import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projekatfaza23.data.auth.UserManager
+import com.example.projekatfaza23.data.db.AppDatabase
 import com.example.projekatfaza23.model.LeaveRepository
 import com.example.projekatfaza23.model.LeaveRepositoryI
 import com.example.projekatfaza23.model.LeaveRequest
@@ -26,8 +29,9 @@ data class DeanUIState(
     val isActiveFilter : Boolean = false
 )
 
-class DeanViewModel(): ViewModel() {
-    private val _repository : LeaveRepositoryI = LeaveRepository()
+class DeanViewModel(application: Application): AndroidViewModel(application) {
+    private val leaveDao = AppDatabase.getInstance(application).leaveDao()
+    private val _repository : LeaveRepositoryI = LeaveRepository(leaveDao)
     private val _uiState = MutableStateFlow(DeanUIState(isLoading = true))
     val uiState: StateFlow<DeanUIState> = _uiState.asStateFlow()
 

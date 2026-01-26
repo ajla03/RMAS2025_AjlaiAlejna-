@@ -17,6 +17,14 @@ interface LeaveDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRequests(requests: List<LeaveRequestEntity>)
 
-    @Query("SELECT * FROM leave_request WHERE userEmail = :email")
+    @Query("SELECT * FROM leave_request WHERE userEmail = :email ORDER BY createdAt DESC")
     fun getRequestsForUser(email: String): Flow<List<LeaveRequestEntity>>
+
+    @Query("SELECT MAX(createdAt) FROM leave_request WHERE userEmail = :email")
+    suspend fun getLastTimestamp(email: String): Long?
+
+    @Query("""
+    DELETE FROM leave_request WHERE id IN (SELECT id FROM leave_request WHERE userEmail = :email 
+        ORDER BY createdAt DESC LIMIT -1 OFFSET 30)""")
+    suspend fun trimOldRequests(email: String)
 }

@@ -43,6 +43,9 @@ class FakeLeaveRepository : LeaveRepositoryI {
         delay(500)
         return true
     }
+
+    override suspend fun syncRequestsWithFirestore(userEmail: String) {
+    }
 }
 
 fun SingleLeaveRequest(id: String, dateFrom : Long) : LeaveRequest {
