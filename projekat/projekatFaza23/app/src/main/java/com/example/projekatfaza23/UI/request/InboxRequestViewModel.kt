@@ -153,23 +153,31 @@ class InboxRequestViewModel(): ViewModel() {
     }
 
     fun onDatesSelected(from: Long?, to: Long?) {
+        if(from == null || to == null ) return
+
         _uiState.update { currentState ->
-            //TODO kada se ui popravi da prima vise rangeova ovo je potrebno ispraviti takodje
-            val oldList = currentState.currentRequest.leave_dates?.firstOrNull() ?: LeaveDates()
-            val newDates = oldList.copy(
-                start = if (from != null) {
-                    Timestamp(java.util.Date(from))
-                } else null,
-                end = if (to != null){
-                    Timestamp(java.util.Date(to))
-                } else null
-            )
+            val newDateRange = LeaveDates(start = Timestamp(java.util.Date(from)),
+                                          end = Timestamp(java.util.Date(to)))
+
+            val oldList = currentState.currentRequest.leave_dates  ?: emptyList<LeaveDates>()
+            val updatedList = oldList + newDateRange
 
             currentState.copy(
                 currentRequest = currentState.currentRequest.copy(
-                    leave_dates = listOf(newDates)
+                    leave_dates = updatedList
                 )
           )
+        }
+    }
+
+    fun removeDateRange(index: Int){
+        _uiState.update { currentState ->
+            val updatedList = (currentState.currentRequest.leave_dates ?: emptyList<LeaveDates>())
+                .filterIndexed { i, _ -> i!=index }
+
+            currentState.copy(
+                currentRequest = currentState.currentRequest.copy(leave_dates = updatedList)
+            )
         }
     }
 

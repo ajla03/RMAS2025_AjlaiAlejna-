@@ -67,15 +67,26 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.projekatfaza23.UI.home.formatTimestampToDate
+import com.example.projekatfaza23.model.LeaveDates
 
 enum class RequestType(val displayName: String, val maxDays: Int) {
     // Godisnji odmor
@@ -127,6 +138,7 @@ fun NewRequestScreen(navigateHome: () -> Unit, viewModel: InboxRequestViewModel 
         navigateHome = navigateHome,
         onTypeChange = { viewModel.onTypeChange(it) },
         onDatesSelected = { from, to -> viewModel.onDatesSelected(from, to) },
+        onRemoveDate = { index -> viewModel.removeDateRange(index) },
         onExplanationChange = { viewModel.onExplanationChange(it) },
         sendRequest = { viewModel.sendRequest() },
         onFileSelected = {uri, name -> viewModel.onFileAttached(uri, name)},
@@ -141,6 +153,7 @@ fun NewRequestContent(
     navigateHome: () -> Unit,
     onTypeChange: (String) -> Unit,
     onDatesSelected: (Long?, Long?) -> Unit,
+    onRemoveDate : (Int) -> Unit,
     onFileSelected: (Uri?, String) -> Unit,
     onExplanationChange: (String) -> Unit,
     sendRequest: () -> Unit,
@@ -168,6 +181,7 @@ fun NewRequestContent(
         Column(modifier = Modifier
             .padding(padding)
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(20.dp)){
 
             RequestTypeSelector(
@@ -178,11 +192,26 @@ fun NewRequestContent(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+            val datesList = uiState.currentRequest.leave_dates?.filterNotNull() ?: emptyList()
 
-            DatePickerField(
-                dateFrom = formatTimestampToDate(uiState.currentRequest.leave_dates?.firstOrNull()?.start),
-                dateTo = formatTimestampToDate(uiState.currentRequest.leave_dates?.firstOrNull()?.end),
-                onClick = {showDatePicker = true})
+            CombinedDateList(
+                leaveDates = datesList,
+                onRemove = { index -> onRemoveDate(index) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedButton(
+                onClick = { showDatePicker = true },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, Color(0xFF004D61))
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF004D61))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Add Date Range", color = Color(0xFF004D61))
+            }
+
 
             Spacer(modifier = Modifier.height(16.dp))
             Text("Details", color = Color.Gray, fontSize = 14.sp, fontWeight = FontWeight.Medium)
@@ -412,6 +441,78 @@ fun RequestHeader(label: String, navigateHome: () -> Unit){
 
 }
 
+@Composable
+fun CombinedDateList(
+    leaveDates: List<LeaveDates>,
+    onRemove: (Int) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Odabrani datumi ",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.Gray,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        OutlinedCard(
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp)
+        ) {
+            if (leaveDates.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Nisu izabrani datumi.", color = Color.LightGray)
+                }
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(12.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    itemsIndexed(leaveDates) { index, dates ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "Pocetak: ${formatTimestampToDate(dates.start)}",
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF004D61),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Kraj:   ${formatTimestampToDate(dates.end)}",
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF004D61)
+                                )
+                            }
+
+                            IconButton(onClick = { onRemove(index) }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Remove",
+                                    tint = Color.Red
+                                )
+                            }
+                        }
+
+                        if (index < leaveDates.size - 1) {
+                            HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
@@ -423,6 +524,7 @@ fun NewRequestPreview(){
       onExplanationChange = {},
       sendRequest = {},
       resetSuccessState = {},
+      onRemoveDate = {},
       onFileSelected = {_, _ -> }
   )
 }
