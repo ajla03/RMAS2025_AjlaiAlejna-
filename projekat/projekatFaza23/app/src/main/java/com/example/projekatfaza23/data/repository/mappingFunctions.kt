@@ -6,6 +6,7 @@ import com.example.projekatfaza23.data.db.LeaveRequestEntity
 import com.example.projekatfaza23.data.db.UserEntity
 import com.example.projekatfaza23.model.FileInfo
 import com.example.projekatfaza23.model.LeaveRequest
+import com.example.projekatfaza23.model.RequestSatus
 
 fun mapToEntity(googleProfile: UserProfile,
                 role: String,
@@ -31,8 +32,24 @@ fun LeaveRequest.toEntity() : LeaveRequestEntity {
         type = this.type,
         explanation = this.explanation,
         status = this.status.name,
+        leaveDates = this.leave_dates,
+        createdAt = this.createdAt?.seconds?.times(1000),
         fileInfo = this.file_info?.let {
             FileInfoSimple(it.file_name, it.file_type, it.uri)
+        }
+    )
+}
+fun LeaveRequestEntity.toLeaveRequest(): LeaveRequest {
+    return LeaveRequest(
+        id = this.id,
+        userEmail = this.userEmail,
+        type = this.type,
+        explanation = this.explanation ?: "",
+        status = RequestSatus.valueOf(this.status),
+        leave_dates = this.leaveDates ?: emptyList(),
+        createdAt = this.createdAt?.let { com.google.firebase.Timestamp(it / 1000, 0) },
+        file_info = this.fileInfo?.let {
+            FileInfo(it.fileName, it.fileType, it.fileUri)
         }
     )
 }

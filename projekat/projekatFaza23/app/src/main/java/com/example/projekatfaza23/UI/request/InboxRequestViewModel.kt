@@ -1,10 +1,15 @@
 package com.example.projekatfaza23.UI.request
 
+import android.app.Application
 import android.net.Uri
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projekatfaza23.UI.home.LeaveUiState
 import com.example.projekatfaza23.data.auth.UserManager
+import com.example.projekatfaza23.data.db.AppDatabase
+import com.example.projekatfaza23.data.db.LeaveDao
 import com.example.projekatfaza23.data.repository.GoogleProfileRepository
 import com.example.projekatfaza23.model.FileInfo
 import com.example.projekatfaza23.model.LeaveDates
@@ -17,11 +22,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class InboxRequestViewModel(): ViewModel() {
-    private val _repository : LeaveRepositoryI = LeaveRepository()
+class InboxRequestViewModel(application: Application): AndroidViewModel(application) {
+    private val leaveDao = AppDatabase.getInstance(application).leaveDao()
+    private val _repository : LeaveRepositoryI = LeaveRepository(leaveDao)
     private val googleProfileRepository = GoogleProfileRepository()
 
     private val _uiState = MutableStateFlow(LeaveUiState())
@@ -115,6 +122,12 @@ class InboxRequestViewModel(): ViewModel() {
     private fun loadUserLeaveData(email: String){
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
+            launch {
+                    //_repository.syncRequestsWithFirestore(email)
+                _repository.startRealtimeSync(email)
+                    .catch { e -> Log.e("RealTimeSync", "Sync error: ${e.message}") }
+                    .collect()
+            }
             _repository.getLeaveHistory(email)
                 .catch { error ->
                     _uiState.update { it.copy(isLoading = false, isError = true) }
@@ -122,8 +135,7 @@ class InboxRequestViewModel(): ViewModel() {
                 _uiState.update {
                     currentState ->
                     currentState.copy(
-                        requestHistory = novaLista
-                            .sortedBy { it.leave_dates?.firstOrNull()?.start?.seconds ?: 0L },
+                        requestHistory = novaLista.sortedByDescending { it.createdAt },
                         isLoading = false
                     )
                 }

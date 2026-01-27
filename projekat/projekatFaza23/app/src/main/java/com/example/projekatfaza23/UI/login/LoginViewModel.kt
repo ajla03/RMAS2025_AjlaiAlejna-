@@ -30,6 +30,7 @@ class  LoginViewModel (
     val uiState = _uiState.asStateFlow()
     private val database = AppDatabase.getInstance(application)
     private val userRepository = UserRepository(database.leaveDao())
+    private val leaveRepository = LeaveRepository(database.leaveDao())
 
     private val authService = GoogleAuth(application.applicationContext)
 

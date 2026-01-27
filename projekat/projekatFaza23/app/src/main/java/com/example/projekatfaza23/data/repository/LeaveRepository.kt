@@ -2,13 +2,21 @@ package com.example.projekatfaza23.model
 
 import android.util.Log
 import androidx.compose.animation.core.snap
+import com.example.projekatfaza23.data.db.LeaveDao
+import com.example.projekatfaza23.data.db.LeaveRequestEntity
+import com.example.projekatfaza23.data.repository.toEntity
+import com.example.projekatfaza23.data.repository.toLeaveRequest
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.PersistentCacheSettings
 import com.google.firebase.firestore.firestoreSettings
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.util.UUID
 
 
 interface LeaveRepositoryI {
@@ -18,58 +26,36 @@ interface LeaveRepositoryI {
     //za dekana
     fun getAllRequests() : Flow<List<LeaveRequest>>
     suspend fun updateReqeustStatus(requestId: String, newStatus: RequestSatus): Boolean
+    suspend fun syncRequestsWithFirestore(userEmail: String)
+    fun startRealtimeSync(userEmail: String): Flow<Unit>
 }
 
-class LeaveRepository() : LeaveRepositoryI {
+class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
     private val firestore = FirebaseFirestore.getInstance()
 
-    override fun getLeaveHistory(userEmail: String): Flow<List<LeaveRequest>> =
-        callbackFlow {
-            val listener = firestore.collection("leave_request")
-                .whereEqualTo("userEmail", userEmail)
-                .addSnapshotListener { snapshot, error ->
-                    //ako se desi greska, npr nema interneta
-                    if(error != null){
-                        close(error)
-                        /*
-                        if(localData.isEmpty()){
-                         trySend(fakeRepo.getLeaveHistory())
-                        }else{
-                            trySend(localData)
-                            }
-                         */
-                        return@addSnapshotListener // Dodano da ne ide dalje u slučaju greške
-                    }
-
-                    if(snapshot != null){
-                        val remoteData = snapshot.documents.mapNotNull { doc ->
-                            doc.toObject(LeaveRequest::class.java)?.copy(
-                                // Firebase ID dokumenta kao unikatni ključ
-                                id = doc.id
-                            )
-                        }
-
-                        trySend(remoteData)
-                    }
-                }
-            awaitClose { listener.remove() }
+    override fun getLeaveHistory(userEmail: String): Flow<List<LeaveRequest>> {
+        return leaveDao.getRequestsForUser(userEmail).map { entities ->
+            entities.map { it.toLeaveRequest() }
         }
+    }
 
-
-    override fun getAllRequests(): Flow<List<LeaveRequest>> = callbackFlow{
+    override fun getAllRequests(): Flow<List<LeaveRequest>> = callbackFlow {
         val listener = firestore.collection("leave_request")
             //dodati sortiranje po datumu kreiranja , dodati u requeste
             .addSnapshotListener { snapshot, error ->
-             if(error!=null) {
-                 Log.e("DEBUG_DEAN", "CRITICAL ERROR: ${error.message}")
-                 return@addSnapshotListener
-             }
-                if(snapshot != null){
+                if (error != null) {
+                    Log.e("DEBUG_DEAN", "CRITICAL ERROR: ${error.message}")
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
                     val rawCount = snapshot.documents.size
                     Log.d("DEBUG_DEAN", "Firestore kaže da ima $rawCount dokumenata.")
 
                     if (rawCount == 0) {
-                        Log.w("DEBUG_DEAN", "Baza je vratila 0 dokumenata! Provjeri Rules ili ime kolekcije.")
+                        Log.w(
+                            "DEBUG_DEAN",
+                            "Baza je vratila 0 dokumenata! Provjeri Rules ili ime kolekcije."
+                        )
                     }
 
                     val isFromCache = snapshot.metadata.isFromCache
@@ -92,7 +78,7 @@ class LeaveRepository() : LeaveRepositoryI {
                         trySend(remoteData) // salje podatke sa servera
                         Log.d("DEBUG_DEAN", "Uspješno mapirano: ${remoteData.size} od $rawCount")
 
-                    } else if (!isFromCache){
+                    } else if (!isFromCache) {
                         Log.e("DEBUG_DEAN", "Snapshot je null!")
                         /*
                    if(localData.isEmpty()){
@@ -109,24 +95,87 @@ class LeaveRepository() : LeaveRepositoryI {
     }
 
     override suspend fun updateReqeustStatus(requestId: String, newStatus: RequestSatus): Boolean {
-        return try{
+        return try {
             firestore.collection("leave_request")
                 .document(requestId)
                 .update("status", newStatus)
                 .await()
             true
-        }catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
             false
         }
     }
+
     override suspend fun submitNewRequest(request: LeaveRequest, userEmail: String): Boolean {
-       val finalRequest = request.copy( userEmail = userEmail)
-       return  try{
-           val result = firestore.collection("leave_request").add(finalRequest).await()
-           true
-       }catch (e : Exception){
-           return false
-       }
+        //ovaj id je bio problem ako je offline (generisemo svoj id sad)
+        val newId = request.id.ifEmpty { UUID.randomUUID().toString() }
+        val currentTime = Timestamp.now()
+
+        val finalRequest = request.copy( id = newId, userEmail = userEmail, createdAt = currentTime, status = RequestSatus.Pending)
+        return try {
+            leaveDao.insertRequests(listOf(finalRequest.toEntity()))
+            firestore.collection("leave_request").document(newId).set(finalRequest).await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    override suspend fun syncRequestsWithFirestore(userEmail: String) {
+        try {
+            val querySnapshot = firestore.collection("leave_request")
+                .whereEqualTo("userEmail", userEmail)
+                .get()
+                .await()
+
+            if (!querySnapshot.isEmpty) {
+                val newEntities = querySnapshot.documents.mapNotNull { doc ->
+                    try {
+                        val data = doc.data
+                        if (data == null) return@mapNotNull null
+
+                        val request = doc.toObject(LeaveRequest::class.java)
+                        request?.toEntity()
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                if (newEntities.isNotEmpty()) {
+                    leaveDao.insertRequests(newEntities)
+                }
+            } else {
+                Log.w("syncRequestsWithFirestore", "Qurey returned 0 results!")
+            }
+        } catch (e: Exception) {
+            Log.e("syncRequestsWithFirestore", "Error in sync func: ${e.message}")
+        }
+    }
+
+    override fun startRealtimeSync(userEmail: String): Flow<Unit> = callbackFlow {
+        if (userEmail.isEmpty()) {
+            close()
+            return@callbackFlow
+        }
+
+        val listenerRegistration = firestore.collection("leave_request")
+            .whereEqualTo("userEmail", userEmail)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && !snapshot.isEmpty) {
+                    launch {
+                        val entities = snapshot.documents.mapNotNull { doc ->
+                            doc.toObject(LeaveRequest::class.java)?.copy(id = doc.id)?.toEntity()
+                        }
+                        leaveDao.insertRequests(entities)
+                    }
+                }
+            }
+        awaitClose {
+            listenerRegistration.remove()
+        }
     }
 }

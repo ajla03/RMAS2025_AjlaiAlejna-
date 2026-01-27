@@ -18,7 +18,8 @@ data class LeaveRequest(
 
     val leave_dates: List<LeaveDates?>? = null,
 
-    val file_info: FileInfo? = null
+    val file_info: FileInfo? = null,
+    val createdAt: Timestamp? = null
 )
 
 data class LeaveDates(
