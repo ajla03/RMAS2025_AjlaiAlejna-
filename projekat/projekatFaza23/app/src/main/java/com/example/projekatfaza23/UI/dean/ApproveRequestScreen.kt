@@ -74,7 +74,7 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
             TopAppBarSection()
             RequestHeader("Pregled zahtjeva", navigateHome = navigateHome)
         }},
-        bottomBar = { BottomBar( navigateHome) }){ paddingValues ->
+        bottomBar = { BottomBar(request, {viewModel.approveRequest(request)}, {viewModel.denyRequest(request)} ,navigateHome) }){ paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)
             .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState()),
@@ -205,7 +205,7 @@ fun RequestDetailsCard(request: LeaveRequest){
 }
 
 @Composable
-fun BottomBar(onBack: () -> Unit){
+fun BottomBar(request: LeaveRequest, onApproved: (request: LeaveRequest) -> Unit, onDenied: (request: LeaveRequest) -> Unit, onBack: () -> Unit){
     Surface(
         shadowElevation = 16.dp,
         color = Color.White,
@@ -217,7 +217,8 @@ fun BottomBar(onBack: () -> Unit){
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ){
             OutlinedButton(
-                onClick = {  onBack() },
+                onClick = {  onDenied(request)
+                             onBack() },
                 modifier = Modifier.weight(1f).height(52.dp),
                 border = BorderStroke(1.5.dp, Color(0xFFD32F2F).copy(alpha = 0.8f)),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD32F2F)),
@@ -225,7 +226,8 @@ fun BottomBar(onBack: () -> Unit){
                 ) { Text("Odbij", fontWeight = FontWeight.Bold) }
 
             Button(
-                onClick = { onBack() },
+                onClick = { onApproved(request)
+                            onBack() },
                 modifier = Modifier.weight(1f).height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = primaryColor ),
