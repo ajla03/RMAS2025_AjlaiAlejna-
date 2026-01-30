@@ -109,16 +109,24 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    fun setExplanationDean(explanationText : String){
+        _selectedRequest.update{
+            currentRequest ->
+            currentRequest?.copy(explanationDean = explanationText)
+        }
+    }
     fun approveRequest(request: LeaveRequest){
         viewModelScope.launch {
-            _repository.updateReqeustStatus(request.id, RequestSatus.Approved)
+            _repository.updateReqeust(request.id, RequestSatus.Approved,request.explanationDean)
         }
+        resetSelectedRequest()
     }
 
     fun denyRequest(request: LeaveRequest){
         viewModelScope.launch {
-            _repository.updateReqeustStatus(request.id, RequestSatus.Denied)
+            _repository.updateReqeust(request.id, RequestSatus.Denied, request.explanationDean)
         }
+        resetSelectedRequest()
     }
 
     fun resetSelectedRequest(){

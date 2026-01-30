@@ -25,7 +25,7 @@ interface LeaveRepositoryI {
 
     //za dekana
     fun getAllRequests() : Flow<List<LeaveRequest>>
-    suspend fun updateReqeustStatus(requestId: String, newStatus: RequestSatus): Boolean
+    suspend fun updateReqeust(requestId: String, newStatus: RequestSatus, explanationText: String): Boolean
     suspend fun syncRequestsWithFirestore(userEmail: String)
     fun startRealtimeSync(userEmail: String): Flow<Unit>
 }
@@ -94,11 +94,11 @@ class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
         awaitClose { listener.remove() }
     }
 
-    override suspend fun updateReqeustStatus(requestId: String, newStatus: RequestSatus): Boolean {
+    override suspend fun updateReqeust(requestId: String, newStatus: RequestSatus, explanationText : String): Boolean {
         return try {
             firestore.collection("leave_request")
                 .document(requestId)
-                .update("status", newStatus)
+                .update("status", newStatus, "explanationDean", explanationText)
                 .await()
             true
         } catch (e: Exception) {

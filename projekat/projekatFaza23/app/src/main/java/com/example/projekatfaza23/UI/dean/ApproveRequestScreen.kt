@@ -50,6 +50,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projekatfaza23.UI.home.TopAppBarSection
 import com.example.projekatfaza23.UI.request.RequestHeader
 import com.example.projekatfaza23.model.LeaveRequest
+import com.example.projekatfaza23.model.RequestSatus
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -67,6 +68,9 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
     }
 
     val request = selectedRequest!!
+    val isProcessed = request.status != RequestSatus.Pending
+
+
     Scaffold(
         containerColor = Color(0xFFF5F7FA),
         topBar = {
@@ -74,7 +78,9 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
             TopAppBarSection()
             RequestHeader("Pregled zahtjeva", navigateHome = navigateHome)
         }},
-        bottomBar = { BottomBar(request, {viewModel.approveRequest(request)}, {viewModel.denyRequest(request)} ,navigateHome) }){ paddingValues ->
+        bottomBar = {
+            if(!isProcessed)
+                BottomBar(request, {viewModel.approveRequest(request)}, {viewModel.denyRequest(request)} ,navigateHome) }){ paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)
             .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState()),
@@ -107,8 +113,10 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
             )
 
             OutlinedTextField(
-                value = "",
-                onValueChange = {}, 
+                value = selectedRequest?.explanationDean ?: "",
+                onValueChange = { newText ->
+                    viewModel.setExplanationDean(newText)
+                },
                 placeholder = { Text("Upiši razlog odbijanja ili napomenu...", style = MaterialTheme.typography.bodyMedium)},
                 modifier = Modifier.fillMaxWidth(),
                 shape =  RoundedCornerShape(12.dp),
@@ -118,9 +126,21 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
                     unfocusedBorderColor = Color.LightGray,
                     focusedBorderColor = primaryColor
                 ),
-                minLines = 4
+                minLines = 4,
+                readOnly = isProcessed,
+                enabled = !isProcessed
             )
             }
+
+            if (isProcessed) {
+                Text(
+                    text = "Ovaj zahtjev je već obrađen: ${request.status.name}",
+                    color = if (request.status == RequestSatus.Approved) Color(0xFF2E7D32) else Color.Red,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
         }
 

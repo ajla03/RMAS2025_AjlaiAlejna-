@@ -14,6 +14,7 @@ data class LeaveRequest(
     val status: RequestSatus = RequestSatus.Pending,
     val type: String = "",
     val explanation: String = "",
+    val explanationDean : String = "",
     val userEmail: String = "",
 
     val leave_dates: List<LeaveDates?>? = null,
