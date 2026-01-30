@@ -115,7 +115,7 @@ class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
         val finalRequest = request.copy( id = newId, userEmail = userEmail, createdAt = currentTime, status = RequestSatus.Pending)
         return try {
             leaveDao.insertRequests(listOf(finalRequest.toEntity()))
-            firestore.collection("leave_request").document(newId).set(finalRequest).await()
+            firestore.collection("leave_request").document(newId).set(finalRequest)
             true
         } catch (e: Exception) {
             false
