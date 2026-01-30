@@ -63,7 +63,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.projekatfaza23.UI.home.RequestsCard
 import com.example.projekatfaza23.UI.home.TopAppBarSection
 import com.example.projekatfaza23.UI.request.RequestType
 import com.google.firebase.Timestamp
