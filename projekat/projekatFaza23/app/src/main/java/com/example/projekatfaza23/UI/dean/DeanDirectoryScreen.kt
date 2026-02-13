@@ -37,14 +37,26 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import com.example.projekatfaza23.UI.home.TopAppBarSection
+import com.example.projekatfaza23.data.db.UserEntity
 import kotlin.random.Random
 
 val avatarColors = listOf(
@@ -56,19 +68,12 @@ val avatarColors = listOf(
     Color(0xFF009688),
     Color(0xFF3F51B5)
 )
-data class Employee(
-    val id: Int,
-    val name: String,
-    val title: String
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeanDirectoryScreen(navigateHome: () -> Unit){
-// Dummy podaci za prikaz
-    val employees = List(10) {
-        Employee(it, "Name LastName", "Software Engineer")
-    }
+fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
+
+    val employees by viewModel.employees.collectAsStateWithLifecycle()
 
     Scaffold (
         topBar =  {TopAppBarSection()},
@@ -166,7 +171,7 @@ fun BackIcon(onBack: () -> Unit){
     }
 }
 @Composable
-fun EmployeeItem(employee: Employee) {
+fun EmployeeItem(employee: UserEntity) {
     Card(
         modifier = Modifier.fillMaxWidth()
             .padding(vertical = 4.dp).padding(horizontal = 4.dp),
@@ -180,15 +185,33 @@ fun EmployeeItem(employee: Employee) {
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                modifier = Modifier.size(50.dp),
-                shape = CircleShape,
-                color = avatarColors[Random(employee.id).nextInt(avatarColors.size)].copy(0.8f),
-                contentColor = Color.Black
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                   Text("NL", color = Color.White, style = MaterialTheme.typography.labelLarge, fontSize = 18.sp)
+            val initials = remember(employee.firstName, employee.lastName){
+                val first = employee.firstName.firstOrNull()?.toString() ?: ""
+                val second = employee.lastName.firstOrNull()?.toString() ?: ""
+                (first + second).toUpperCase()
+            }
+            if (!employee.imageUrl.isNullOrBlank()) {
+                SubcomposeAsyncImage(
+                    model = employee.imageUrl,
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                ) {
+                    val state = painter.state
+
+                    if (state is AsyncImagePainter.State.Error) {
+                        InitialsAvatar(employee = employee, initials = initials)
+                    } else {
+                        SubcomposeAsyncImageContent()
+                    }
                 }
+            } else {
+                InitialsAvatar(
+                    employee = employee,
+                    initials = initials,
+                )
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -197,7 +220,7 @@ fun EmployeeItem(employee: Employee) {
                 modifier = Modifier.weight(1f)
             ){
                 Text(
-                    text = employee.name,
+                    text = employee.firstName + " " + employee.lastName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.Black
@@ -206,7 +229,7 @@ fun EmployeeItem(employee: Employee) {
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = employee.title,
+                    text = employee.role,
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray
                 )
@@ -215,6 +238,24 @@ fun EmployeeItem(employee: Employee) {
     }
 }
 
+@Composable
+fun InitialsAvatar(employee: UserEntity, initials: String) {
+    Surface(
+        modifier = Modifier.size(50.dp),
+        shape = CircleShape,
+        color = avatarColors[Random(employee.email.hashCode()).nextInt(avatarColors.size)].copy(alpha = 0.8f),
+        contentColor = Color.Black
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = initials,
+                color = Color.White,
+                style = MaterialTheme.typography.labelLarge,
+                fontSize = 18.sp
+            )
+        }
+    }
+}
 
 
 @Composable
@@ -241,5 +282,5 @@ fun FilterButtonCircle(onClick:() -> Unit){
 @Preview
 @Composable
 fun PreviewDirectory() {
-        DeanDirectoryScreen({})
+        DeanDirectoryScreen(viewModel(), {})
 }

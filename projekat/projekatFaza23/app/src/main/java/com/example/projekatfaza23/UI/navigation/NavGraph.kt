@@ -52,7 +52,7 @@ fun AppNavigation (navController : NavHostController) {
         }
 
         composable<Screen.DeanDirectory>{
-            DeanDirectoryScreen(navigateHome = {navController.popBackStack()})
+            DeanDirectoryScreen(viewModel = sharedDeanViewModel, navigateHome = {navController.popBackStack()})
         }
 
         composable<Screen.ApproveRequestScreen>{

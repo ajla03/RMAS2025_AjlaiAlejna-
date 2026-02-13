@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.animation.core.snap
 import com.example.projekatfaza23.data.db.LeaveDao
 import com.example.projekatfaza23.data.db.LeaveRequestEntity
+import com.example.projekatfaza23.data.db.UserEntity
 import com.example.projekatfaza23.data.repository.toEntity
 import com.example.projekatfaza23.data.repository.toLeaveRequest
 import com.google.firebase.Timestamp
@@ -25,6 +26,8 @@ interface LeaveRepositoryI {
 
     //za dekana
     fun getAllRequests() : Flow<List<LeaveRequest>>
+
+    fun getAllEmployees(): Flow<List<UserEntity>>
     suspend fun updateReqeust(requestId: String, newStatus: RequestSatus, explanationText: String): Boolean
     suspend fun syncRequestsWithFirestore(userEmail: String)
     fun startRealtimeSync(userEmail: String): Flow<Unit>
@@ -94,7 +97,11 @@ class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
         awaitClose { listener.remove() }
     }
 
-    override suspend fun updateReqeust(requestId: String, newStatus: RequestSatus, explanationText : String): Boolean {
+    override suspend fun updateReqeust(
+        requestId: String,
+        newStatus: RequestSatus,
+        explanationText: String
+    ): Boolean {
         return try {
             firestore.collection("leave_request")
                 .document(requestId)
@@ -112,7 +119,12 @@ class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
         val newId = request.id.ifEmpty { UUID.randomUUID().toString() }
         val currentTime = Timestamp.now()
 
-        val finalRequest = request.copy( id = newId, userEmail = userEmail, createdAt = currentTime, status = RequestSatus.Pending)
+        val finalRequest = request.copy(
+            id = newId,
+            userEmail = userEmail,
+            createdAt = currentTime,
+            status = RequestSatus.Pending
+        )
         return try {
             leaveDao.insertRequests(listOf(finalRequest.toEntity()))
             firestore.collection("leave_request").document(newId).set(finalRequest)
@@ -178,4 +190,39 @@ class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
             listenerRegistration.remove()
         }
     }
+
+
+    override fun getAllEmployees(): Flow<List<UserEntity>> = callbackFlow {
+        val listener = firestore.collection("user_info")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val employees = snapshot.documents.mapNotNull { doc ->
+                        val email = doc.getString("email")
+                        if (email != null) {
+                            UserEntity(
+                                email = email,
+                                firstName = doc.getString("firstName") ?: "",
+                                lastName = doc.getString("lastName") ?: "",
+                                imageUrl = doc.getString("imageUrl"),
+                                totalDays = doc.getLong("totalDays")?.toInt() ?: 20,
+                                usedDays = doc.getLong("usedDays")?.toInt() ?: 0,
+                                userStatus = doc.getString("employeeStatus") ?: "AtWork",
+                                role = doc.getString("role") ?: "Professor"
+                            )
+                        } else {
+                            null
+                        }
+                    }
+                    trySend(employees)
+                }
+            }
+
+        awaitClose { listener.remove() }
+    }
+
 }

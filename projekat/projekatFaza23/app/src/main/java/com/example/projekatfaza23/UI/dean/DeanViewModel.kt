@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.data.db.AppDatabase
+import com.example.projekatfaza23.data.db.UserEntity
 import com.example.projekatfaza23.model.LeaveRepository
 import com.example.projekatfaza23.model.LeaveRepositoryI
 import com.example.projekatfaza23.model.LeaveRequest
@@ -44,6 +45,9 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
 
     private val _selectedRequest = MutableStateFlow<LeaveRequest?>(null)
     val selectedRequest : StateFlow<LeaveRequest?> = _selectedRequest.asStateFlow()
+
+    private val _employees = MutableStateFlow<List<UserEntity>>(emptyList())
+    val employees: StateFlow<List<UserEntity>> = _employees.asStateFlow()
 
     val filteredRequests: StateFlow<List<LeaveRequest>> = combine(
         _uiState,
@@ -87,6 +91,7 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
 
     init {
         loadAllRequests()
+        loadEmployees()
     }
 
     private fun loadAllRequests(){
@@ -105,6 +110,18 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
                             isLoading = false
                         )
                     }
+                }
+        }
+    }
+
+    private fun loadEmployees() {
+        viewModelScope.launch {
+            _repository.getAllEmployees()
+                .catch { error ->
+                    Log.e("DeanViewModel", "Error loading employees", error)
+                }
+                .collect { usersList ->
+                    _employees.value = usersList
                 }
         }
     }
