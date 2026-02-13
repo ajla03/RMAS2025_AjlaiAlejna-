@@ -1,5 +1,7 @@
 package com.example.projekatfaza23.UI.dean
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,6 +61,11 @@ import coil.compose.SubcomposeAsyncImageContent
 import com.example.projekatfaza23.UI.home.TopAppBarSection
 import com.example.projekatfaza23.data.db.UserEntity
 import kotlin.random.Random
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 
 val avatarColors = listOf(
     Color(0xFF2196F3),
@@ -73,20 +81,43 @@ val avatarColors = listOf(
 @Composable
 fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
 
-    val employees by viewModel.employees.collectAsStateWithLifecycle()
+    val employees by viewModel.filteredEmployees.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.employeeSearchQuery.collectAsStateWithLifecycle()
+
+    val focusManager = LocalFocusManager.current
+
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val pdfLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                exportEmployeesToPdf(context, uri, employees)
+            }
+        }
+    }
 
     Scaffold (
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+            detectTapGestures(onTap = {
+                focusManager.clearFocus()
+            })
+        },
         topBar =  {TopAppBarSection()},
         containerColor = Color(0xFFF5F7FA),
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* TODO */ },
+                onClick = { pdfLauncher.launch("Zaposleni_Lista.pdf") },
                 containerColor = Color(0xFF2D3E50),
                 contentColor = Color.White
             ) {
                 Icon(Icons.Default.PictureAsPdf, contentDescription = "Export PDF")
             }
-        }
+        },
      ){ paddingValues ->
         Column(
             modifier = Modifier.padding(paddingValues)
@@ -117,8 +148,8 @@ fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextField(
-                    value = "",
-                    onValueChange = {},
+                    value = searchQuery,
+                    onValueChange = { newValue -> viewModel.updateEmployeeSearch(newValue)},
                     placeholder = {Text("Pretraži zaposlene...", color = Color.Gray)},
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)},
                     modifier = Modifier.weight(1f).height(56.dp),
@@ -144,6 +175,12 @@ fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
                 color = Color.White,
                 shadowElevation = 4.dp
             ){
+                if(employees.isEmpty()){
+                    Box(modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center){
+                        Text("Nema rezultata. ", color = Color.Gray)
+                    }
+                }
                 LazyColumn(
                     contentPadding = PaddingValues(top = 10.dp, start = 10.dp, end = 10.dp, bottom = 16.dp)                    ){
                     itemsIndexed(employees) { index, employee ->

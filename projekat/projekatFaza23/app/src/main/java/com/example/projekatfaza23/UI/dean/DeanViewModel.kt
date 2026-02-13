@@ -49,6 +49,9 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
     private val _employees = MutableStateFlow<List<UserEntity>>(emptyList())
     val employees: StateFlow<List<UserEntity>> = _employees.asStateFlow()
 
+    private val _employeeSearchQuery = MutableStateFlow("")
+    val employeeSearchQuery = _employeeSearchQuery.asStateFlow()
+
     val filteredRequests: StateFlow<List<LeaveRequest>> = combine(
         _uiState,
         _filterStatus,
@@ -89,6 +92,24 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
         initialValue = emptyList()
     )
 
+    val filteredEmployees: StateFlow<List<UserEntity>> = combine(
+        _employees,
+        _employeeSearchQuery
+    ) { employees, query ->
+        if (query.isBlank()) {
+            employees
+        } else {
+            employees.filter { user ->
+                val fullName = "${user.firstName} ${user.lastName}"
+                fullName.contains(query, ignoreCase = true)
+            }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
     init {
         loadAllRequests()
         loadEmployees()
@@ -112,6 +133,10 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
                     }
                 }
         }
+    }
+
+    fun updateEmployeeSearch(query: String) {
+        _employeeSearchQuery.value = query
     }
 
     private fun loadEmployees() {
