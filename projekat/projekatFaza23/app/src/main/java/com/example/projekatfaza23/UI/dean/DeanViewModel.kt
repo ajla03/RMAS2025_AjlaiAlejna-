@@ -47,10 +47,9 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
     val selectedRequest : StateFlow<LeaveRequest?> = _selectedRequest.asStateFlow()
 
     private val _employees = MutableStateFlow<List<UserEntity>>(emptyList())
-    val employees: StateFlow<List<UserEntity>> = _employees.asStateFlow()
-
     private val _employeeSearchQuery = MutableStateFlow("")
     val employeeSearchQuery = _employeeSearchQuery.asStateFlow()
+
 
     val filteredRequests: StateFlow<List<LeaveRequest>> = combine(
         _uiState,

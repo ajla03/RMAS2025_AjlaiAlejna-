@@ -2,6 +2,7 @@ package com.example.projekatfaza23.UI.dean
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,9 +64,16 @@ import com.example.projekatfaza23.data.db.UserEntity
 import kotlin.random.Random
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.launch
+import java.lang.StrictMath.abs
 
 val avatarColors = listOf(
     Color(0xFF2196F3),
@@ -77,15 +85,20 @@ val avatarColors = listOf(
     Color(0xFF3F51B5)
 )
 
+fun getAvatarColor(email: String): Color {
+    val index = abs(email.hashCode()) %  avatarColors.size
+    return avatarColors[index]
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
 
     val employees by viewModel.filteredEmployees.collectAsStateWithLifecycle()
     val searchQuery by viewModel.employeeSearchQuery.collectAsStateWithLifecycle()
-
+    var selectedEmployee by remember { mutableStateOf<UserEntity?>(null) }
     val focusManager = LocalFocusManager.current
-
+    val sheetState = rememberModalBottomSheetState()
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -182,14 +195,29 @@ fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
                     }
                 }
                 LazyColumn(
-                    contentPadding = PaddingValues(top = 10.dp, start = 10.dp, end = 10.dp, bottom = 16.dp)                    ){
+                    contentPadding = PaddingValues(top = 10.dp, start = 10.dp, end = 10.dp, bottom = 16.dp)                    ) {
                     itemsIndexed(employees) { index, employee ->
-                        EmployeeItem(employee)
+                        EmployeeItem(employee, {
+                            selectedEmployee = employee
+                            focusManager.clearFocus()
+                        })
 
 
                     }
                 }
 
+            }
+
+            if(selectedEmployee!=null){
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        selectedEmployee = null
+                    },
+                    sheetState = sheetState,
+                    containerColor =  Color.White
+                ) {
+                    EmployeeDetailSheet(selectedEmployee!!)
+                }
             }
 
         }
@@ -208,10 +236,11 @@ fun BackIcon(onBack: () -> Unit){
     }
 }
 @Composable
-fun EmployeeItem(employee: UserEntity) {
+fun EmployeeItem(employee: UserEntity, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth()
-            .padding(vertical = 4.dp).padding(horizontal = 4.dp),
+            .padding(vertical = 4.dp).padding(horizontal = 4.dp)
+            .clickable{ onClick() },
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp)
@@ -271,16 +300,40 @@ fun EmployeeItem(employee: UserEntity) {
                     color = Color.Gray
                 )
             }
+          }
         }
     }
-}
 
+@Composable
+fun DetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            color = Color.DarkGray,
+            modifier = Modifier.width(90.dp)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.Black,
+            modifier = Modifier.weight(1f),
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
 @Composable
 fun InitialsAvatar(employee: UserEntity, initials: String) {
     Surface(
         modifier = Modifier.size(50.dp),
         shape = CircleShape,
-        color = avatarColors[Random(employee.email.hashCode()).nextInt(avatarColors.size)].copy(alpha = 0.8f),
+        color = getAvatarColor(employee.email).copy(alpha = 0.8f),
         contentColor = Color.Black
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -294,6 +347,72 @@ fun InitialsAvatar(employee: UserEntity, initials: String) {
     }
 }
 
+@Composable
+fun InitialsAvatarLarge(initials: String, color: Color) {
+    Surface(
+        modifier = Modifier.size(100.dp),
+        shape = CircleShape,
+        color = color.copy(0.8f),
+        contentColor = Color.White
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(text = initials,
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+fun VacationStatusCard(used: Int, total: Int) {
+    val progress = if (total > 0) used.toFloat() / total.toFloat() else 0f
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFF5F7FA), RoundedCornerShape(12.dp))
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Godišnji odmor",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "$used / $total dana",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF2196F3)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp)),
+            color = if (progress > 0.8f) Color(0xFFFF9800) else Color(0xFF2196F3),
+            trackColor = Color(0xFFE0E0E0),
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "Preostalo: ${total - used} dana",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray,
+            modifier = Modifier.align(Alignment.End)
+        )
+    }
+}
 
 @Composable
 fun FilterButtonCircle(onClick:() -> Unit){
@@ -313,8 +432,78 @@ fun FilterButtonCircle(onClick:() -> Unit){
         }
 
     }
-
 }
+
+@Composable
+fun EmployeeDetailSheet(employee: UserEntity) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        val initials = (employee.firstName.take(1) + employee.lastName.take(1)).uppercase()
+
+        if (!employee.imageUrl.isNullOrBlank()) {
+            SubcomposeAsyncImage(
+                model = employee.imageUrl,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            ) {
+                if (painter.state is AsyncImagePainter.State.Error) {
+                    InitialsAvatarLarge(initials, getAvatarColor(employee.email))
+                } else {
+                    SubcomposeAsyncImageContent()
+                }
+            }
+        } else {
+            InitialsAvatarLarge(initials, getAvatarColor(employee.email))
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(
+            modifier = Modifier.fillMaxWidth(),
+            thickness = 1.dp,
+            color = Color.LightGray.copy(alpha = 0.5f)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "${employee.firstName} ${employee.lastName}",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = employee.userStatus,
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (employee.userStatus == "AtWork") Color(0xFF4CAF50) else Color.Gray,
+            fontWeight = FontWeight.Medium
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.Start
+        ) {
+            DetailRow(label = "Titula:", value = employee.role)
+            DetailRow(label = "Email:", value = employee.email)
+            DetailRow(label = "Telefon:", value = "+387 61 123 456")
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            VacationStatusCard(used = employee.usedDays, total = employee.totalDays)
+        }
+
+        Spacer(modifier = Modifier.height(40.dp))
+    }
+}
+
 
 @Preview
 @Composable
