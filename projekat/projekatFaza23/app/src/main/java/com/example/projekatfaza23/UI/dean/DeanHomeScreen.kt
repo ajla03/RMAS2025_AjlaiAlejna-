@@ -88,6 +88,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.SemanticsProperties.ImeAction
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
@@ -177,16 +178,10 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
         viewModel.resetSelectedRequest()
     }
 */
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var showFilterSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
-
-    val searchName by viewModel.searchName.collectAsState()
-    val dateRange by viewModel.filterDateRange.collectAsState()
-    val requestToDisplay by viewModel.filteredRequests.collectAsState()
-    val selectedStatusChip by viewModel.filterStatus.collectAsState()
-
     var showProfileDialog by remember { mutableStateOf(false) }
     val user = UserManager.currentUser.collectAsState().value
 
@@ -271,7 +266,7 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
                 items(filters){filter ->
                     FilterChipItem(
                         text = filter,
-                        selected = selectedStatusChip == filterMap[filter]!!,
+                        selected = (uiState.filterStatus) == filterMap[filter]!!,
                         onClick = {
                             viewModel.setStatusFilter(filterMap[filter]!!)
                         }
@@ -291,7 +286,7 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(bottom = 80.dp)
                 ) {
-                    items(requestToDisplay) { request ->
+                    items(uiState.displayRequests) { request ->
                         RequestCardDean(request, navigateRequest, {viewModel.setSelectedRequest(it)})
                     }
                 }
@@ -316,13 +311,12 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
                 sheetState = sheetState,
 
             ) { FilterBottomSheetContent(
-                currentName = searchName,
-                currentStartMillis = dateRange.first,
-                currentEndMillis = dateRange.second,
+                currentName = uiState.searchQuery,
+                currentStartMillis = uiState.dateRange.first,
+                currentEndMillis = uiState.dateRange.second,
                 onNameChange = { viewModel.updateNameFilter(it) },
                 onDateRangeChange = { start, end -> viewModel.updateDateRangeFilter(start, end) },
-                onApply = { viewModel.checkActiveFilter()
-                            showFilterSheet = false }
+                onApply = { showFilterSheet = false }
             )}
         }
     }

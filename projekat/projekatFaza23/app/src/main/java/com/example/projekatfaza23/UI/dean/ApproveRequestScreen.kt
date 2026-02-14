@@ -63,13 +63,16 @@ val primaryColor = Color(0xFF004D61)
 /* TODO - make prettier screen, adjust spacing */ 
 @Composable
 fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
-    val selectedRequest by viewModel.selectedRequest.collectAsState()
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val selectedRequest = uiState.selectedRequest
 
     if (selectedRequest == null) {
         return
     }
 
-    val employees by viewModel.filteredEmployees.collectAsStateWithLifecycle()
+    val employees = uiState.employees
+
     val requestAuthor = remember(selectedRequest, employees) {
         employees.find { it.email == selectedRequest?.userEmail }
     }

@@ -1,5 +1,6 @@
 package com.example.projekatfaza23.UI.dean
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -94,8 +95,8 @@ fun getAvatarColor(email: String): Color {
 @Composable
 fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
 
-    val employees by viewModel.filteredEmployees.collectAsStateWithLifecycle()
-    val searchQuery by viewModel.employeeSearchQuery.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     var selectedEmployee by remember { mutableStateOf<UserEntity?>(null) }
     val focusManager = LocalFocusManager.current
     val sheetState = rememberModalBottomSheetState()
@@ -107,9 +108,14 @@ fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
     ) { uri ->
         if (uri != null) {
             scope.launch {
-                exportEmployeesToPdf(context, uri, employees)
+                exportEmployeesToPdf(context, uri, uiState.displayedEmployees)
             }
         }
+    }
+
+    BackHandler{
+        viewModel.resetEmployeeSearchQuery()
+        navigateHome()
     }
 
     Scaffold (
@@ -142,7 +148,10 @@ fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
             Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically){
 
-                BackIcon(navigateHome)
+                BackIcon({
+                    viewModel.resetEmployeeSearchQuery()
+                    navigateHome()
+                })
                 Spacer(modifier = Modifier.width(12.dp))
 
 
@@ -161,7 +170,7 @@ fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextField(
-                    value = searchQuery,
+                    value = uiState.employeeSearchQuery,
                     onValueChange = { newValue -> viewModel.updateEmployeeSearch(newValue)},
                     placeholder = {Text("Pretraži zaposlene...", color = Color.Gray)},
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)},
@@ -189,7 +198,7 @@ fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
                 color = Color.White,
                 shadowElevation = 4.dp
             ){
-                if(employees.isEmpty()){
+                if(uiState.displayedEmployees.isEmpty()){
                     Box(modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center){
                         Text("Nema rezultata. ", color = Color.Gray)
@@ -197,7 +206,7 @@ fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
                 }
                 LazyColumn(
                     contentPadding = PaddingValues(top = 10.dp, start = 10.dp, end = 10.dp, bottom = 16.dp)                    ) {
-                    itemsIndexed(employees) { index, employee ->
+                    itemsIndexed(uiState.displayedEmployees) { index, employee ->
                         EmployeeItem(employee, {
                             selectedEmployee = employee
                             focusManager.clearFocus()
