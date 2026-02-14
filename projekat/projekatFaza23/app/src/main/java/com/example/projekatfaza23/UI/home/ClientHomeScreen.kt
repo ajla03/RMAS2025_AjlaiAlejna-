@@ -122,6 +122,7 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel,
         UserMenu(
             isOpen = isMenuOpen,
             userName = "${user?.name ?: ""} ${user?.lastName ?: ""}",
+            userEmail = user?.email ?: "",
             userProfilePhoto = user?.profilePictureURL,
             onDismiss = {isMenuOpen = false},
             navigateLogout = navigateLogout
