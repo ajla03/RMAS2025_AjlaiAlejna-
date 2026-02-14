@@ -177,9 +177,10 @@ fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.width(12.dp))
 
-                FilterButtonCircle({})
+                /* Zakomentarisan filter button - nemamo po cemu filtrirati trenutno */
+                //Spacer(modifier = Modifier.width(12.dp))
+                //FilterButtonCircle({})
             }
             //lista
             Surface(

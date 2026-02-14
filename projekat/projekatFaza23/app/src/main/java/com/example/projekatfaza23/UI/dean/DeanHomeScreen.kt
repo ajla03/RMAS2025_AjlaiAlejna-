@@ -229,7 +229,7 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
                 IconButton(onClick = { showProfileDialog = true }) {
                     DeanProfileAvatar(
                         imageUrl = user?.profilePictureURL.toString(),
-                        name = (user?.name?: "") + " " + (user?.lastName ?: ""),
+                        email = user?.email ?: "",
                         modifier = Modifier.size(40.dp)
                             .border( 
                                 width = 1.5.dp,
@@ -699,7 +699,7 @@ fun DeanProfileDialog(onDismiss: () -> Unit,
 
                 DeanProfileAvatar(
                     imageUrl = imageUrl,
-                    name = deanName,
+                    email = deanEmail,
                     modifier = Modifier.size(80.dp),
                     fontSize = 28.sp
                 )
@@ -760,15 +760,8 @@ fun DeanProfileDialog(onDismiss: () -> Unit,
 }
 
 @Composable
-fun DeanProfileAvatar(imageUrl: String?, name: String, modifier: Modifier, fontSize: androidx.compose.ui.unit.TextUnit){
-    val names = name.trim().split(" ")
-    val initials = if (names.isNotEmpty()) {
-        val first = names.first().take(1)
-        val last = if (names.size > 1) names.last().take(1) else ""
-        (first + last).uppercase()
-    } else {
-        ""
-    }
+fun DeanProfileAvatar(imageUrl: String?, email: String, modifier: Modifier, fontSize: androidx.compose.ui.unit.TextUnit){
+    val initials = extractInitials(email)
 
     if (!imageUrl.isNullOrBlank()) {
         SubcomposeAsyncImage(
@@ -781,20 +774,20 @@ fun DeanProfileAvatar(imageUrl: String?, name: String, modifier: Modifier, fontS
             if (state is AsyncImagePainter.State.Loading) {
                 CircularProgressIndicator(modifier = Modifier.padding(2.dp))
             } else if (state is AsyncImagePainter.State.Error) {
-                InitialsAvatarBackground(name = name, initials = initials, modifier = modifier, fontSize = fontSize)
+                InitialsAvatarBackground(email = email, initials = initials, modifier = modifier, fontSize = fontSize)
             } else {
                 SubcomposeAsyncImageContent()
             }
         }
     } else {
-        InitialsAvatarBackground(name = name, initials = initials, modifier = modifier, fontSize = fontSize)
+        InitialsAvatarBackground(email = email, initials = initials, modifier = modifier, fontSize = fontSize)
     }
 }
 
 
 @Composable
 fun InitialsAvatarBackground(
-    name: String,
+    email: String,
     initials: String,
     modifier: Modifier,
     fontSize: androidx.compose.ui.unit.TextUnit
@@ -802,7 +795,7 @@ fun InitialsAvatarBackground(
     Surface(
         modifier = modifier,
         shape = CircleShape,
-        color = getAvatarColor(name).copy(alpha = 0.8f),
+        color = getAvatarColor(email).copy(alpha = 0.8f),
         contentColor = Color.White
     ) {
         Box(contentAlignment = Alignment.Center) {

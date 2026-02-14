@@ -39,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projekatfaza23.UI.home.TopAppBarSection
 import com.example.projekatfaza23.UI.request.RequestHeader
@@ -65,6 +67,11 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
 
     if (selectedRequest == null) {
         return
+    }
+
+    val employees by viewModel.filteredEmployees.collectAsStateWithLifecycle()
+    val requestAuthor = remember(selectedRequest, employees) {
+        employees.find { it.email == selectedRequest?.userEmail }
     }
 
     val request = selectedRequest!!
@@ -87,7 +94,7 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
             verticalArrangement = Arrangement.spacedBy(24.dp)) {
             Spacer(modifier = Modifier.height(4.dp))
 
-            UserProfileHeader(selectedRequest?.userEmail ?: "")
+            UserProfileHeader(selectedRequest?.userEmail ?: "", imageUrl = requestAuthor?.imageUrl.toString())
             Divider(color = Color.LightGray.copy(0.5f), thickness = 1.dp)
 
             RequestDetailsCard(request = request)
@@ -312,21 +319,19 @@ fun EmployeeCommentBox(comment: String) {
     }
 }
 @Composable
-fun UserProfileHeader(email: String) {
+fun UserProfileHeader(email: String, imageUrl: String?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Surface(
             shape = CircleShape,
             color = primaryColor.copy(alpha = 0.2f),
             modifier = Modifier.size(56.dp)
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    extractInitials(email),
-                    color = primaryColor,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
-            }
+            DeanProfileAvatar(
+                imageUrl = imageUrl,
+                email = email,
+                modifier = Modifier.size(40.dp),
+                fontSize = 18.sp
+            )
         }
         Spacer(modifier = Modifier.width(16.dp))
 

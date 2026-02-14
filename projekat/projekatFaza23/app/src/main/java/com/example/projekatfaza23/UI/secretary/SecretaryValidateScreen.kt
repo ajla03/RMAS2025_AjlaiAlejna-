@@ -86,7 +86,7 @@ fun SecretaryValidateScreen(navigateHome: () -> Unit){
         ){
             Spacer(modifier = Modifier.height(8.dp))
 
-            UserProfileHeader("ajla.bulic@fet.ba")
+            UserProfileHeader("ajla.bulic@fet.ba", null)
             Divider(color = Color.LightGray.copy(0.5f), thickness = 1.dp)
 
             RequestDetailsCard(request)
