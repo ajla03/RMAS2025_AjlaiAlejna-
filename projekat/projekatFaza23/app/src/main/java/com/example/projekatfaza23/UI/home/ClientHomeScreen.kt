@@ -88,8 +88,8 @@ val ErrorColor = Color(0xFFC62828)
 val TextDark = Color(0xFF1A1C1E)
 @Composable
 fun ClientHomeScreen(viewModel: InboxRequestViewModel,
-                     //TODO dodaj logout lambdu
-                     createNewRequest : () -> Unit) {
+                     createNewRequest : () -> Unit,
+                     navigateLogout: () -> Unit) {
 
     val uiState by viewModel.uiState.collectAsState()
     val currentFilter by viewModel.currentFilter.collectAsState()
@@ -124,8 +124,7 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel,
             userName = "${user?.name ?: ""} ${user?.lastName ?: ""}",
             userProfilePhoto = user?.profilePictureURL,
             onDismiss = {isMenuOpen = false},
-            //TODO
-            navigateLogout = {}
+            navigateLogout = navigateLogout
         )
 
     }
