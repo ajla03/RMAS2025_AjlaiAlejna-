@@ -1,7 +1,7 @@
 package com.example.projekatfaza23.UI.home
 import android.net.Uri
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,11 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
@@ -37,7 +32,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -68,16 +62,11 @@ import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import com.example.projekatfaza23.UI.dean.primaryColor
 import com.example.projekatfaza23.UI.request.InboxRequestViewModel
-import com.example.projekatfaza23.model.LeaveDates
-import com.google.firebase.Timestamp
-import java.util.Date
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChildFriendly
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Healing
-import androidx.compose.material.icons.filled.HighlightOff
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalHospital
 import androidx.compose.material.icons.filled.MoneyOff
@@ -87,10 +76,11 @@ import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.projekatfaza23.UI.dean.getMockRequests
 import com.example.projekatfaza23.UI.request.RequestType
-import okhttp3.internal.format
+import com.example.projekatfaza23.UI.profile.UserMenu
 
 val SuccessColor = Color(0xFF2E7D32)
 val WarningColor = Color(0xFFEF6C00)
@@ -98,23 +88,47 @@ val ErrorColor = Color(0xFFC62828)
 val TextDark = Color(0xFF1A1C1E)
 @Composable
 fun ClientHomeScreen(viewModel: InboxRequestViewModel,
+                     //TODO dodaj logout lambdu
                      createNewRequest : () -> Unit) {
+
     val uiState by viewModel.uiState.collectAsState()
     val currentFilter by viewModel.currentFilter.collectAsState()
     val requests = viewModel.getFilteredRequests()
     val user = UserManager.currentUser.collectAsState().value
 
+    var isMenuOpen by remember { mutableStateOf(false) }
+    val blurRadius by animateDpAsState(targetValue = if (isMenuOpen) 12.dp else 0.dp)
 
-    ClientHomeScreenContent(
-        remainingDays = uiState.remainingLeaveDays,
-        requests = requests,
-        isLoading = uiState.isLoading,
-        currentFilter = currentFilter,
-        userName = "${user?.name ?: ""} ${user?.lastName ?: ""}",
-        userPhoto = user?.profilePictureURL,
-        onFilterChange = { newFilter -> viewModel.setFilter(newFilter) },
-        onCreateRequest = createNewRequest
-    )
+
+    Box(modifier = Modifier.fillMaxSize()) {
+
+
+        Box(modifier = Modifier.blur(blurRadius)) {
+            ClientHomeScreenContent(
+                remainingDays = uiState.remainingLeaveDays,
+                requests = requests,
+                isLoading = uiState.isLoading,
+                currentFilter = currentFilter,
+                userName = "${user?.name ?: ""} ${user?.lastName ?: ""}",
+                userPhoto = user?.profilePictureURL,
+                onFilterChange = { newFilter -> viewModel.setFilter(newFilter) },
+                onCreateRequest = createNewRequest,
+                isMenuOpen = isMenuOpen,
+                onProfPicClick = {isMenuOpen = true}
+            )
+        }
+
+
+        UserMenu(
+            isOpen = isMenuOpen,
+            userName = "${user?.name ?: ""} ${user?.lastName ?: ""}",
+            userProfilePhoto = user?.profilePictureURL,
+            onDismiss = {isMenuOpen = false},
+            //TODO
+            navigateLogout = {}
+        )
+
+    }
 
 }
 
@@ -128,7 +142,9 @@ fun ClientHomeScreenContent(
     userName: String,
     userPhoto: Uri?,
     onFilterChange: (String) -> Unit,
-    onCreateRequest: () -> Unit
+    onCreateRequest: () -> Unit,
+    isMenuOpen : Boolean,
+    onProfPicClick : () -> Unit
 ){
     Scaffold(
         containerColor = Color(0xFFF5F7FA),
@@ -136,14 +152,16 @@ fun ClientHomeScreenContent(
             TopAppBarSection()
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {onCreateRequest()},
-                containerColor = primaryColor,
-                shape = CircleShape,
-                contentColor = Color.White,
-                elevation = FloatingActionButtonDefaults.elevation(6.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White)
+            if (!isMenuOpen) {
+                FloatingActionButton(
+                    onClick = { onCreateRequest() },
+                    containerColor = primaryColor,
+                    shape = CircleShape,
+                    contentColor = Color.White,
+                    elevation = FloatingActionButtonDefaults.elevation(6.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White)
+                }
             }
         },
         bottomBar = {
@@ -160,7 +178,7 @@ fun ClientHomeScreenContent(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            ProfileHeader(userName, userPhoto, remainingDays)
+            ProfileHeader(userName, userPhoto, remainingDays, onProfPicClick)
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -279,7 +297,7 @@ fun TopAppBarSection(){
 }
 
 @Composable
-fun ProfileHeader(userName: String, userPhoto: Uri?, remainingDays: Int) {
+fun ProfileHeader(userName: String, userPhoto: Uri?, remainingDays: Int, onProfPicClick: () -> Unit) {
 Column (verticalArrangement = Arrangement.spacedBy(20.dp)){
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -292,6 +310,7 @@ Column (verticalArrangement = Arrangement.spacedBy(20.dp)){
             error = painterResource(R.drawable.no_photo),
             modifier = Modifier.size(60.dp).clip(CircleShape)
                 .border(1.dp, Color.LightGray, CircleShape)
+                .clickable{onProfPicClick()}
         )
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -488,7 +507,9 @@ fun ClientHomePreviewNew() {
             userName = "Alejna Hodzic",
             userPhoto = null,
             onFilterChange = {},
-            onCreateRequest = {}
+            onCreateRequest = {},
+            isMenuOpen = false,
+            onProfPicClick = {}
         )
     }
 }

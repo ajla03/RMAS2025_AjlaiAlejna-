@@ -40,12 +40,13 @@ class GoogleAuth(private val context: Context) {
             val googleTokenCredentialData = GoogleIdTokenCredential.createFrom(result.credential.data)
             Log.d("test##", "slika: ${googleTokenCredentialData.profilePictureUri}")
 
+
             val profile = UserProfile(
                 name = googleTokenCredentialData.givenName ?: throw Exception("Google Login failed: Name missing"),
                 lastName = googleTokenCredentialData.familyName ?: throw Exception("Google Login failed"),
                 email = googleTokenCredentialData.id,
                 profilePictureURL = googleTokenCredentialData.profilePictureUri,
-                //TODO provjeri ima li i broj telefona kod Ajle
+                //TODO nema broja telefona!
                 phoneNumber = null,
                 idToken = googleTokenCredentialData.idToken
             )
