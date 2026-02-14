@@ -4,6 +4,7 @@ import android.R
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +35,8 @@ import com.example.projekatfaza23.model.LeaveDates
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
@@ -44,6 +47,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -69,6 +73,7 @@ import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Date
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
@@ -79,9 +84,15 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.SemanticsProperties.ImeAction
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
+import com.example.projekatfaza23.data.auth.UserManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.compose
 import java.util.Locale
@@ -158,7 +169,7 @@ val filterMap = mapOf(
 //main screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navigateRequest: () -> Unit){
+fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navigateRequest: () -> Unit, onLogoutClick: () -> Unit){
 /*
      mozda cemo trebati ako se podaci budu fetchali sa interneta kada kliknemo na request
     LaunchedEffect(Unit) {
@@ -176,8 +187,12 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
     val requestToDisplay by viewModel.filteredRequests.collectAsState()
     val selectedStatusChip by viewModel.filterStatus.collectAsState()
 
+    var showProfileDialog by remember { mutableStateOf(false) }
+    val user = UserManager.currentUser.collectAsState().value
+
     Scaffold(
-        topBar =  {TopAppBarSection()},
+        topBar =  {
+            TopAppBarSection()},
         containerColor = Color(0xFFF5F7FA),
         floatingActionButton = {
             FloatingActionButton(
@@ -198,15 +213,36 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
                 .padding(horizontal = 16.dp)
         ){
             Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Lista zahtjeva",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Lista zahtjeva",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+
+                IconButton(onClick = { showProfileDialog = true }) {
+                    DeanProfileAvatar(
+                        imageUrl = user?.profilePictureURL.toString(),
+                        name = (user?.name?: "") + " " + (user?.lastName ?: ""),
+                        modifier = Modifier.size(40.dp)
+                            .border( 
+                                width = 1.5.dp,
+                                color = Color.Gray,
+                                shape = CircleShape
+                            ),
+                        fontSize = 16.sp
+                    )
+                }
+            }
 
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(26.dp))
 
             //status filteri
             LazyRow (
@@ -243,7 +279,7 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(22.dp))
 
             //lista zahtjeva
             if(uiState.isLoading) {
@@ -261,6 +297,19 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
                 }
             }
         }
+
+        if (showProfileDialog) {
+            DeanProfileDialog(
+                deanName = (user?.name ?: "") + " " + (user?.lastName ?: ""),
+                deanEmail = (user?.email ?: ""),
+                onDismiss = { showProfileDialog = false },
+                imageUrl = user?.profilePictureURL.toString(),
+                onLogout = {
+                    showProfileDialog = false
+                    onLogoutClick() }
+            )
+        }
+
         if(showFilterSheet){
             ModalBottomSheet(
                 onDismissRequest = {showFilterSheet = false},
@@ -628,8 +677,148 @@ fun FilterChipItem(text: String, selected : Boolean, onClick: () -> Unit) {
 
 }
 
+
+
+@Composable
+fun DeanProfileDialog(onDismiss: () -> Unit,
+                      onLogout: () -> Unit,
+                      deanName : String,
+                      deanEmail: String ,
+                      imageUrl: String?){
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                DeanProfileAvatar(
+                    imageUrl = imageUrl,
+                    name = deanName,
+                    modifier = Modifier.size(80.dp),
+                    fontSize = 28.sp
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = deanName,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                Text(
+                    text = deanEmail,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
+
+                Text(
+                    text = "Uloga: Dekan",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF1E2A47),
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onLogout,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFFEBEE),
+                        contentColor = Color(0xFFC62828)
+                    ),
+                    shape = RoundedCornerShape(50),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Odjavi se", fontWeight = FontWeight.SemiBold)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TextButton(onClick = onDismiss) {
+                    Text("Zatvori", color = Color.Gray)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DeanProfileAvatar(imageUrl: String?, name: String, modifier: Modifier, fontSize: androidx.compose.ui.unit.TextUnit){
+    val names = name.trim().split(" ")
+    val initials = if (names.isNotEmpty()) {
+        val first = names.first().take(1)
+        val last = if (names.size > 1) names.last().take(1) else ""
+        (first + last).uppercase()
+    } else {
+        ""
+    }
+
+    if (!imageUrl.isNullOrBlank()) {
+        SubcomposeAsyncImage(
+            model = imageUrl,
+            contentDescription = "Profile Picture",
+            modifier = modifier.clip(CircleShape),
+            contentScale = ContentScale.Crop
+        ) {
+            val state = painter.state
+            if (state is AsyncImagePainter.State.Loading) {
+                CircularProgressIndicator(modifier = Modifier.padding(2.dp))
+            } else if (state is AsyncImagePainter.State.Error) {
+                InitialsAvatarBackground(name = name, initials = initials, modifier = modifier, fontSize = fontSize)
+            } else {
+                SubcomposeAsyncImageContent()
+            }
+        }
+    } else {
+        InitialsAvatarBackground(name = name, initials = initials, modifier = modifier, fontSize = fontSize)
+    }
+}
+
+
+@Composable
+fun InitialsAvatarBackground(
+    name: String,
+    initials: String,
+    modifier: Modifier,
+    fontSize: androidx.compose.ui.unit.TextUnit
+) {
+    Surface(
+        modifier = modifier,
+        shape = CircleShape,
+        color = getAvatarColor(name).copy(alpha = 0.8f),
+        contentColor = Color.White
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = initials,
+                style = MaterialTheme.typography.labelLarge,
+                fontSize = fontSize,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun HRAppPreview() {
-    DeanHomeScreen(viewModel(),{},{})
+    DeanHomeScreen(viewModel(), {}, {}, {})
+
 }

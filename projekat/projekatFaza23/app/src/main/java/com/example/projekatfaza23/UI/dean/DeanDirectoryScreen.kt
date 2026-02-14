@@ -493,7 +493,7 @@ fun EmployeeDetailSheet(employee: UserEntity) {
         ) {
             DetailRow(label = "Titula:", value = employee.role)
             DetailRow(label = "Email:", value = employee.email)
-            DetailRow(label = "Telefon:", value = "+387 61 123 456")
+            //DetailRow(label = "Telefon:", value = "+387 61 123 456")
 
             Spacer(modifier = Modifier.height(24.dp))
 

@@ -48,7 +48,17 @@ fun AppNavigation (navController : NavHostController) {
         composable<Screen.DeanHome>{
             DeanHomeScreen(viewModel = sharedDeanViewModel,
                 navigateDirectory = {navController.navigate((Screen.DeanDirectory))},
-                navigateRequest = {navController.navigate(Screen.ApproveRequestScreen)})
+                navigateRequest = {navController.navigate(Screen.ApproveRequestScreen)},
+                onLogoutClick = {
+                    navController.navigate(Screen.Login){
+                        // brisemo sve sa stacka
+                        popUpTo(navController.graph.id){
+                            inclusive = true
+                        }
+                        // da se sprijeci kreiranje visestrukih login ekrana
+                        launchSingleTop = true
+                    }
+                })
         }
 
         composable<Screen.DeanDirectory>{
