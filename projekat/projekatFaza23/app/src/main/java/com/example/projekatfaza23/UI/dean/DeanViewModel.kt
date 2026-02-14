@@ -23,12 +23,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.internal.ignoreIoExceptions
 import kotlinx.coroutines.flow.combine
-data class DeanUIState(
-    val requests: List<LeaveRequest> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val isActiveFilter : Boolean = false
-)
+import kotlinx.coroutines.flow.distinctUntilChanged
+
 
 class DeanViewModel(application: Application): AndroidViewModel(application) {
     private val leaveDao = AppDatabase.getInstance(application).leaveDao()
@@ -36,106 +32,41 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(DeanUIState(isLoading = true))
     val uiState: StateFlow<DeanUIState> = _uiState.asStateFlow()
 
-    private val _filterStatus = MutableStateFlow("All")
-    val filterStatus : StateFlow<String> = _filterStatus.asStateFlow()
-    private val _searchName = MutableStateFlow("")
-    val searchName: StateFlow<String> = _searchName.asStateFlow()
-    private val _filterDateRange = MutableStateFlow<Pair<Long?, Long?>>(null to null)
-    val filterDateRange: StateFlow<Pair<Long?, Long?>> = _filterDateRange.asStateFlow()
-
-    private val _selectedRequest = MutableStateFlow<LeaveRequest?>(null)
-    val selectedRequest : StateFlow<LeaveRequest?> = _selectedRequest.asStateFlow()
-
-    private val _employees = MutableStateFlow<List<UserEntity>>(emptyList())
-    private val _employeeSearchQuery = MutableStateFlow("")
-    val employeeSearchQuery = _employeeSearchQuery.asStateFlow()
-
-
-    val filteredRequests: StateFlow<List<LeaveRequest>> = combine(
-        _uiState,
-        _filterStatus,
-        _searchName,
-        _filterDateRange
-    ) { state, status, name, dateRange ->
-
-        state.requests.filter { request ->
-            // 1. Status Filter
-            val matchStatus = if (status == "All") true else request.status.name.equals(status, ignoreCase = true)
-            val matchName = if (name.isBlank()) {true}
-            else {
-                val fullName = name.trim().split("\\s+".toRegex()) //hvata i brise prazna mjesta
-                fullName.all {
-                    term -> request.userEmail.contains(term, ignoreCase = true)
-                }
-            }
-
-            val (filterStart, filterEnd) = dateRange
-            val matchDate = if (filterStart == null || filterEnd == null) {
-                true // ako nije odabran datum prikazat ce sve
-            } else {
-                val requestRange = request.leave_dates?.firstOrNull()
-                val reqStart = requestRange?.start?.seconds?.times(1000)
-                val reqEnd = requestRange?.end?.seconds?.times(1000)
-
-                if (reqStart != null && reqEnd != null) {
-                    (reqStart >= filterStart) && (reqEnd <= filterEnd)
-                } else {
-                    false
-                }
-            }
-            matchStatus && matchName && matchDate
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
-
-    val filteredEmployees: StateFlow<List<UserEntity>> = combine(
-        _employees,
-        _employeeSearchQuery
-    ) { employees, query ->
-        if (query.isBlank()) {
-            employees
-        } else {
-            employees.filter { user ->
-                val fullName = "${user.firstName} ${user.lastName}"
-                fullName.contains(query, ignoreCase = true)
-            }
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
 
     init {
         loadAllRequests()
         loadEmployees()
     }
 
-    private fun loadAllRequests(){
+    private fun loadAllRequests() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
             _repository.getAllRequests()
-                .catch { error ->
-                    _uiState.update { it.copy(isLoading = false, error = error.message) }
-                }.collect { novaLista ->
-                    Log.d("nova lista", "${novaLista.size}")
-                    _uiState.update {
-                            currentState ->
-                        currentState.copy(
-                            requests = novaLista
-                                .sortedBy { it.leave_dates?.firstOrNull()?.start?.seconds ?: 0L },
-                            isLoading = false
-                        )
+                .catch { e ->
+                    Log.e("DeanVM", "Error loading requests", e)
+                    _uiState.update { it.copy(isLoading = false, error = e.message) }
+                }
+                .collect { requests ->
+                    _uiState.update { currentState ->
+                        val newState = currentState.copy(requests = requests, isLoading = false)
+                        applyFilters(newState)
                     }
                 }
         }
     }
 
     fun updateEmployeeSearch(query: String) {
-        _employeeSearchQuery.value = query
+        _uiState.update { currentState ->
+            val filteredEmp = if (query.isBlank()) currentState.employees
+            else currentState.employees.filter {
+                it.firstName.contains(query, ignoreCase = true) ||
+                        it.lastName.contains(query, ignoreCase = true)
+            }
+
+            currentState.copy(
+                employeeSearchQuery = query,
+                displayedEmployees = filteredEmp
+            )
+        }
     }
 
     private fun loadEmployees() {
@@ -145,17 +76,70 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
                     Log.e("DeanViewModel", "Error loading employees", error)
                 }
                 .collect { usersList ->
-                    _employees.value = usersList
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            employees = usersList,
+                            displayedEmployees = usersList
+                        )
+                    }
                 }
         }
     }
 
+    private fun applyFilters(state: DeanUIState): DeanUIState {
+        val filtered = state.requests.filter { req ->
+            val matchesStatus = if (state.filterStatus == "All") true
+            else req.status.name.equals(state.filterStatus, ignoreCase = true)
+
+            val matchesName = if (state.searchQuery.isBlank()) true
+            else {
+                val query = state.searchQuery.trim()
+                val queryParts = query.split("\\s+".toRegex())
+
+                // trazimo u zaposlenim
+                val matchingEmails = state.employees.filter { employee ->
+                    val fullName = "${employee.firstName} ${employee.lastName}"
+
+                    queryParts.all { part ->
+                        fullName.contains(part, ignoreCase = true)
+                    }
+                }.map { it.email }.toSet()
+
+                val isNameMatch = req.userEmail in matchingEmails
+
+                val isEmailMatch = queryParts.all { part ->
+                    req.userEmail.contains(part, ignoreCase = true)
+                }
+                isNameMatch || isEmailMatch
+            }
+            val (start, end) = state.dateRange
+            val matchesDate = if (start == null || end == null) true
+            else {
+                val reqStart = req.leave_dates?.firstOrNull()?.start?.seconds?.times(1000) ?: 0L
+                val reqEnd = req.leave_dates?.firstOrNull()?.end?.seconds?.times(1000) ?: 0L
+                reqStart >= start && reqEnd <= end
+            }
+
+            matchesStatus && matchesName && matchesDate
+        }
+
+        val isFilterActive = state.searchQuery.isNotBlank() ||
+                state.dateRange.first != null
+
+        return state.copy(
+            displayRequests = filtered,
+            isActiveFilter = isFilterActive
+        )
+    }
+
+
     fun setExplanationDean(explanationText : String){
-        _selectedRequest.update{
-            currentRequest ->
-            currentRequest?.copy(explanationDean = explanationText)
+        _uiState.update { currentState ->
+            val updatedRequest = currentState.selectedRequest?.copy(explanationDean = explanationText)
+            currentState.copy(selectedRequest = updatedRequest)
         }
     }
+
     fun approveRequest(request: LeaveRequest){
         viewModelScope.launch {
             _repository.updateReqeust(request.id, RequestSatus.Approved,request.explanationDean)
@@ -171,37 +155,54 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
     }
 
     fun resetSelectedRequest(){
-        _selectedRequest.value = null
+        _uiState.update { it.copy(selectedRequest = null) }
     }
 
     fun setSelectedRequest(request: LeaveRequest){
-        _selectedRequest.value = request
+        _uiState.update { it.copy(selectedRequest = request) }
     }
 
     //filtriranje funckije
     fun setStatusFilter(status: String){
-        _filterStatus.value = status
-    }
+        _uiState.update { currentState ->
+            val newState = currentState.copy(filterStatus = status)
+            applyFilters(newState)
+        }    }
 
 
     fun updateNameFilter(name : String){
-        _searchName.value = name
+        _uiState.update { currentState ->
+            val newState = currentState.copy(searchQuery = name)
+            applyFilters(newState)
+        }
     }
 
     fun updateDateRangeFilter(startMillis: Long?, endMillis: Long?){
-        _filterDateRange.value = startMillis to endMillis
+        _uiState.update { currentState ->
+            val newState = currentState.copy(dateRange = startMillis to endMillis)
+            applyFilters(newState)
+        }
     }
 
     fun resetFilters(){
-        _filterDateRange.value = null to null
-        _searchName.value = ""
-        _uiState.update { it.copy( isActiveFilter = false) }
+        _uiState.update { currentState ->
+            val newState = currentState.copy(
+                filterStatus = "All",
+                dateRange = null to null,
+                searchQuery = ""
+            )
+            applyFilters(newState)
+        }
     }
 
-    fun checkActiveFilter(){
-        val hasName = _searchName.value.isNotBlank()
-        val hasDate = _filterDateRange.value.first!=null
-        _uiState.update { it.copy(isActiveFilter = hasDate || hasName) }
+    fun resetEmployeeSearchQuery(){
+        _uiState.update { currentState ->
+          currentState.copy(
+                employeeSearchQuery =  "",
+                displayedEmployees = currentState.employees
+            )
+        }
     }
+
 
 }
