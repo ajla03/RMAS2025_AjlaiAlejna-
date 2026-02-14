@@ -21,5 +21,10 @@ sealed interface Screen {
     @Serializable
     object ApproveRequestScreen : Screen
 
+    @Serializable
+    object SecretaryHomeScreen : Screen
+
+    @Serializable
+    object SecretaryValidateScreen : Screen
 
 }

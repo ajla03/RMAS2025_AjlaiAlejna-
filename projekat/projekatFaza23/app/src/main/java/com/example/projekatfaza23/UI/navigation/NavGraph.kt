@@ -13,11 +13,15 @@ import com.example.projekatfaza23.UI.home.ClientHomeScreen
 import com.example.projekatfaza23.UI.request.InboxRequestViewModel
 import com.example.projekatfaza23.UI.login.LoginScreen
 import com.example.projekatfaza23.UI.request.NewRequestScreen
+import com.example.projekatfaza23.UI.secretary.SecretaryHomeScreen
+import com.example.projekatfaza23.UI.secretary.SecretaryValidateScreen
+import com.example.projekatfaza23.UI.secretary.SecretaryViewModel
 
 @Composable
 fun AppNavigation (navController : NavHostController) {
     val sharedViewModel : InboxRequestViewModel = viewModel()
     val sharedDeanViewModel : DeanViewModel = viewModel()
+    val sharedSecretaryViewModel : SecretaryViewModel = viewModel()
 
     NavHost (
         navController = navController,
@@ -70,6 +74,13 @@ fun AppNavigation (navController : NavHostController) {
             ApproveRequestScreen(sharedDeanViewModel, navigateHome = {navController.popBackStack()})
         }
 
+        composable<Screen.SecretaryHomeScreen>{
+            SecretaryHomeScreen(sharedSecretaryViewModel, onLogoutClicked = {navController.popBackStack()}, onNavigateToValidate = {navController.navigate(Screen.SecretaryValidateScreen)})
+        }
+
+        composable<Screen.SecretaryValidateScreen>{
+            SecretaryValidateScreen(sharedSecretaryViewModel, navigateHome = {navController.popBackStack()})
+        }
 
     }
 }

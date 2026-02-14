@@ -5,9 +5,11 @@ import android.view.Surface
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -19,6 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -28,13 +31,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projekatfaza23.UI.dean.RequestDetailsCard
 import com.example.projekatfaza23.UI.dean.UserProfileHeader
 import com.example.projekatfaza23.UI.dean.primaryColor
@@ -43,37 +51,38 @@ import com.example.projekatfaza23.UI.request.RequestHeader
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 
-/* TODO : VIEW MODEL ZA SEKRETARA */
-
-data class UserStats(val totalDays: Int, val usedDays: Int, val remainingDays: Int)
 
 @Composable
-fun SecretaryValidateScreen(navigateHome: () -> Unit){
-    val request = LeaveRequest(type = "Godisnji odmor", status = RequestSatus.Pending)
+fun SecretaryValidateScreen(viewModel: SecretaryViewModel, navigateHome: () -> Unit){
 
-    val userStats = UserStats(
-        totalDays = 20,
-        usedDays = 12,
-        remainingDays = 8
-    )
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val daysRequested = 4
-    val balanceAfter = userStats.remainingDays - daysRequested
-    val isNegativeBalace = balanceAfter < 0
+    val request = uiState.selectedRequest
+    val stats = uiState.stats
 
+    if(request == null){
+        Box(modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center){
+            CircularProgressIndicator()
+        }
+        return
+    }
 
     Scaffold(
         containerColor = Color(0xFFF5F7FA),
         topBar = {
             Column {
                 TopAppBarSection()
-                RequestHeader("Validacija zahtjeva", {})
+                RequestHeader("Validacija zahtjeva", { navigateHome() })
             }
         },
         bottomBar = {
             SecretaryBottomBar(
-                onReject = { /* viewModel.rejectRequest() */ navigateHome() },
-                onForward = { /* viewModel.forwardToDean() */ navigateHome() }
+                onReject = { viewModel.denyRequest()
+                              navigateHome() },
+                onForward = {
+                        viewModel.validateRequest()
+                        navigateHome() }
             )
         }
     ){ paddingValues ->
@@ -97,7 +106,7 @@ fun SecretaryValidateScreen(navigateHome: () -> Unit){
                 color  = Color.Gray
             )
 
-            StatsValidationCard(userStats, daysRequested, isNegativeBalace)
+            StatsValidationCard(stats)
 
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)){
@@ -165,7 +174,10 @@ fun SecretaryBottomBar(onReject: () -> Unit, onForward: () -> Unit){
 }
 
 @Composable
-fun StatsValidationCard(stats: UserStats, requested: Int, isNegative: Boolean) {
+fun StatsValidationCard(stats: UserVacationStats) {
+    val remainingAfter = stats.remainingDays - stats.pendingDays
+    val isNegativeBalance = remainingAfter < 0
+
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(12.dp),
@@ -207,12 +219,12 @@ fun StatsValidationCard(stats: UserStats, requested: Int, isNegative: Boolean) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(if (isNegative) Color(0xFFFFEBEE) else Color(0xFFE8F5E9), RoundedCornerShape(4.dp))
+                    .background(if (isNegativeBalance) Color(0xFFFFEBEE) else Color(0xFFE8F5E9), RoundedCornerShape(4.dp))
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Ovaj zahtjev:", color = Color.Black, style = MaterialTheme.typography.labelMedium)
-                Text("-$requested", fontWeight = FontWeight.Bold, color = Color.Red, style = MaterialTheme.typography.labelMedium)
+                Text("-${stats.pendingDays}", fontWeight = FontWeight.Bold, color = Color.Red, style = MaterialTheme.typography.labelMedium)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -223,15 +235,15 @@ fun StatsValidationCard(stats: UserStats, requested: Int, isNegative: Boolean) {
 
                 Text("STANJE NAKON ODOBRENJA:", fontWeight = FontWeight.Bold, fontSize = 12.sp, style = MaterialTheme.typography.headlineMedium)
                 Text(
-                    "${stats.remainingDays - requested}",
+                    "${stats.remainingDays - stats.pendingDays}",
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 16.sp,
                     style = MaterialTheme.typography.headlineMedium,
-                    color = if (isNegative) Color.Red else Color(0xFF2E7D32)
+                    color = if (isNegativeBalance) Color.Red else Color(0xFF2E7D32)
                 )
             }
 
-            if (isNegative) {
+            if (isNegativeBalance) {
                 Text(
                     text = "UPOZORENJE: Zaposlenik nema dovoljno dana!",
                     color = Color.Red,
@@ -264,5 +276,5 @@ fun StatRow(label: String, value: String, color: Color) {
 @Composable
 @Preview(showBackground = true)
 fun SecretaryValidatePreview(){
-    SecretaryValidateScreen ({ })
+    SecretaryValidateScreen (viewModel(), {})
 }

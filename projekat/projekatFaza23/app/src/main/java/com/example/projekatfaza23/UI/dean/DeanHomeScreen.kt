@@ -541,10 +541,11 @@ fun RequestCardDean(request: LeaveRequest, navigateRequest: () -> Unit, setReque
 
     val dateText = formatLeaveDates(request.leave_dates)
 
-    val (statusLabel, statusColor) = when (request.status) {
-        RequestSatus.Approved -> "Odobren" to Color(0xFF2E7D32)
-        RequestSatus.Pending -> "Na čekanju" to Color(0xFFF9A825)
-        RequestSatus.Denied -> "Odbijen" to Color(0xFFC62828)
+    val (statusColor, statusLabel) = when (request.status) {
+        RequestSatus.Pending -> Color(0xFFF57C00) to "Na čekanju"
+        RequestSatus.PendingDean -> Color(0xFF1976D2) to "Čeka Dekana"
+        RequestSatus.Approved -> Color(0xFF2E7D32) to "Odobreno"
+        RequestSatus.Denied -> Color(0xFFC62828) to "Odbijeno"
     }
 
     Card(
@@ -627,6 +628,7 @@ fun RequestCardDean(request: LeaveRequest, navigateRequest: () -> Unit, setReque
         }
     }
 }
+
 
 
 fun formatLeaveDates(dates: List<LeaveDates?>? ):String{

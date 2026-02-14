@@ -5,6 +5,7 @@ import com.google.firebase.Timestamp
 
 enum class RequestSatus{
     Pending,
+    PendingDean,
     Approved,
     Denied
 }
@@ -15,6 +16,7 @@ data class LeaveRequest(
     val type: String = "",
     val explanation: String = "",
     val explanationDean : String = "",
+    val explanationSecretary : String = "",
     val userEmail: String = "",
 
     val leave_dates: List<LeaveDates?>? = null,
