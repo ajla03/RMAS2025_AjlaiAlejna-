@@ -37,8 +37,9 @@ fun AppNavigation (navController : NavHostController) {
         composable<Screen.Home>{
             ClientHomeScreen(
                 viewModel = sharedViewModel,
-                {navController.navigate(Screen.CreateRequest)
-            })
+                {navController.navigate(Screen.CreateRequest)},
+                {navController.navigate(Screen.Login)}
+                )
         }
 
         composable<Screen.CreateRequest> {
