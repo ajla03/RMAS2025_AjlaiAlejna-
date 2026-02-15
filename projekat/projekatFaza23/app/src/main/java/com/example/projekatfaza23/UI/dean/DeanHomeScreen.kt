@@ -170,7 +170,63 @@ val filterMap = mapOf(
 //main screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navigateRequest: () -> Unit, onLogoutClick: () -> Unit){
+fun DeanHomeScreen(
+    viewModel: DeanViewModel,
+    navigateDirectory: () -> Unit,
+    navigateRequest: () -> Unit,
+    onLogoutClick: () -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val user = UserManager.currentUser.collectAsState().value
+
+    // Proslijeđujemo samo čiste podatke u Content funkciju
+    DeanHomeScreenContent(
+        isLoading = uiState.isLoading,
+        displayRequests = uiState.displayRequests,
+        isActiveFilter = uiState.isActiveFilter == true,
+        filterStatus = uiState.filterStatus,
+        searchQuery = uiState.searchQuery,
+        dateRangeStart = uiState.dateRange.first,
+        dateRangeEnd = uiState.dateRange.second,
+        userName = user?.name ?: "",
+        userLastName = user?.lastName ?: "",
+        userEmail = user?.email ?: "",
+        userImageUrl = user?.profilePictureURL?.toString(),
+        navigateDirectory = navigateDirectory,
+        navigateRequest = navigateRequest,
+        onLogoutClick = onLogoutClick,
+        onResetFilters = { viewModel.resetFilters() },
+        onSetStatusFilter = { viewModel.setStatusFilter(it) },
+        onSetSelectedRequest = { viewModel.setSelectedRequest(it) },
+        onUpdateNameFilter = { viewModel.updateNameFilter(it) },
+        onUpdateDateRangeFilter = { start, end -> viewModel.updateDateRangeFilter(start, end) }
+    )
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DeanHomeScreenContent(
+    isLoading: Boolean,
+    displayRequests: List<LeaveRequest>,
+    isActiveFilter: Boolean,
+    filterStatus: String,
+    searchQuery: String,
+    dateRangeStart: Long?,
+    dateRangeEnd: Long?,
+    userName: String,
+    userLastName: String,
+    userEmail: String,
+    userImageUrl: String?,
+    navigateDirectory: () -> Unit,
+    navigateRequest: () -> Unit,
+    onLogoutClick: () -> Unit,
+    onResetFilters: () -> Unit,
+    onSetStatusFilter: (String) -> Unit,
+    onSetSelectedRequest: (LeaveRequest) -> Unit,
+    onUpdateNameFilter: (String) -> Unit,
+    onUpdateDateRangeFilter: (Long?, Long?) -> Unit
+) {
 /*
      mozda cemo trebati ako se podaci budu fetchali sa interneta kada kliknemo na request
     LaunchedEffect(Unit) {
@@ -178,12 +234,10 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
         viewModel.resetSelectedRequest()
     }
 */
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var showFilterSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     var showProfileDialog by remember { mutableStateOf(false) }
-    val user = UserManager.currentUser.collectAsState().value
 
     Scaffold(
         topBar =  {
@@ -223,8 +277,8 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
 
                 IconButton(onClick = { showProfileDialog = true }) {
                     DeanProfileAvatar(
-                        imageUrl = user?.profilePictureURL.toString(),
-                        email = user?.email ?: "",
+                        imageUrl = userImageUrl,
+                        email = userEmail,
                         modifier = Modifier.size(40.dp)
                             .border( 
                                 width = 1.5.dp,
@@ -249,9 +303,9 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
                     FilterButton(onClick = { showFilterSheet = true })
                 }
 
-                if(uiState.isActiveFilter == true){
+                if(isActiveFilter == true){
                     item{
-                        ResetButton(onClick = {viewModel.resetFilters()})
+                        ResetButton(onClick = {onResetFilters()})
                     }
                 }
 
@@ -266,9 +320,9 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
                 items(filters){filter ->
                     FilterChipItem(
                         text = filter,
-                        selected = (uiState.filterStatus) == filterMap[filter]!!,
+                        selected = (filterStatus) == filterMap[filter]!!,
                         onClick = {
-                            viewModel.setStatusFilter(filterMap[filter]!!)
+                            onSetStatusFilter(filterMap[filter]!!)
                         }
                     )
                 }
@@ -277,7 +331,7 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
             Spacer(modifier = Modifier.height(22.dp))
 
             //lista zahtjeva
-            if(uiState.isLoading) {
+            if(isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
                     CircularProgressIndicator()
                 }
@@ -286,8 +340,8 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(bottom = 80.dp)
                 ) {
-                    items(uiState.displayRequests) { request ->
-                        RequestCardDean(request, navigateRequest, {viewModel.setSelectedRequest(it)})
+                    items(displayRequests) { request ->
+                        RequestCardDean(request, navigateRequest, {onSetSelectedRequest(it)})
                     }
                 }
             }
@@ -295,10 +349,10 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
 
         if (showProfileDialog) {
             ProfileDialog(
-                deanName = (user?.name ?: "") + " " + (user?.lastName ?: ""),
-                deanEmail = (user?.email ?: ""),
+                deanName = (userName) + " " + (userLastName),
+                deanEmail = userEmail,
                 onDismiss = { showProfileDialog = false },
-                imageUrl = user?.profilePictureURL.toString(),
+                imageUrl = userImageUrl,
                 onLogout = {
                     showProfileDialog = false
                     onLogoutClick() },
@@ -312,11 +366,11 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
                 sheetState = sheetState,
 
             ) { FilterBottomSheetContent(
-                currentName = uiState.searchQuery,
-                currentStartMillis = uiState.dateRange.first,
-                currentEndMillis = uiState.dateRange.second,
-                onNameChange = { viewModel.updateNameFilter(it) },
-                onDateRangeChange = { start, end -> viewModel.updateDateRangeFilter(start, end) },
+                currentName = searchQuery,
+                currentStartMillis = dateRangeStart,
+                currentEndMillis = dateRangeEnd,
+                onNameChange = { onUpdateNameFilter(it) },
+                onDateRangeChange = { start, end -> onUpdateDateRangeFilter(start, end) },
                 onApply = { showFilterSheet = false }
             )}
         }
@@ -810,6 +864,25 @@ fun InitialsAvatarBackground(
 @Preview(showBackground = true)
 @Composable
 fun HRAppPreview() {
-    DeanHomeScreen(viewModel(), {}, {}, {})
-
+        DeanHomeScreenContent(
+            isLoading = false,
+            displayRequests = getMockRequests(),
+            isActiveFilter = false,
+            filterStatus = "All",
+            searchQuery = "",
+            dateRangeStart = null,
+            dateRangeEnd = null,
+            userName = "Ahmet",
+            userLastName = "Dekanović",
+            userEmail = "adekanovic@fit.ba",
+            userImageUrl = null,
+            navigateDirectory = {},
+            navigateRequest = {},
+            onLogoutClick = {},
+            onResetFilters = {},
+            onSetStatusFilter = {},
+            onSetSelectedRequest = {},
+            onUpdateNameFilter = {},
+            onUpdateDateRangeFilter = { _, _ -> }
+        )
 }
