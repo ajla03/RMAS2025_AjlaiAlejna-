@@ -1,5 +1,6 @@
 package com.example.projekatfaza23.model
 
+import android.R
 import android.util.Log
 import androidx.compose.animation.core.snap
 import com.example.projekatfaza23.data.db.LeaveDao
@@ -31,6 +32,7 @@ interface LeaveRepositoryI {
     suspend fun updateReqeust(requestId: String, newStatus: RequestSatus, explanationText: String): Boolean
     suspend fun syncRequestsWithFirestore(userEmail: String)
     fun startRealtimeSync(userEmail: String): Flow<Unit>
+    suspend fun updateEmployeeStatus(email: String, newStatus: String) : Boolean
 }
 
 class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
@@ -223,6 +225,30 @@ class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
             }
 
         awaitClose { listener.remove() }
+    }
+
+    override suspend fun updateEmployeeStatus(email: String, newStatus: String): Boolean {
+        return try {
+            leaveDao.updateUserStatus(email, newStatus)
+            val querySnapshot = firestore.collection("user_info")
+                .whereEqualTo("email", email)
+                .get()
+                .await()
+
+            if (!querySnapshot.isEmpty) {
+                for (doc in querySnapshot.documents) {
+                    firestore.collection("user_info")
+                        .document(doc.id)
+                        .update("employeeStatus", newStatus)
+                        .await()
+                }
+            } else {
+                Log.d("updateEmployeeStatus", "U bazi ne postoji korisnik sa emailom $email na Firestore")
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
 }

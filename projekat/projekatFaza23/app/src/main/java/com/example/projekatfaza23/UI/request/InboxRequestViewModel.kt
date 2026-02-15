@@ -213,9 +213,32 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
     }
 
     fun updateStatus(newStatus: Status){
-        _uiState.update {
-            currentState ->
-            currentState.copy(status = newStatus)
+        val email = currentUserEmail
+
+        if (email == null){
+            _uiState.update {
+                it.copy(
+                    isError = true,
+                    errorMsg = "User not signed in"
+                )
+                return
+            }
+        }
+
+        viewModelScope.launch {
+            _uiState.update {
+                    currentState ->
+                currentState.copy(status = newStatus)
+            }
+
+            if(!_repository.updateEmployeeStatus(email ?: "", newStatus.name)){
+                _uiState.update {
+                    it.copy(
+                        isError = true,
+                        errorMsg = "Unexpected error"
+                    )
+                }
+            }
         }
     }
 }

@@ -23,8 +23,13 @@ interface LeaveDao {
     @Query("SELECT MAX(createdAt) FROM leave_request WHERE userEmail = :email")
     suspend fun getLastTimestamp(email: String): Long?
 
-    @Query("""
+    @Query(
+        """
     DELETE FROM leave_request WHERE id IN (SELECT id FROM leave_request WHERE userEmail = :email 
-        ORDER BY createdAt DESC LIMIT -1 OFFSET 30)""")
+        ORDER BY createdAt DESC LIMIT -1 OFFSET 30)"""
+    )
     suspend fun trimOldRequests(email: String)
+
+    @Query("UPDATE users SET userStatus = :newStatus WHERE email = :email")
+    suspend fun updateUserStatus(email: String, newStatus: String)
 }
