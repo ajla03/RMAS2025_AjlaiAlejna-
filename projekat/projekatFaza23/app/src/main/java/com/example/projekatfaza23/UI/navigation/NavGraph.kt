@@ -60,7 +60,7 @@ fun AppNavigation (navController : NavHostController) {
 
         composable<Screen.DeanHome>{
             DeanHomeScreen(viewModel = sharedDeanViewModel,
-                navigateDirectory = {navController.navigate((Screen.DeanDirectory))},
+                onNavigateToDirectory = {navController.navigate((Screen.DeanDirectory))},
                 navigateRequest = {navController.navigate(Screen.ApproveRequestScreen)},
                 onLogoutClick = {
                     navController.navigate(Screen.Login){

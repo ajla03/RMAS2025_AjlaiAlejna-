@@ -93,6 +93,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
+import com.example.projekatfaza23.UI.secretary.SecretaryBottomNavigationBar
 import com.example.projekatfaza23.data.auth.UserManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.compose
@@ -172,14 +173,14 @@ val filterMap = mapOf(
 @Composable
 fun DeanHomeScreen(
     viewModel: DeanViewModel,
-    navigateDirectory: () -> Unit,
     navigateRequest: () -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToDirectory : () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val user = UserManager.currentUser.collectAsState().value
 
-    // Proslijeđujemo samo čiste podatke u Content funkciju
     DeanHomeScreenContent(
         isLoading = uiState.isLoading,
         displayRequests = uiState.displayRequests,
@@ -192,14 +193,15 @@ fun DeanHomeScreen(
         userLastName = user?.lastName ?: "",
         userEmail = user?.email ?: "",
         userImageUrl = user?.profilePictureURL?.toString(),
-        navigateDirectory = navigateDirectory,
         navigateRequest = navigateRequest,
         onLogoutClick = onLogoutClick,
         onResetFilters = { viewModel.resetFilters() },
         onSetStatusFilter = { viewModel.setStatusFilter(it) },
         onSetSelectedRequest = { viewModel.setSelectedRequest(it) },
         onUpdateNameFilter = { viewModel.updateNameFilter(it) },
-        onUpdateDateRangeFilter = { start, end -> viewModel.updateDateRangeFilter(start, end) }
+        onUpdateDateRangeFilter = { start, end -> viewModel.updateDateRangeFilter(start, end) },
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToDirectory = onNavigateToDirectory
     )
 }
 
@@ -218,14 +220,15 @@ fun DeanHomeScreenContent(
     userLastName: String,
     userEmail: String,
     userImageUrl: String?,
-    navigateDirectory: () -> Unit,
     navigateRequest: () -> Unit,
     onLogoutClick: () -> Unit,
     onResetFilters: () -> Unit,
     onSetStatusFilter: (String) -> Unit,
     onSetSelectedRequest: (LeaveRequest) -> Unit,
     onUpdateNameFilter: (String) -> Unit,
-    onUpdateDateRangeFilter: (Long?, Long?) -> Unit
+    onUpdateDateRangeFilter: (Long?, Long?) -> Unit,
+    onNavigateToHistory: () -> Unit,
+    onNavigateToDirectory: () -> Unit = {}
 ) {
 /*
      mozda cemo trebati ako se podaci budu fetchali sa interneta kada kliknemo na request
@@ -243,15 +246,13 @@ fun DeanHomeScreenContent(
         topBar =  {
             TopAppBarSection()},
         containerColor = Color(0xFFF5F7FA),
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navigateDirectory() },
-                containerColor = Color(0xFF1E2A47),
-                contentColor = Color.White,
-                shape = CircleShape
-            ) {
-                Icon(Icons.Filled.Groups, contentDescription = "Directory")
-            }
+        bottomBar = {
+            DeanBottomNavigationBar(
+                currentRoute = "home",
+                onNavigateToHome = {},
+                onNavigateToHistory = onNavigateToHistory,
+                onNavigateToDirectory = onNavigateToDirectory
+            )
         }
     ){
         paddingValues ->
@@ -876,13 +877,13 @@ fun HRAppPreview() {
             userLastName = "Dekanović",
             userEmail = "adekanovic@fit.ba",
             userImageUrl = null,
-            navigateDirectory = {},
             navigateRequest = {},
             onLogoutClick = {},
             onResetFilters = {},
             onSetStatusFilter = {},
             onSetSelectedRequest = {},
             onUpdateNameFilter = {},
-            onUpdateDateRangeFilter = { _, _ -> }
+            onUpdateDateRangeFilter = { _, _ -> },
+            onNavigateToHistory = {}
         )
 }
