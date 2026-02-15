@@ -325,24 +325,6 @@ fun StatusBadge(status: RequestSatus) {
     }
 }
 
-@Composable
-fun FilterChip(selected: Boolean, onClick: () -> Unit, label: String) {
-    Surface(
-        onClick = onClick,
-        color = if (selected) primaryColor else Color.White,
-        shape = RoundedCornerShape(20.dp),
-        border = if (selected) null else BorderStroke(1.dp, Color.LightGray),
-        shadowElevation = if(selected) 2.dp else 0.dp
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            color = if (selected) Color.White else Color.Gray,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}
 
 @Composable
 fun EmptyStateMessage(isHistory: Boolean) {

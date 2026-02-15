@@ -71,7 +71,7 @@ class SecretaryViewModel(application: Application) : AndroidViewModel(applicatio
         val req = state.selectedRequest ?: return
 
         viewModelScope.launch {
-            repository.updateReqeust(req.id, RequestSatus.PendingDean, state.explanationSecretary)
+            repository.updateRequestSecretary(req.id, RequestSatus.PendingDean, state.explanationSecretary)
             _uiState.update { it.copy(selectedRequest = null) }
         }
     }
@@ -135,5 +135,14 @@ class SecretaryViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun updateHistoryFilter(filter: HistoryFilter) {
         _uiState.update { it.copy(historyFilter = filter) }
+    }
+
+    fun resetHistoryFilters() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                historySearchQuery = "",
+                historyFilter = HistoryFilter.ALL
+            )
+        }
     }
 }

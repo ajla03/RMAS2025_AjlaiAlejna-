@@ -89,7 +89,7 @@ fun AppNavigation (navController : NavHostController) {
         composable<Screen.SecretaryHistoryScreen> {
             SecretaryHistoryScreen(
                 sharedSecretaryViewModel,
-                onNavigateToHome = { navController.navigate(Screen.SecretaryHomeScreen) },
+                onNavigateToHome = { navController.popBackStack() },
                 onNavigateToRequest = {navController.navigate(Screen.SecretaryValidateScreen)})
         }
 

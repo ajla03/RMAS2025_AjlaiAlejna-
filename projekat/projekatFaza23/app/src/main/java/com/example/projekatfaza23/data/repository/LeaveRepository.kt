@@ -116,6 +116,23 @@ class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
         }
     }
 
+    suspend fun updateRequestSecretary(
+        requestId: String,
+        newStatus: RequestSatus,
+        explanationText: String
+    ): Boolean {
+        return try {
+            firestore.collection("leave_request")
+                .document(requestId)
+                .update("status", newStatus, "explanationSecretary", explanationText)
+                .await()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
     override suspend fun submitNewRequest(request: LeaveRequest, userEmail: String): Boolean {
         //ovaj id je bio problem ako je offline (generisemo svoj id sad)
         val newId = request.id.ifEmpty { UUID.randomUUID().toString() }

@@ -111,14 +111,14 @@ fun SecretaryValidateScreen(viewModel: SecretaryViewModel, navigateHome: () -> U
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)){
                 Text(
-                    text =  "Napomena za dekana (Opcionalno)",
+                    text =  "Napomena (Opcionalno)",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.Gray
                 )
 
                 OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
+                    value = uiState.explanationSecretary,
+                    onValueChange = { newValue ->  viewModel.updateExplanation(newValue)},
                     placeholder = { Text("Npr. Provjereno, dani se slažu sa evidencijom...", style = MaterialTheme.typography.bodySmall, color = Color.Gray) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),

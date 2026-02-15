@@ -1,5 +1,6 @@
 package com.example.projekatfaza23.UI.secretary
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +22,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -68,6 +68,12 @@ fun SecretaryHistoryScreen(
 
         matchesSearch && matchesStatus
     }
+
+    BackHandler {
+        viewModel.resetHistoryFilters()
+        onNavigateToHome()
+    }
+
     SecretaryHistoryScreenContent(
         isLoading = uiState.isLoading,
         processedRequests = filteredRequests,
@@ -79,7 +85,9 @@ fun SecretaryHistoryScreen(
         onFilterSelected  =  { newFilter ->
             viewModel.updateHistoryFilter(newFilter)
         },
-        onNavigateToHome = onNavigateToHome,
+        onNavigateToHome = {
+            viewModel.resetHistoryFilters()
+            onNavigateToHome()},
         onRequestClick = { request ->
             viewModel.selectRequest(request)
             onNavigateToRequest()
