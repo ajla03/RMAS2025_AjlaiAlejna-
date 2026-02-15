@@ -74,5 +74,6 @@ class UserRepository(private val leaveDao : LeaveDao) {
             false
         }
     }
+
     fun getUser(email: String): Flow<UserEntity?> = leaveDao.getUser(email)
 }

@@ -12,6 +12,7 @@ import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.data.db.AppDatabase
 import com.example.projekatfaza23.data.db.LeaveDao
 import com.example.projekatfaza23.data.repository.GoogleProfileRepository
+import com.example.projekatfaza23.data.repository.UserRepository
 import com.example.projekatfaza23.model.FileInfo
 import com.example.projekatfaza23.model.LeaveDates
 import com.example.projekatfaza23.model.LeaveRepository
@@ -30,7 +31,7 @@ import kotlinx.coroutines.launch
 class InboxRequestViewModel(application: Application): AndroidViewModel(application) {
     private val leaveDao = AppDatabase.getInstance(application).leaveDao()
     private val _repository : LeaveRepositoryI = LeaveRepository(leaveDao)
-    private val googleProfileRepository = GoogleProfileRepository()
+    private val userRepo = UserRepository(leaveDao)
 
     private val _uiState = MutableStateFlow(LeaveUiState())
     val uiState: StateFlow<LeaveUiState> = _uiState.asStateFlow()
@@ -54,6 +55,7 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
                 }
             }
         }
+        monitorUserData()
     }
 
 
@@ -237,6 +239,29 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
                         isError = true,
                         errorMsg = "Unexpected error"
                     )
+                }
+            }
+        }
+    }
+
+    private fun monitorUserData() {
+        viewModelScope.launch {
+            UserManager.currentUser.collect { userProfile ->
+                val email = userProfile?.email
+                
+                if (email != null) {
+                    userRepo.getUser(email).collect { userEntity ->
+                        userEntity?.let { user ->
+
+                            _uiState.update { currState ->
+                                currState.copy(
+                                    totalDays = user.totalDays,
+                                    usedDays = user.usedDays,
+                                    remainingLeaveDays = user.totalDays - user.usedDays
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -73,7 +73,6 @@ fun UserMenu(
     onDismiss: () -> Unit,
     navigateLogout: () -> Unit
 ) {
-    val bgGradient = Brush.linearGradient(listOf(primaryColor, Color(0xFF381460)))
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val borerBrush = Brush.sweepGradient(listOf(cyan, purple, cyan))
     val statusBrush = Brush.horizontalGradient(listOf(cyan, pink))
