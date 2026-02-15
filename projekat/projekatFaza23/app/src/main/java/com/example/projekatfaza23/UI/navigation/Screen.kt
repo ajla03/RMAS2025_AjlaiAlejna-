@@ -23,6 +23,8 @@ sealed interface Screen {
 
     @Serializable
     object SecretaryHomeScreen : Screen
+    @Serializable
+    object SecretaryHistoryScreen : Screen
 
     @Serializable
     object SecretaryValidateScreen : Screen

@@ -13,6 +13,7 @@ import com.example.projekatfaza23.UI.home.ClientHomeScreen
 import com.example.projekatfaza23.UI.request.InboxRequestViewModel
 import com.example.projekatfaza23.UI.login.LoginScreen
 import com.example.projekatfaza23.UI.request.NewRequestScreen
+import com.example.projekatfaza23.UI.secretary.SecretaryHistoryScreen
 import com.example.projekatfaza23.UI.secretary.SecretaryHomeScreen
 import com.example.projekatfaza23.UI.secretary.SecretaryValidateScreen
 import com.example.projekatfaza23.UI.secretary.SecretaryViewModel
@@ -75,11 +76,21 @@ fun AppNavigation (navController : NavHostController) {
         }
 
         composable<Screen.SecretaryHomeScreen>{
-            SecretaryHomeScreen(sharedSecretaryViewModel, onLogoutClicked = {navController.popBackStack()}, onNavigateToValidate = {navController.navigate(Screen.SecretaryValidateScreen)})
+            SecretaryHomeScreen(sharedSecretaryViewModel,
+                onLogoutClicked = {navController.popBackStack()},
+                onNavigateToValidate = {navController.navigate(Screen.SecretaryValidateScreen)},
+                onNavigateToHistory = {navController.navigate(Screen.SecretaryHistoryScreen)})
         }
 
         composable<Screen.SecretaryValidateScreen>{
             SecretaryValidateScreen(sharedSecretaryViewModel, navigateHome = {navController.popBackStack()})
+        }
+
+        composable<Screen.SecretaryHistoryScreen> {
+            SecretaryHistoryScreen(
+                sharedSecretaryViewModel,
+                onNavigateToHome = { navController.navigate(Screen.SecretaryHomeScreen) },
+                onNavigateToRequest = {navController.navigate(Screen.SecretaryValidateScreen)})
         }
 
     }
