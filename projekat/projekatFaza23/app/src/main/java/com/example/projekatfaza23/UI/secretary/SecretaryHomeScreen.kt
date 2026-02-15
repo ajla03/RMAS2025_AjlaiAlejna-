@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,27 +57,45 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-
 @Composable
 fun SecretaryHomeScreen(
     viewModel: SecretaryViewModel,
     onLogoutClicked: () -> Unit,
     onNavigateToValidate: () -> Unit
 ) {
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
     val pendingRequests = uiState.displayedRequests
     val processedRequests = uiState.allRequests.filter { it.status != RequestSatus.Pending }
-
     var showHistory by remember { mutableStateOf(false) }
 
+    SecretaryHomeScreenContent(
+        isLoading = uiState.isLoading,
+        pendingRequests = pendingRequests,
+        processedRequests = processedRequests,
+        showHistory = showHistory,
+        onHistoryToggle = { isHistory -> showHistory = isHistory },
+        onRequestClick = { request ->
+            viewModel.selectRequest(request)
+            onNavigateToValidate()
+        }
+    )
+}
+
+@Composable
+fun SecretaryHomeScreenContent(
+    isLoading: Boolean,
+    pendingRequests: List<LeaveRequest>,
+    processedRequests: List<LeaveRequest>,
+    showHistory: Boolean,
+    onHistoryToggle: (Boolean) -> Unit,
+    onRequestClick: (LeaveRequest) -> Unit
+) {
     Scaffold(
         containerColor = Color(0xFFF5F7FA),
         topBar = { TopAppBarSection() }
     ) { padding ->
 
-        if (uiState.isLoading) {
+        if (isLoading) {
             Box(
                 modifier = Modifier
                     .padding(padding)
@@ -91,7 +110,6 @@ fun SecretaryHomeScreen(
                     .padding(padding)
                     .fillMaxSize()
             ) {
-
                 SecretaryDashboardHeader(
                     pendingCount = pendingRequests.size,
                     onLeaveCount = 3  // potrebno izracunati
@@ -105,12 +123,12 @@ fun SecretaryHomeScreen(
                 ) {
                     FilterChip(
                         selected = !showHistory,
-                        onClick = { showHistory = false },
+                        onClick = { onHistoryToggle(false) },
                         label = "Na čekanju (${pendingRequests.size})"
                     )
                     FilterChip(
                         selected = showHistory,
-                        onClick = { showHistory = true },
+                        onClick = { onHistoryToggle(true) },
                         label = "Historija (${processedRequests.size})"
                     )
                 }
@@ -129,10 +147,7 @@ fun SecretaryHomeScreen(
                         items(listDisplay) { request ->
                             SecretaryRequestItem(
                                 request = request,
-                                onClick = {
-                                    viewModel.selectRequest(request)
-                                    onNavigateToValidate()
-                                }
+                                onClick = { onRequestClick(request) }
                             )
                         }
                     }
@@ -352,4 +367,26 @@ fun EmptyStateMessage(isHistory: Boolean) {
             color = Color.Gray
         )
     }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun SecretaryHomeScreenPreview() {
+        val mockPending = listOf(
+            LeaveRequest(userEmail = "ahodzic@fit.ba", status = RequestSatus.Pending),
+            LeaveRequest(userEmail = "abulic@fit.ba", status = RequestSatus.Pending)
+        )
+        val mockProcessed = listOf(
+            LeaveRequest(userEmail = "mmujic@fit.ba", status = RequestSatus.Approved)
+        )
+
+        SecretaryHomeScreenContent(
+            isLoading = false,
+            pendingRequests = mockPending,
+            processedRequests = mockProcessed,
+            showHistory = false,       // Postavi na true ako želiš vidjeti Preview "Historija" taba
+            onHistoryToggle = {},
+            onRequestClick = {}
+        )
 }
