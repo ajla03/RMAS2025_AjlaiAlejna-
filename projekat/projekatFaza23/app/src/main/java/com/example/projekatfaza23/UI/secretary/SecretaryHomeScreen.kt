@@ -75,6 +75,7 @@ fun SecretaryHomeScreen(
             viewModel.selectRequest(request)
             onNavigateToValidate()
         },
+        onTodayLeaveCount = uiState.onTodayLeaveCount,
         onNavigateToHistory = onNavigateToHistory
     )
 }
@@ -82,6 +83,7 @@ fun SecretaryHomeScreen(
 @Composable
 fun SecretaryHomeScreenContent(
     isLoading: Boolean,
+    onTodayLeaveCount : Int,
     pendingRequests: List<LeaveRequest>,
     onRequestClick: (LeaveRequest) -> Unit,
     onNavigateToHistory: () -> Unit
@@ -115,7 +117,7 @@ fun SecretaryHomeScreenContent(
             ) {
                 SecretaryDashboardHeader(
                     pendingCount = pendingRequests.size,
-                    onLeaveCount = 3  // potrebno izracunati
+                    onLeaveCount = onTodayLeaveCount
                 )
 
                 Text(
@@ -354,7 +356,8 @@ fun SecretaryHomeScreenPreview() {
         SecretaryHomeScreenContent(
             isLoading = false,
             pendingRequests = mockPending,
+            onTodayLeaveCount = 3,
             onRequestClick = {},
-            {}
+            onNavigateToHistory = {}
         )
 }

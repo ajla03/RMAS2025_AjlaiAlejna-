@@ -12,6 +12,7 @@ data class SecretaryUIState(
     val selectedRequest: LeaveRequest? = null,
     val requestAuthor: UserEntity? = null,
     val explanationSecretary: String = "",
+    val onTodayLeaveCount: Int = 0,
 
     val stats: UserVacationStats = UserVacationStats(),
     val isLoading: Boolean = false,

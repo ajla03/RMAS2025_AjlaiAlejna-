@@ -1,6 +1,7 @@
 package com.example.projekatfaza23.UI.secretary
 
 import android.app.Application
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 
 class SecretaryViewModel(application: Application) : AndroidViewModel(application) {
@@ -42,9 +44,11 @@ class SecretaryViewModel(application: Application) : AndroidViewModel(applicatio
                     .collect { requests ->
                         _uiState.update { state ->
                             val pendingOnly = requests.filter { it.status == RequestSatus.Pending }
+                            val onLeaveCount = calculateOnLeaveToday(requests)
                             state.copy(
                                 allRequests = requests,
                                 displayedRequests = pendingOnly,
+                                onTodayLeaveCount = onLeaveCount,
                                 isLoading = false
                             )
                         }
@@ -110,6 +114,27 @@ class SecretaryViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    private fun calculateOnLeaveToday(requests: List<LeaveRequest>): Int{
+        val now  = System.currentTimeMillis()
+
+        val activeRequests = requests.filter { request ->
+            request.status == RequestSatus.Approved &&
+            request.leave_dates?.any{ dateRange ->
+                val startMillis = dateRange?.start?.toDate()?.time ?: Long.MAX_VALUE
+                val endMillis = dateRange?.end?.toDate()?.time ?: Long.MIN_VALUE
+
+                val calendar = Calendar.getInstance()
+                calendar.timeInMillis = endMillis
+                calendar.set(Calendar.HOUR_OF_DAY, 23)
+                calendar.set(Calendar.MINUTE, 59)
+                calendar.set(Calendar.SECOND, 59)
+                val adjustedEndMillis = calendar.timeInMillis
+
+                now in startMillis..adjustedEndMillis
+            } == true
+        }
+        return activeRequests.map { it.userEmail }.distinct().size
+    }
     private fun calculateDurationInDays(start: Timestamp?, end: Timestamp?): Int {
         if (start == null || end == null) return 0
 
