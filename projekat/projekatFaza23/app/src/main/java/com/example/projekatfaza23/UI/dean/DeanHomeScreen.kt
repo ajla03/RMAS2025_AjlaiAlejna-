@@ -294,14 +294,15 @@ fun DeanHomeScreen(viewModel: DeanViewModel, navigateDirectory: () -> Unit, navi
         }
 
         if (showProfileDialog) {
-            DeanProfileDialog(
+            ProfileDialog(
                 deanName = (user?.name ?: "") + " " + (user?.lastName ?: ""),
                 deanEmail = (user?.email ?: ""),
                 onDismiss = { showProfileDialog = false },
                 imageUrl = user?.profilePictureURL.toString(),
                 onLogout = {
                     showProfileDialog = false
-                    onLogoutClick() }
+                    onLogoutClick() },
+                role = "Dekan"
             )
         }
 
@@ -676,11 +677,12 @@ fun FilterChipItem(text: String, selected : Boolean, onClick: () -> Unit) {
 
 
 @Composable
-fun DeanProfileDialog(onDismiss: () -> Unit,
+fun ProfileDialog(onDismiss: () -> Unit,
                       onLogout: () -> Unit,
                       deanName : String,
                       deanEmail: String ,
-                      imageUrl: String?){
+                      imageUrl: String?,
+                      role: String){
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Card(
             colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -715,7 +717,7 @@ fun DeanProfileDialog(onDismiss: () -> Unit,
                 )
 
                 Text(
-                    text = "Uloga: Dekan",
+                    text = "Uloga: $role",
                     style = MaterialTheme.typography.labelSmall,
                     color = Color(0xFF1E2A47),
                     modifier = Modifier.padding(top = 4.dp)

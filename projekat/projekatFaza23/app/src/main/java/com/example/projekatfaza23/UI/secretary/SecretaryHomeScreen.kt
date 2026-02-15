@@ -1,7 +1,7 @@
 package com.example.projekatfaza23.UI.secretary
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,11 +26,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,12 +47,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.projekatfaza23.UI.dean.DeanProfileAvatar
+import com.example.projekatfaza23.UI.dean.ProfileDialog
 import com.example.projekatfaza23.UI.dean.extractInitials
 import com.example.projekatfaza23.UI.dean.extractNameFromEmail
 import com.example.projekatfaza23.UI.dean.getAvatarColor
 import com.example.projekatfaza23.UI.dean.primaryColor
 import com.example.projekatfaza23.UI.dean.timeStampToString
 import com.example.projekatfaza23.UI.home.TopAppBarSection
+import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 import java.text.SimpleDateFormat
@@ -68,16 +73,36 @@ fun SecretaryHomeScreen(
 
     val pendingRequests = uiState.displayedRequests
 
+    val user = UserManager.currentUser.collectAsState().value
+    var showProfileDialog by remember { mutableStateOf(false) }
+
     SecretaryHomeScreenContent(
         isLoading = uiState.isLoading,
         pendingRequests = pendingRequests,
-        onRequestClick = { request ->
+        onRequestClick = { request: LeaveRequest ->
             viewModel.selectRequest(request)
             onNavigateToValidate()
         },
         onTodayLeaveCount = uiState.onTodayLeaveCount,
+        userImageUrl = user?.profilePictureURL?.toString(),
+        userEmail = user?.email ?: "",
+        onProfileClick = { showProfileDialog = true },
         onNavigateToHistory = onNavigateToHistory
     )
+
+    if (showProfileDialog) {
+        ProfileDialog(
+            deanName = "${user?.name ?: ""} ${user?.lastName ?: ""}",
+            deanEmail = user?.email ?: "",
+            imageUrl = user?.profilePictureURL?.toString(),
+            onDismiss = { showProfileDialog = false },
+            onLogout = {
+                showProfileDialog = false
+                onLogoutClicked()
+            },
+            role = "Sekretar"
+        )
+    }
 }
 
 @Composable
@@ -85,6 +110,9 @@ fun SecretaryHomeScreenContent(
     isLoading: Boolean,
     onTodayLeaveCount : Int,
     pendingRequests: List<LeaveRequest>,
+    userImageUrl: String?,
+    userEmail: String,
+    onProfileClick: () -> Unit,
     onRequestClick: (LeaveRequest) -> Unit,
     onNavigateToHistory: () -> Unit
 ) {
@@ -117,7 +145,10 @@ fun SecretaryHomeScreenContent(
             ) {
                 SecretaryDashboardHeader(
                     pendingCount = pendingRequests.size,
-                    onLeaveCount = onTodayLeaveCount
+                    onLeaveCount = onTodayLeaveCount,
+                    userImageUrl = userImageUrl,
+                    userEmail = userEmail,
+                    onProfileClick = onProfileClick
                 )
 
                 Text(
@@ -151,25 +182,53 @@ fun SecretaryHomeScreenContent(
 }
 
 @Composable
-fun SecretaryDashboardHeader(pendingCount: Int, onLeaveCount: Int) {
+fun SecretaryDashboardHeader(pendingCount: Int,
+                             onLeaveCount: Int,
+                             userImageUrl: String?,
+                             userEmail: String,
+                             onProfileClick: () -> Unit) {
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
             .padding(20.dp)
     ) {
-        Text(
-            text = "Dobrodošli, Sekretar",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF004D61)
-        )
 
-        Text(
-            text = SimpleDateFormat("EEEE, d. MMMM", Locale("ba", "BA")).format(Date()),
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Dobrodošli, Sekretar",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF004D61)
+                )
+                Text(
+                    text = SimpleDateFormat("EEEE, d. MMMM", Locale("ba", "BA")).format(Date()),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
+            }
+
+            IconButton(onClick = onProfileClick) {
+                DeanProfileAvatar(
+                    imageUrl = userImageUrl,
+                    email = userEmail,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .border(
+                            width = 1.5.dp,
+                            color = Color.Gray,
+                            shape = CircleShape
+                        ),
+                    fontSize = 16.sp
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -358,6 +417,9 @@ fun SecretaryHomeScreenPreview() {
             pendingRequests = mockPending,
             onTodayLeaveCount = 3,
             onRequestClick = {},
-            onNavigateToHistory = {}
+            onNavigateToHistory = {},
+            userEmail = "",
+            userImageUrl = "",
+            onProfileClick = {}
         )
 }

@@ -77,7 +77,14 @@ fun AppNavigation (navController : NavHostController) {
 
         composable<Screen.SecretaryHomeScreen>{
             SecretaryHomeScreen(sharedSecretaryViewModel,
-                onLogoutClicked = {navController.popBackStack()},
+                onLogoutClicked = {
+                    navController.navigate(Screen.Login) {
+                        popUpTo(navController.graph.id) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                },
                 onNavigateToValidate = {navController.navigate(Screen.SecretaryValidateScreen)},
                 onNavigateToHistory = {navController.navigate(Screen.SecretaryHistoryScreen)})
         }
