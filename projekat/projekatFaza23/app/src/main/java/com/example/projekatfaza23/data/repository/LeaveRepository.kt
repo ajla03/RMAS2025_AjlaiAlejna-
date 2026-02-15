@@ -119,12 +119,17 @@ class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
     suspend fun updateRequestSecretary(
         requestId: String,
         newStatus: RequestSatus,
-        explanationText: String
+        explanationText: String,
+        finalDates: List<LeaveDates>
     ): Boolean {
         return try {
             firestore.collection("leave_request")
                 .document(requestId)
-                .update("status", newStatus, "explanationSecretary", explanationText)
+                .update(mapOf(
+                    "status" to newStatus,
+                    "explanationSecretary" to explanationText,
+                    "leave_dates" to finalDates
+                ))
                 .await()
             true
         } catch (e: Exception) {

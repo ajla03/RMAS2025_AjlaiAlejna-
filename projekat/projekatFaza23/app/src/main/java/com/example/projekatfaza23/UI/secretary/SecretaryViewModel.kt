@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projekatfaza23.data.db.AppDatabase
+import com.example.projekatfaza23.model.LeaveDates
 import com.example.projekatfaza23.model.LeaveRepository
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
@@ -70,12 +71,18 @@ class SecretaryViewModel(application: Application) : AndroidViewModel(applicatio
         _uiState.update { it.copy(explanationSecretary = text) }
     }
 
-    fun validateRequest() {
+    fun validateRequest(selectedDateRange: LeaveDates) {
         val state = _uiState.value
         val req = state.selectedRequest ?: return
 
         viewModelScope.launch {
-            repository.updateRequestSecretary(req.id, RequestSatus.PendingDean, state.explanationSecretary)
+            val purifiedList = listOf(selectedDateRange)
+
+            repository.updateRequestSecretary(req.id,
+                                              RequestSatus.PendingDean,
+                                              state.explanationSecretary,
+                                              purifiedList)
+
             _uiState.update { it.copy(selectedRequest = null) }
         }
     }
