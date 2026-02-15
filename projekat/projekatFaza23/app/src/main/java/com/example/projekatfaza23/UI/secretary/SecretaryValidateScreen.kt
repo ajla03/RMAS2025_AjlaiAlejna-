@@ -162,7 +162,7 @@ fun SecretaryBottomBar(onReject: () -> Unit, onForward: () -> Unit){
 
 
             Button(
-                onClick = onReject,
+                onClick = onForward,
                 modifier  = Modifier.weight(1f).height(52.dp),
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = primaryColor),
                 shape = RoundedCornerShape(12.dp)

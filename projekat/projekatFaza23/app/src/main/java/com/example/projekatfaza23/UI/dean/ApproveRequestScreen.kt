@@ -78,7 +78,7 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
     }
 
     val request = selectedRequest!!
-    val isProcessed = request.status != RequestSatus.Pending
+    val isProcessed = request.status != RequestSatus.PendingDean
 
 
     Scaffold(

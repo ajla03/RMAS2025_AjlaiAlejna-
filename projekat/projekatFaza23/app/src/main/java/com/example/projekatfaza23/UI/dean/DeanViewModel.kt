@@ -88,6 +88,8 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
 
     private fun applyFilters(state: DeanUIState): DeanUIState {
         val filtered = state.requests.filter { req ->
+            if (req.status == RequestSatus.Pending) return@filter false  // ne  zelim da dekan vidi pending za sekretara, nepotrebno je
+
             val matchesStatus = if (state.filterStatus == "All") true
             else req.status.name.equals(state.filterStatus, ignoreCase = true)
 

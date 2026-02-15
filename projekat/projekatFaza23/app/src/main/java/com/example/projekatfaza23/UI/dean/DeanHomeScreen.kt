@@ -163,7 +163,7 @@ fun getMockRequests(): List<LeaveRequest> {
 val filterMap = mapOf(
     "Svi" to "All",
     "Odobreni" to "Approved",
-    "Na čekanju" to "Pending",
+    "Na čekanju" to "PendingDean",
     "Odbijeni" to "Denied"
 )
 
