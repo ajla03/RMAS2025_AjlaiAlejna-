@@ -128,4 +128,12 @@ class SecretaryViewModel(application: Application) : AndroidViewModel(applicatio
             state.copy(requestAuthor = author)
         }
     }
+
+    fun updateHistorySearchQuery(query: String) {
+        _uiState.update { it.copy(historySearchQuery = query) }
+    }
+
+    fun updateHistoryFilter(filter: HistoryFilter) {
+        _uiState.update { it.copy(historyFilter = filter) }
+    }
 }

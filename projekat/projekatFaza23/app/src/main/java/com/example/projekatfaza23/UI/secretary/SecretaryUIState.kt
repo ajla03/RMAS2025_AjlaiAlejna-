@@ -15,7 +15,11 @@ data class SecretaryUIState(
 
     val stats: UserVacationStats = UserVacationStats(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+
+    // for filter
+    val historySearchQuery: String = "",
+    val historyFilter: HistoryFilter = HistoryFilter.ALL
 )
 
 data class UserVacationStats(
@@ -24,3 +28,7 @@ data class UserVacationStats(
     val pendingDays: Int = 0, // dani u zahtjevu
     val remainingDays: Int = 0
 )
+
+enum class HistoryFilter {
+    ALL, APPROVED, DENIED
+}

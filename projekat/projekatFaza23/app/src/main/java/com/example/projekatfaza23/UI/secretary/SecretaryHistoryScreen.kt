@@ -1,19 +1,31 @@
 package com.example.projekatfaza23.UI.secretary
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButtonDefaults.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -23,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.projekatfaza23.UI.dean.extractNameFromEmail
 import com.example.projekatfaza23.UI.dean.primaryColor
 import com.example.projekatfaza23.UI.home.TopAppBarSection
 import com.example.projekatfaza23.model.LeaveRequest
@@ -39,9 +52,33 @@ fun SecretaryHistoryScreen(
 
     val processedRequests = uiState.allRequests.filter{ it.status!= RequestSatus.Pending }
 
+    val filteredRequests = processedRequests.filter { request ->
+        val matchesSearch = if (uiState.historySearchQuery.isBlank()) {
+            true
+        } else {
+            val name = extractNameFromEmail(request.userEmail)
+            name.contains(uiState.historySearchQuery, ignoreCase = true)
+        }
+
+        val matchesStatus = when (uiState.historyFilter) {
+            HistoryFilter.ALL -> true
+            HistoryFilter.APPROVED -> request.status == RequestSatus.Approved
+            HistoryFilter.DENIED -> request.status == RequestSatus.Denied
+        }
+
+        matchesSearch && matchesStatus
+    }
     SecretaryHistoryScreenContent(
         isLoading = uiState.isLoading,
-        processedRequests = processedRequests,
+        processedRequests = filteredRequests,
+        searchQuery = uiState.historySearchQuery,
+        onSearchQueryChange = { newValue ->
+            viewModel.updateHistorySearchQuery(newValue)
+        },
+        selectedFilter =uiState.historyFilter,
+        onFilterSelected  =  { newFilter ->
+            viewModel.updateHistoryFilter(newFilter)
+        },
         onNavigateToHome = onNavigateToHome,
         onRequestClick = { request ->
             viewModel.selectRequest(request)
@@ -55,7 +92,10 @@ fun SecretaryHistoryScreen(
 fun SecretaryHistoryScreenContent(
     isLoading: Boolean,
     processedRequests: List<LeaveRequest>,
-    onNavigateToHome: () -> Unit,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    selectedFilter: HistoryFilter,
+    onFilterSelected: (HistoryFilter) -> Unit,    onNavigateToHome: () -> Unit,
     onRequestClick: (LeaveRequest) -> Unit
 ) {
     Scaffold(
@@ -91,6 +131,49 @@ fun SecretaryHistoryScreenContent(
                         color = Color.Gray
                     )
 
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    TextField(
+                        value = searchQuery,
+                        onValueChange = onSearchQueryChange,
+                        placeholder = { Text("Pretraži ...", color = Color.Gray) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(50),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFFF5F7FA),
+                            unfocusedContainerColor = Color(0xFFF5F7FA),
+                            disabledContainerColor = Color(0xFFF5F7FA),
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        singleLine = true
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        HistoryFilterChip(
+                            text = "Svi",
+                            selected = selectedFilter == HistoryFilter.ALL,
+                            onClick = { onFilterSelected(HistoryFilter.ALL) }
+                        )
+                        HistoryFilterChip(
+                            text = "Odobreni",
+                            selected = selectedFilter == HistoryFilter.APPROVED,
+                            onClick = { onFilterSelected(HistoryFilter.APPROVED) }
+                        )
+                        HistoryFilterChip(
+                            text = "Odbijeni",
+                            selected = selectedFilter == HistoryFilter.DENIED,
+                            onClick = { onFilterSelected(HistoryFilter.DENIED) }
+                        )
+                    }
                 }
 
                 LazyColumn(
@@ -116,19 +199,40 @@ fun SecretaryHistoryScreenContent(
 
 }
 
-
+@Composable
+fun HistoryFilterChip(text: String, selected:  Boolean, onClick : ()-> Unit){
+    Surface(
+        onClick = onClick,
+        color = if (selected) primaryColor else Color.White,
+        shape = RoundedCornerShape(20.dp),
+        border = if (selected) null else BorderStroke(1.dp, Color.LightGray),
+        shadowElevation = if (selected) 2.dp else 0.dp
+    ){
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            color = if (selected) Color.White else Color.Gray,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
 
 
 @Preview(showBackground = true)
 @Composable
 fun SecretaryHistoryScreenPreview() {
-        SecretaryHistoryScreenContent(
-            isLoading = false,
-            processedRequests = listOf(
-                LeaveRequest(userEmail = "odobreno@fit.ba", status = RequestSatus.Approved),
-                LeaveRequest(userEmail = "odbijeno@fit.ba", status = RequestSatus.Denied)
-            ),
-            onNavigateToHome = {},
-            onRequestClick = {}
-        )
+    SecretaryHistoryScreenContent(
+        isLoading = false,
+        processedRequests = listOf(
+            LeaveRequest(userEmail = "odobreno@fit.ba", status = RequestSatus.Approved),
+            LeaveRequest(userEmail = "odbijeno@fit.ba", status = RequestSatus.Denied)
+        ),
+        searchQuery = "",
+        onSearchQueryChange = {},
+        selectedFilter = HistoryFilter.ALL,
+        onFilterSelected = {},
+        onNavigateToHome = {},
+        onRequestClick = {}
+    )
 }
