@@ -9,6 +9,7 @@ data class DeanUIState(
 
     val employees: List<UserEntity> = emptyList(),
     val displayedEmployees: List<UserEntity> = emptyList(),
+    val onTodayLeaveCount: Int = 0,
 
     val isLoading: Boolean = false,
     val error: String? = null,

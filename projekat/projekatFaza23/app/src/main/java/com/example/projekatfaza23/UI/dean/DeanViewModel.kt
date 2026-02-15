@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import okhttp3.internal.ignoreIoExceptions
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import java.util.Calendar
 
 
 class DeanViewModel(application: Application): AndroidViewModel(application) {
@@ -46,8 +47,14 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
                     _uiState.update { it.copy(isLoading = false, error = e.message) }
                 }
                 .collect { requests ->
+                    val deanRequests = requests.filter{ it.status != RequestSatus.Pending }
                     _uiState.update { currentState ->
-                        val newState = currentState.copy(requests = requests, isLoading = false)
+                        val onLeaveCount = calculateOnLeaveToday(requests)
+
+                        val newState = currentState.copy(
+                            requests = deanRequests,
+                            isLoading = false,
+                            onTodayLeaveCount = onLeaveCount)
                         applyFilters(newState)
                     }
                 }
@@ -142,6 +149,27 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    private fun calculateOnLeaveToday(requests: List<LeaveRequest>): Int{
+        val now  = System.currentTimeMillis()
+
+        val activeRequests = requests.filter { request ->
+            request.status == RequestSatus.Approved &&
+                    request.leave_dates?.any{ dateRange ->
+                        val startMillis = dateRange?.start?.toDate()?.time ?: Long.MAX_VALUE
+                        val endMillis = dateRange?.end?.toDate()?.time ?: Long.MIN_VALUE
+
+                        val calendar = Calendar.getInstance()
+                        calendar.timeInMillis = endMillis
+                        calendar.set(Calendar.HOUR_OF_DAY, 23)
+                        calendar.set(Calendar.MINUTE, 59)
+                        calendar.set(Calendar.SECOND, 59)
+                        val adjustedEndMillis = calendar.timeInMillis
+
+                        now in startMillis..adjustedEndMillis
+                    } == true
+        }
+        return activeRequests.map { it.userEmail }.distinct().size
+    }
     fun approveRequest(request: LeaveRequest){
         viewModelScope.launch {
             _repository.updateReqeust(request.id, RequestSatus.Approved,request.explanationDean)

@@ -143,7 +143,8 @@ fun SecretaryHomeScreenContent(
                     .padding(padding)
                     .fillMaxSize()
             ) {
-                SecretaryDashboardHeader(
+                DashboardHeader(
+                    role = "Sekretar",
                     pendingCount = pendingRequests.size,
                     onLeaveCount = onTodayLeaveCount,
                     userImageUrl = userImageUrl,
@@ -182,7 +183,8 @@ fun SecretaryHomeScreenContent(
 }
 
 @Composable
-fun SecretaryDashboardHeader(pendingCount: Int,
+fun DashboardHeader(role : String,
+                            pendingCount: Int,
                              onLeaveCount: Int,
                              userImageUrl: String?,
                              userEmail: String,
@@ -202,7 +204,7 @@ fun SecretaryDashboardHeader(pendingCount: Int,
         ) {
             Column {
                 Text(
-                    text = "Dobrodošli, Sekretar",
+                    text = "Dobrodošli, $role",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF004D61)
