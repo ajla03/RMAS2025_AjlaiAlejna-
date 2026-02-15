@@ -61,23 +61,21 @@ import java.util.Locale
 fun SecretaryHomeScreen(
     viewModel: SecretaryViewModel,
     onLogoutClicked: () -> Unit,
-    onNavigateToValidate: () -> Unit
+    onNavigateToValidate: () -> Unit,
+    onNavigateToHistory: () ->  Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     val pendingRequests = uiState.displayedRequests
-    val processedRequests = uiState.allRequests.filter { it.status != RequestSatus.Pending }
-    var showHistory by remember { mutableStateOf(false) }
 
     SecretaryHomeScreenContent(
         isLoading = uiState.isLoading,
         pendingRequests = pendingRequests,
-        processedRequests = processedRequests,
-        showHistory = showHistory,
-        onHistoryToggle = { isHistory -> showHistory = isHistory },
         onRequestClick = { request ->
             viewModel.selectRequest(request)
             onNavigateToValidate()
-        }
+        },
+        onNavigateToHistory = onNavigateToHistory
     )
 }
 
@@ -85,14 +83,19 @@ fun SecretaryHomeScreen(
 fun SecretaryHomeScreenContent(
     isLoading: Boolean,
     pendingRequests: List<LeaveRequest>,
-    processedRequests: List<LeaveRequest>,
-    showHistory: Boolean,
-    onHistoryToggle: (Boolean) -> Unit,
-    onRequestClick: (LeaveRequest) -> Unit
+    onRequestClick: (LeaveRequest) -> Unit,
+    onNavigateToHistory: () -> Unit
 ) {
     Scaffold(
         containerColor = Color(0xFFF5F7FA),
-        topBar = { TopAppBarSection() }
+        topBar = { TopAppBarSection() },
+        bottomBar = {
+            SecretaryBottomNavigationBar(
+                currentRoute = "home",
+                onNavigateToHome = {},
+                onNavigateToHistory = onNavigateToHistory
+            )
+        }
     ) { padding ->
 
         if (isLoading) {
@@ -115,36 +118,24 @@ fun SecretaryHomeScreenContent(
                     onLeaveCount = 3  // potrebno izracunati
                 )
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    FilterChip(
-                        selected = !showHistory,
-                        onClick = { onHistoryToggle(false) },
-                        label = "Na čekanju (${pendingRequests.size})"
-                    )
-                    FilterChip(
-                        selected = showHistory,
-                        onClick = { onHistoryToggle(true) },
-                        label = "Historija (${processedRequests.size})"
-                    )
-                }
-
-                val listDisplay = if (showHistory) processedRequests else pendingRequests
+                Text(
+                    text = "Zahtjevi koji čekaju obradu",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.DarkGray,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                )
 
                 LazyColumn(
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (listDisplay.isEmpty()) {
+                    if (pendingRequests.isEmpty()) {
                         item {
-                            EmptyStateMessage(isHistory = showHistory)
+                            EmptyStateMessage(isHistory = false)
                         }
                     } else {
-                        items(listDisplay) { request ->
+                        items(pendingRequests) { request ->
                             SecretaryRequestItem(
                                 request = request,
                                 onClick = { onRequestClick(request) }
@@ -377,16 +368,11 @@ fun SecretaryHomeScreenPreview() {
             LeaveRequest(userEmail = "ahodzic@fit.ba", status = RequestSatus.Pending),
             LeaveRequest(userEmail = "abulic@fit.ba", status = RequestSatus.Pending)
         )
-        val mockProcessed = listOf(
-            LeaveRequest(userEmail = "mmujic@fit.ba", status = RequestSatus.Approved)
-        )
 
         SecretaryHomeScreenContent(
             isLoading = false,
             pendingRequests = mockPending,
-            processedRequests = mockProcessed,
-            showHistory = false,       // Postavi na true ako želiš vidjeti Preview "Historija" taba
-            onHistoryToggle = {},
-            onRequestClick = {}
+            onRequestClick = {},
+            {}
         )
 }
