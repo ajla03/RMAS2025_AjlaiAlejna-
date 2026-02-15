@@ -1,10 +1,6 @@
 package com.example.projekatfaza23.UI.dean
 
-import android.R
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,16 +12,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.paddingFromBaseline
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -36,29 +28,16 @@ import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DateRangePicker
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,94 +51,20 @@ import com.example.projekatfaza23.UI.request.RequestType
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Date
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberDateRangePickerState
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.SemanticsProperties.ImeAction
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
-import com.example.projekatfaza23.UI.secretary.SecretaryBottomNavigationBar
+import com.example.projekatfaza23.UI.secretary.DashboardHeader
 import com.example.projekatfaza23.data.auth.UserManager
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.compose
 import java.util.Locale
 
-//mock podaci za prikaz, da vidim kako ce preview izgledati
-fun getMockRequests(): List<LeaveRequest> {
-    val now = System.currentTimeMillis()
-    val dayInMillis = 24 * 60 * 60 * 1000L
-
-    return listOf(
-        LeaveRequest(
-            id = "101",
-            status = RequestSatus.Pending,
-            type = RequestType.SICK_LEAVE.displayName,
-            explanation = "Imam jaku gripu i temperaturu.",
-            userEmail = "marko.peric@firma.com",
-            leave_dates = listOf(
-                LeaveDates(
-                    start = Timestamp(Date(now + dayInMillis)),
-                    end = Timestamp(Date(now + (3 * dayInMillis)))
-                )
-            )
-        ),
-        LeaveRequest(
-            id = "102",
-            status = RequestSatus.Approved,
-            type = RequestType.HOUSE_CONSTRUCTION.displayName,
-            explanation = "Renoviranje kupatila, moram biti prisutan.",
-            userEmail = "ana.anic@firma.com",
-            leave_dates = listOf(
-                LeaveDates(
-                    start = Timestamp(Date(now - (2 * dayInMillis))),
-                    end = Timestamp(Date(now))
-                )
-            )
-        ),
-        LeaveRequest(
-            id = "103",
-            status = RequestSatus.Denied,
-            type = RequestType.ANNUAL_LEAVE.displayName,
-            explanation = "Planirani ljetni godišnji odmor.",
-            userEmail = "ivan.horvat@firma.com",
-            leave_dates = listOf(
-                LeaveDates(
-                    start = Timestamp(Date(now + (10 * dayInMillis))),
-                    end = Timestamp(Date(now + (15 * dayInMillis)))
-                )
-            )
-        ),
-        LeaveRequest(
-            id = "104",
-            status = RequestSatus.Pending,
-            type = RequestType.RELOCATION.displayName,
-            explanation = "Selidba u novi stan.",
-            userEmail = "petra.petrovic@firma.com",
-            leave_dates = listOf(
-                LeaveDates(
-                    start = Timestamp(Date(now + (5 * dayInMillis))),
-                    end = Timestamp(Date(now + (7 * dayInMillis)))
-                )
-            ),
-            file_info = FileInfo("ugovor_stan.pdf", "pdf", "http://fakeurl.com/doc")
-        )
-    )
-}
 
 val filterMap = mapOf(
     "Svi" to "All",
@@ -169,7 +74,6 @@ val filterMap = mapOf(
 )
 
 //main screen
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeanHomeScreen(
     viewModel: DeanViewModel,
@@ -181,52 +85,36 @@ fun DeanHomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val user = UserManager.currentUser.collectAsState().value
 
+    val pendingRequests = uiState.requests.filter { it.status == RequestSatus.PendingDean }
     DeanHomeScreenContent(
         isLoading = uiState.isLoading,
-        displayRequests = uiState.displayRequests,
-        isActiveFilter = uiState.isActiveFilter == true,
-        filterStatus = uiState.filterStatus,
-        searchQuery = uiState.searchQuery,
-        dateRangeStart = uiState.dateRange.first,
-        dateRangeEnd = uiState.dateRange.second,
+        displayRequests = pendingRequests,
+        onTodayLeaveCount = uiState.onTodayLeaveCount,
         userName = user?.name ?: "",
         userLastName = user?.lastName ?: "",
         userEmail = user?.email ?: "",
         userImageUrl = user?.profilePictureURL?.toString(),
         navigateRequest = navigateRequest,
         onLogoutClick = onLogoutClick,
-        onResetFilters = { viewModel.resetFilters() },
-        onSetStatusFilter = { viewModel.setStatusFilter(it) },
         onSetSelectedRequest = { viewModel.setSelectedRequest(it) },
-        onUpdateNameFilter = { viewModel.updateNameFilter(it) },
-        onUpdateDateRangeFilter = { start, end -> viewModel.updateDateRangeFilter(start, end) },
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToDirectory = onNavigateToDirectory
     )
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeanHomeScreenContent(
     isLoading: Boolean,
     displayRequests: List<LeaveRequest>,
-    isActiveFilter: Boolean,
-    filterStatus: String,
-    searchQuery: String,
-    dateRangeStart: Long?,
-    dateRangeEnd: Long?,
+    onTodayLeaveCount: Int = 0,
     userName: String,
     userLastName: String,
     userEmail: String,
     userImageUrl: String?,
     navigateRequest: () -> Unit,
     onLogoutClick: () -> Unit,
-    onResetFilters: () -> Unit,
-    onSetStatusFilter: (String) -> Unit,
     onSetSelectedRequest: (LeaveRequest) -> Unit,
-    onUpdateNameFilter: (String) -> Unit,
-    onUpdateDateRangeFilter: (Long?, Long?) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToDirectory: () -> Unit = {}
 ) {
@@ -238,8 +126,6 @@ fun DeanHomeScreenContent(
     }
 */
 
-    var showFilterSheet by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
     var showProfileDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -256,93 +142,50 @@ fun DeanHomeScreenContent(
         }
     ){
         paddingValues ->
+
         Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ){
-            Spacer(modifier = Modifier.height(12.dp))
+        modifier = Modifier
+            .padding(paddingValues)
+            .fillMaxSize()
+        ) {
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Lista zahtjeva",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
+            DashboardHeader(
+                role = "Dekan",
+                pendingCount = displayRequests.size,
+                onLeaveCount = onTodayLeaveCount,
+                userImageUrl = userImageUrl,
+                userEmail = userEmail,
+                onProfileClick = {showProfileDialog = true}
+            )
 
-                IconButton(onClick = { showProfileDialog = true }) {
-                    DeanProfileAvatar(
-                        imageUrl = userImageUrl,
-                        email = userEmail,
-                        modifier = Modifier.size(40.dp)
-                            .border( 
-                                width = 1.5.dp,
-                                color = Color.Gray,
-                                shape = CircleShape
-                            ),
-                        fontSize = 16.sp
-                    )
-                }
-            }
+            Text(
+                text = "Zahtjevi koji čekaju obradu",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.DarkGray,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+            )
 
 
-            Spacer(modifier = Modifier.height(26.dp))
-
-            //status filteri
-            LazyRow (
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ){
-
-                item {
-                    FilterButton(onClick = { showFilterSheet = true })
-                }
-
-                if(isActiveFilter == true){
-                    item{
-                        ResetButton(onClick = {onResetFilters()})
-                    }
-                }
-
-                item {
-                    Box(modifier = Modifier
-                        .height(24.dp)
-                        .width(1.dp)
-                        .background(Color.LightGray))
-                }
-
-                val filters = listOf("Svi", "Odobreni", "Na čekanju", "Odbijeni")
-                items(filters){filter ->
-                    FilterChipItem(
-                        text = filter,
-                        selected = (filterStatus) == filterMap[filter]!!,
-                        onClick = {
-                            onSetStatusFilter(filterMap[filter]!!)
-                        }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(22.dp))
-
-            //lista zahtjeva
-            if(isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-            }else {
+            } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 80.dp)
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 80.dp)
                 ) {
-                    items(displayRequests) { request ->
-                        RequestCardDean(request, navigateRequest, {onSetSelectedRequest(it)})
+                    if (displayRequests.isEmpty()) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
+                                Text("Nema novih zahtjeva na čekanju.", color = Color.Gray)
+                            }
+                        }
+                    } else {
+                        items(displayRequests) { request ->
+                            RequestCardDean(request, navigateRequest, { onSetSelectedRequest(it) })
+                        }
                     }
                 }
             }
@@ -350,244 +193,27 @@ fun DeanHomeScreenContent(
 
         if (showProfileDialog) {
             ProfileDialog(
-                deanName = (userName) + " " + (userLastName),
+                deanName = "$userName $userLastName",
                 deanEmail = userEmail,
                 onDismiss = { showProfileDialog = false },
                 imageUrl = userImageUrl,
                 onLogout = {
                     showProfileDialog = false
-                    onLogoutClick() },
+                    onLogoutClick()
+                },
                 role = "Dekan"
             )
         }
-
-        if(showFilterSheet){
-            ModalBottomSheet(
-                onDismissRequest = {showFilterSheet = false},
-                sheetState = sheetState,
-
-            ) { FilterBottomSheetContent(
-                currentName = searchQuery,
-                currentStartMillis = dateRangeStart,
-                currentEndMillis = dateRangeEnd,
-                onNameChange = { onUpdateNameFilter(it) },
-                onDateRangeChange = { start, end -> onUpdateDateRangeFilter(start, end) },
-                onApply = { showFilterSheet = false }
-            )}
-        }
-    }
-}
-
-@Composable
-fun ResetButton(onClick: () -> Unit){
-    Surface(
-        onClick = onClick,
-        color = Color(0xFFFFEBEE),
-        shape = CircleShape,
-        modifier = Modifier.size(32.dp)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Poništi filtere",
-                tint = Color(0xFFC62828),
-                modifier = Modifier.size(16.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun FilterBottomSheetContent(
-    currentName: String,
-    currentStartMillis: Long?,
-    currentEndMillis: Long?,
-    onNameChange: (String) -> Unit,
-    onDateRangeChange: (Long?, Long?) -> Unit,
-    onApply: () -> Unit
-) {
-
-    Column(
-        modifier = Modifier.fillMaxWidth()
-            .padding(horizontal = 24.dp)
-            .padding(bottom = 48.dp)
-    ) {
-        Text(
-            text = "Filtriraj po",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            "Datum",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        DateRangeFilterField(
-            startMillis = currentStartMillis,
-            endMillis = currentEndMillis,
-            onDateSelected = onDateRangeChange
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Ime", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = currentName,
-            onValueChange = onNameChange,
-            placeholder = { Text("Ime Prezime") },
-            singleLine = true,
-            leadingIcon = {
-                Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = Color.White,
-                focusedContainerColor = Color.White,
-                focusedBorderColor = Color(0xFF1E2A47),
-                unfocusedBorderColor = Color.Gray
-            )
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = onApply,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E2A47)),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text("Primijeni", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        }
-
-
     }
 }
 
 
-@Composable
-fun DateRangeFilterField(
-    startMillis: Long?,
-    endMillis: Long?,
-    onDateSelected : (Long?, Long?) -> Unit
-){
-    var showDatePicker by remember {mutableStateOf(false)}
-
-    val displayText = if(startMillis!=null && endMillis!=null){
-        "${convertMillisToDate(startMillis)} - ${convertMillisToDate(endMillis)}"
-    }else{
-        ""
-    }
-
-    OutlinedTextField(
-        value = displayText,
-        onValueChange = {},
-        placeholder = { Text("Datum od - do") },
-        label = {Text("Raspon datuma")},
-        readOnly = true,
-        trailingIcon = {
-            IconButton(onClick = {showDatePicker = true}) {
-                Icon(Icons.Default.DateRange, contentDescription = "Odaberi datum")
-            }
-        },
-        modifier = Modifier.fillMaxWidth().clickable{showDatePicker=true},
-        shape = RoundedCornerShape(12.dp),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White
-        ),
-        enabled = false
-    )
-
-    if(showDatePicker){
-        val dateRangePickerState = rememberDateRangePickerState(
-            initialSelectedStartDateMillis  = startMillis,
-            initialSelectedEndDateMillis = endMillis
-        )
-
-        DatePickerDialog(
-            onDismissRequest = {showDatePicker = false},
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onDateSelected(
-                            dateRangePickerState.selectedStartDateMillis,
-                            dateRangePickerState.selectedEndDateMillis
-                        )
-                        showDatePicker = false
-                    }
-                ){
-                    Text("OK")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {showDatePicker = false}){
-                    Text("Otkaži")
-                }
-            }
-        ) {
-            DateRangePicker(state = dateRangePickerState,
-                title = null,
-                headline = {
-                Row(modifier = Modifier.padding(16.dp)) {
-                    val startText = dateRangePickerState.selectedStartDateMillis?.let { convertMillisToDate(it) } ?: "Početak"
-                    val endText = dateRangePickerState.selectedEndDateMillis?.let { convertMillisToDate(it) } ?: "Kraj"
-                    Box(Modifier.weight(1f)) {
-                        Text(text = startText)
-                    }
-                    Box(Modifier.weight(1f)) {
-                        Text(text = endText)
-                    }
-                }
-            },
-                showModeToggle = false,
-                modifier = Modifier.height(400.dp))
-        }
-    }
-}
 
 fun convertMillisToDate(millis: Long): String {
     val formatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
     return formatter.format(Date(millis))
 }
 
-@Composable
-fun FilterButton(onClick:() -> Unit){
-    Surface(
-        onClick = onClick,
-        color = Color(0xFF1E2A47),
-        shape  = RoundedCornerShape(50),
-        modifier = Modifier.height(32.dp),
-        ) {
-
-        Row(verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 12.dp))
-        {
-            Icon(
-                imageVector = Icons.Default.FilterList,
-                contentDescription = "filter",
-                tint = Color.White,
-                modifier = Modifier.size(16.dp)
-            )
-
-            Spacer(modifier = Modifier.width(6.dp))
-
-            Text(
-                text = "Filter",
-                style = MaterialTheme.typography.labelMedium,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
-            )
-
-        }
-    }
-}
 @Composable
 fun RequestCardDean(request: LeaveRequest, navigateRequest: () -> Unit, setRequest: (LeaveRequest) -> Unit) {
     val displayName = request.userEmail.substringBefore("@")
@@ -685,8 +311,6 @@ fun RequestCardDean(request: LeaveRequest, navigateRequest: () -> Unit, setReque
     }
 }
 
-
-
 fun formatLeaveDates(dates: List<LeaveDates?>? ):String{
     if(dates.isNullOrEmpty()) return "No dates"
 
@@ -698,37 +322,6 @@ fun formatLeaveDates(dates: List<LeaveDates?>? ):String{
     val format = SimpleDateFormat("YYYY MMM dd")
     return "${format.format(start)} - ${format.format(end)}"
 }
-
-@Composable
-fun FilterChipItem(text: String, selected : Boolean, onClick: () -> Unit) {
-    val backgroundColor = if (selected) Color(0xFF1976D2) else Color.White
-    val contentColor = if(selected) Color.White else Color.Gray
-    val borderColor = if(selected) Color.Transparent else Color.LightGray
-
-    Surface(
-        onClick = onClick,
-        color = backgroundColor,
-        contentColor = contentColor,
-        shape = RoundedCornerShape(50),
-        border = if(!selected) BorderStroke(1.dp, borderColor) else null,
-        modifier = Modifier.height(32.dp)
-
-    ){
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        ){
-            Text(
-                text= text,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = if(selected) FontWeight.SemiBold else FontWeight.Normal
-            )
-        }
-
-    }
-
-}
-
 
 
 @Composable
@@ -868,22 +461,76 @@ fun HRAppPreview() {
         DeanHomeScreenContent(
             isLoading = false,
             displayRequests = getMockRequests(),
-            isActiveFilter = false,
-            filterStatus = "All",
-            searchQuery = "",
-            dateRangeStart = null,
-            dateRangeEnd = null,
+
             userName = "Ahmet",
             userLastName = "Dekanović",
             userEmail = "adekanovic@fit.ba",
             userImageUrl = null,
             navigateRequest = {},
             onLogoutClick = {},
-            onResetFilters = {},
-            onSetStatusFilter = {},
             onSetSelectedRequest = {},
-            onUpdateNameFilter = {},
-            onUpdateDateRangeFilter = { _, _ -> },
             onNavigateToHistory = {}
         )
+}
+
+//mock podaci za prikaz, da vidim kako ce preview izgledati
+fun getMockRequests(): List<LeaveRequest> {
+    val now = System.currentTimeMillis()
+    val dayInMillis = 24 * 60 * 60 * 1000L
+
+    return listOf(
+        LeaveRequest(
+            id = "101",
+            status = RequestSatus.Pending,
+            type = RequestType.SICK_LEAVE.displayName,
+            explanation = "Imam jaku gripu i temperaturu.",
+            userEmail = "marko.peric@firma.com",
+            leave_dates = listOf(
+                LeaveDates(
+                    start = Timestamp(Date(now + dayInMillis)),
+                    end = Timestamp(Date(now + (3 * dayInMillis)))
+                )
+            )
+        ),
+        LeaveRequest(
+            id = "102",
+            status = RequestSatus.Approved,
+            type = RequestType.HOUSE_CONSTRUCTION.displayName,
+            explanation = "Renoviranje kupatila, moram biti prisutan.",
+            userEmail = "ana.anic@firma.com",
+            leave_dates = listOf(
+                LeaveDates(
+                    start = Timestamp(Date(now - (2 * dayInMillis))),
+                    end = Timestamp(Date(now))
+                )
+            )
+        ),
+        LeaveRequest(
+            id = "103",
+            status = RequestSatus.Denied,
+            type = RequestType.ANNUAL_LEAVE.displayName,
+            explanation = "Planirani ljetni godišnji odmor.",
+            userEmail = "ivan.horvat@firma.com",
+            leave_dates = listOf(
+                LeaveDates(
+                    start = Timestamp(Date(now + (10 * dayInMillis))),
+                    end = Timestamp(Date(now + (15 * dayInMillis)))
+                )
+            )
+        ),
+        LeaveRequest(
+            id = "104",
+            status = RequestSatus.Pending,
+            type = RequestType.RELOCATION.displayName,
+            explanation = "Selidba u novi stan.",
+            userEmail = "petra.petrovic@firma.com",
+            leave_dates = listOf(
+                LeaveDates(
+                    start = Timestamp(Date(now + (5 * dayInMillis))),
+                    end = Timestamp(Date(now + (7 * dayInMillis)))
+                )
+            ),
+            file_info = FileInfo("ugovor_stan.pdf", "pdf", "http://fakeurl.com/doc")
+        )
+    )
 }

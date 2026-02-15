@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.projekatfaza23.UI.dean.ApproveRequestScreen
 import com.example.projekatfaza23.UI.dean.DeanDirectoryScreen
+import com.example.projekatfaza23.UI.dean.DeanHistoryScreen
 import com.example.projekatfaza23.UI.dean.DeanHomeScreen
 import com.example.projekatfaza23.UI.dean.DeanViewModel
 import com.example.projekatfaza23.UI.home.ClientHomeScreen
@@ -71,11 +72,21 @@ fun AppNavigation (navController : NavHostController) {
                         // da se sprijeci kreiranje visestrukih login ekrana
                         launchSingleTop = true
                     }
-                })
+                },
+                onNavigateToHistory = {navController.navigate(Screen.DeanHistoryScreen)})
         }
 
         composable<Screen.DeanDirectory>{
             DeanDirectoryScreen(viewModel = sharedDeanViewModel, navigateHome = {navController.popBackStack()})
+        }
+
+        composable<Screen.DeanHistoryScreen> {
+            DeanHistoryScreen(
+                sharedDeanViewModel,
+                onNavigateToHome = { navController.popBackStack() },
+                navigateRequest = {navController.navigate(Screen.ApproveRequestScreen)},
+                onNavigateToDirectory = {navController.navigate(Screen.DeanDirectory)}
+            )
         }
 
         composable<Screen.ApproveRequestScreen>{

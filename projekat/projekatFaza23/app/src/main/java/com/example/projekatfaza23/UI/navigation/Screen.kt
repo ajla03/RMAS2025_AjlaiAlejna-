@@ -17,6 +17,8 @@ sealed interface Screen {
 
     @Serializable
     object DeanDirectory : Screen
+    @Serializable
+    object DeanHistoryScreen : Screen
 
     @Serializable
     object ApproveRequestScreen : Screen
