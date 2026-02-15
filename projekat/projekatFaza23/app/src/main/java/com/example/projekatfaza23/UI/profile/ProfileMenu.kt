@@ -1,8 +1,14 @@
 package com.example.projekatfaza23.UI.profile
 
 import android.net.Uri
+import android.view.Surface
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -12,12 +18,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -33,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.projekatfaza23.R
 import com.example.projekatfaza23.UI.dean.primaryColor
+import com.example.projekatfaza23.UI.home.Status
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +50,8 @@ fun UserMenu(
     userName: String,
     userEmail: String,
     userProfilePhoto: Uri?,
+    currStatus: Status,
+    onStatusChange: (Status) -> Unit,
     onDismiss: () -> Unit,
     navigateLogout: () -> Unit
 ) {
@@ -57,12 +68,12 @@ fun UserMenu(
                 bottomEnd = 24.dp,
                 bottomStart = 24.dp
             ),
-            modifier = Modifier.fillMaxHeight(0.67f)
+            modifier = Modifier.fillMaxHeight(0.7f)
         ) {
             Column (
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding( 24.dp)
+                    .padding( horizontal = 24.dp, vertical = 12.dp)
                     .statusBarsPadding(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -89,7 +100,44 @@ fun UserMenu(
                     fontWeight = FontWeight.Thin,
                     color = Color.LightGray
                 )
-                Spacer(modifier = Modifier.weight(2f))
+
+                Spacer(modifier = Modifier.height(44.dp))
+
+                Text(
+                    text = "Postavi status:",
+                    color = Color.White.copy(alpha = 0.8f),
+                    fontSize = 14.sp,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Status.entries.forEach { status ->
+                        val isSelected = currStatus == status
+
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = if (isSelected) Color.White else Color.Transparent,
+                            border = BorderStroke(1.dp, Color.White),
+                            modifier = Modifier.clickable { onStatusChange(status) }
+                        ) {
+                            Text(
+                                text = status.statusString,
+                                color = if (isSelected) primaryColor else Color.White,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                fontSize = 14.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
 
                 Button(
                     onClick = {

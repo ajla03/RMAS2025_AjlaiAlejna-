@@ -3,10 +3,11 @@ package com.example.projekatfaza23.UI.home
 import com.example.projekatfaza23.model.LeaveRequest
 
 
-enum class Status{
-    AtWork,
-    PaidLeave,
-    AnnualLeave
+enum class Status (val statusString: String){
+    AtWork("Na poslu"),
+    PaidLeave("Plaćeno odsustvo"),
+    AnnualLeave("Godišnji odmor"),
+    Away("Odsutan/na")
 }
 
 data class LeaveUiState(

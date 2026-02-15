@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projekatfaza23.UI.home.LeaveUiState
+import com.example.projekatfaza23.UI.home.Status
 import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.data.db.AppDatabase
 import com.example.projekatfaza23.data.db.LeaveDao
@@ -209,5 +210,12 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
 
     fun resetSuccessState() {
         _uiState.update { it.copy(isSuccess = false) }
+    }
+
+    fun updateStatus(newStatus: Status){
+        _uiState.update {
+            currentState ->
+            currentState.copy(status = newStatus)
+        }
     }
 }

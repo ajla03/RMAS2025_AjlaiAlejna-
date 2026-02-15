@@ -114,7 +114,8 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel,
                 onFilterChange = { newFilter -> viewModel.setFilter(newFilter) },
                 onCreateRequest = createNewRequest,
                 isMenuOpen = isMenuOpen,
-                onProfPicClick = {isMenuOpen = true}
+                onProfPicClick = {isMenuOpen = true},
+                currStatus = uiState.status
             )
         }
 
@@ -124,6 +125,8 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel,
             userName = "${user?.name ?: ""} ${user?.lastName ?: ""}",
             userEmail = user?.email ?: "",
             userProfilePhoto = user?.profilePictureURL,
+            currStatus = uiState.status,
+            onStatusChange = {newStat -> viewModel.updateStatus(newStat)},
             onDismiss = {isMenuOpen = false},
             navigateLogout = navigateLogout
         )
@@ -144,6 +147,7 @@ fun ClientHomeScreenContent(
     onFilterChange: (String) -> Unit,
     onCreateRequest: () -> Unit,
     isMenuOpen : Boolean,
+    currStatus: Status,
     onProfPicClick : () -> Unit
 ){
     Scaffold(
@@ -178,7 +182,7 @@ fun ClientHomeScreenContent(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            ProfileHeader(userName, userPhoto, remainingDays, onProfPicClick)
+            ProfileHeader(userName, userPhoto, remainingDays, onProfPicClick, currStatus)
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -297,7 +301,20 @@ fun TopAppBarSection(){
 }
 
 @Composable
-fun ProfileHeader(userName: String, userPhoto: Uri?, remainingDays: Int, onProfPicClick: () -> Unit) {
+fun ProfileHeader(
+    userName: String,
+    userPhoto: Uri?,
+    remainingDays: Int,
+    onProfPicClick: () -> Unit,
+    currStatus: Status
+){
+    val (textColor, bgColor) = when (currStatus) {
+        Status.AtWork -> Pair(Color(0xFF2E7D32), Color(0xFFE3F1E5))
+        Status.PaidLeave -> Pair(Color(0xFF1976D2), Color(0xFFCFD9E1))
+        Status.AnnualLeave -> Pair(Color(0xFFEF6C00), Color(0xFFF1E7D9))
+        Status.Away -> Pair(Color(0xFFD72525), Color(0xFFF1E5E6))
+    }
+
 Column (verticalArrangement = Arrangement.spacedBy(20.dp)){
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -308,7 +325,7 @@ Column (verticalArrangement = Arrangement.spacedBy(20.dp)){
             contentDescription = "Profilna slika",
             placeholder = painterResource(R.drawable.no_photo),
             error = painterResource(R.drawable.no_photo),
-            modifier = Modifier.size(60.dp).clip(CircleShape)
+            modifier = Modifier.size(70.dp).clip(CircleShape)
                 .border(1.dp, Color.LightGray, CircleShape)
                 .clickable{onProfPicClick()}
         )
@@ -326,16 +343,23 @@ Column (verticalArrangement = Arrangement.spacedBy(20.dp)){
                 fontWeight = FontWeight.Bold
             )
 
+            Spacer(modifier = Modifier.height(2.dp))
+
             Surface(
-                color = Color(0xFFE8F5E9),
+                color = bgColor,
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row (modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically){
 
-                    Box(modifier = Modifier.size(6.dp).background(Color(0xFF2E7D32), CircleShape))
+                    Box(modifier = Modifier.size(6.dp).background(textColor, CircleShape))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Na poslu", fontSize = 12.sp, color = Color(0xFF2E7D32), fontWeight = FontWeight.Medium)
+                    Text(
+                        currStatus.statusString,
+                        fontSize = 12.sp,
+                        color = textColor,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
@@ -509,6 +533,7 @@ fun ClientHomePreviewNew() {
             onFilterChange = {},
             onCreateRequest = {},
             isMenuOpen = false,
+            currStatus = Status.AtWork,
             onProfPicClick = {}
         )
     }
