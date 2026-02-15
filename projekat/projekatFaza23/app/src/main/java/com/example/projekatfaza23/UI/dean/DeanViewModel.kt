@@ -47,11 +47,12 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
                     _uiState.update { it.copy(isLoading = false, error = e.message) }
                 }
                 .collect { requests ->
+                    val deanRequests = requests.filter{ it.status != RequestSatus.Pending }
                     _uiState.update { currentState ->
                         val onLeaveCount = calculateOnLeaveToday(requests)
 
                         val newState = currentState.copy(
-                            requests = requests,
+                            requests = deanRequests,
                             isLoading = false,
                             onTodayLeaveCount = onLeaveCount)
                         applyFilters(newState)
