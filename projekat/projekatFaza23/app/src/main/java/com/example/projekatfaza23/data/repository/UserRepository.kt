@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.tasks.await
 import com.example.projekatfaza23.data.db.LeaveDao
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 
 class UserRepository(private val leaveDao : LeaveDao) {
     private val firestore = FirebaseFirestore.getInstance()
@@ -76,4 +79,35 @@ class UserRepository(private val leaveDao : LeaveDao) {
     }
 
     fun getUser(email: String): Flow<UserEntity?> = leaveDao.getUser(email)
+
+    fun realTimeUserSync(email: String) : Flow<Unit> = callbackFlow {
+        val query = firestore.collection("user_info")
+            .whereEqualTo("email", email)
+        val listener = query.addSnapshotListener {
+            snapshot, error ->
+            if (error != null){
+                close(error)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null && !snapshot.isEmpty){
+                val doc = snapshot.documents[0]
+                val updatedUser = UserEntity (
+                    email = email,
+                    firstName = doc.getString("firstName") ?: "",
+                    lastName = doc.getString("lastName") ?: "",
+                    imageUrl = doc.getString("imageUrl"),
+                    totalDays = doc.getLong("totalDays")?.toInt() ?: 20,
+                    usedDays = doc.getLong("usedDays")?.toInt() ?: 0,
+                    userStatus = doc.getString("employeeStatus") ?: "AtWork",
+                    role = doc.getString("role") ?: "Professor"
+                )
+
+                launch {
+                    leaveDao.insertUser(updatedUser)
+                }
+            }
+        }
+        awaitClose { listener.remove() }
+    }
 }

@@ -44,14 +44,12 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
             UserManager.currentUser.collect{ user ->
                 if (user != null && user.email != null){
                     currentUserEmail = user.email
+
+                    launch {
+                        userRepo.realTimeUserSync(user.email).collect()
+                    }
+
                     loadUserLeaveData(user.email)
-//
-//                    launch {
-//                        val url = googleProfileRepository.getProfilePictureUrl()
-//                        if (url!=null){
-//                            UserManager.addProfilePhoto(url)
-//                        }
-//                    }
                 }
             }
         }
@@ -248,7 +246,7 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
         viewModelScope.launch {
             UserManager.currentUser.collect { userProfile ->
                 val email = userProfile?.email
-                
+
                 if (email != null) {
                     userRepo.getUser(email).collect { userEntity ->
                         userEntity?.let { user ->
