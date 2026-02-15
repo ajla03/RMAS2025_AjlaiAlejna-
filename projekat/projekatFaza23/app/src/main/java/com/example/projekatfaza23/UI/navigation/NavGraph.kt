@@ -32,19 +32,26 @@ fun AppNavigation (navController : NavHostController) {
             LoginScreen(viewModel(), {
                 destinationScreen ->
                 navController.navigate(destinationScreen){
-                    popUpTo<Screen.Login> {
+                    popUpTo(navController.graph.id) {
                         inclusive = true
                     }
+                    launchSingleTop = true
+                    }
                 }
-            })
+            )
         }
 
         composable<Screen.Home>{
             ClientHomeScreen(
                 viewModel = sharedViewModel,
                 {navController.navigate(Screen.CreateRequest)},
-                {navController.navigate(Screen.Login)}
-                )
+                { navController.navigate(Screen.Login) {
+                    popUpTo(navController.graph.id) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
+                    }
+                })
         }
 
         composable<Screen.CreateRequest> {
