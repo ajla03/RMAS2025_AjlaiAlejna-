@@ -6,9 +6,12 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.example.projekatfaza23.UI.home.LeaveUiState
 import com.example.projekatfaza23.UI.home.Status
 import com.example.projekatfaza23.data.auth.UserManager
@@ -296,15 +299,22 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
                 delay = 5000L
             }
         }
+        val inputData = workDataOf(
+            "request_id" to request.id,
+            "end_date_millis" to endDateMillis
+        )
         if(delay > 0){
-            val workRequest = OneTimeWorkRequestBuilder<LeaveReminderWorker>()
-                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            val periodicWorkRequest = PeriodicWorkRequestBuilder<LeaveReminderWorker>(
+                12, TimeUnit.HOURS
+            ).setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                .setInputData(inputData)
+                .addTag("reminder_${request.id}")
                 .build()
 
-            WorkManager.getInstance(getApplication()).enqueueUniqueWork(
-                "reminder_${request.id}",
-                ExistingWorkPolicy.KEEP,
-                workRequest
+            WorkManager.getInstance(getApplication()).enqueueUniquePeriodicWork(
+                "periodic_reminder_${request.id}",
+                ExistingPeriodicWorkPolicy.UPDATE,
+                periodicWorkRequest
             )
             Log.d("WorkManager", "Uspješno zakazana notifikacija za zahtjev ${request.id}")
         }else{
