@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projekatfaza23.UI.dean.EmployeeCommentBox
 import com.example.projekatfaza23.UI.dean.RequestDetailsCard
 import com.example.projekatfaza23.UI.dean.UserProfileHeader
 import com.example.projekatfaza23.UI.dean.calculateDaysBetween
@@ -179,6 +180,16 @@ fun SecretaryValidateContent(
             }
             RequestDetailsCard(request)
 
+            //komentar zaposlenika
+            Text(
+                    text = "Razlog / Napomena",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.Gray,
+            )
+            EmployeeCommentBox(
+                request?.explanation?.takeIf { it.isNotBlank() } ?: "Nema komentara zaposlenika."
+            )
+
             Text(
                 text = "Provjera stanja dana",
                 style = MaterialTheme.typography.labelLarge,
@@ -189,22 +200,32 @@ fun SecretaryValidateContent(
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
+                val isProcessed = request.status != RequestSatus.Pending
+
+                val displayText = if (isProcessed) {
+                    uiState.explanationSecretary.takeIf { it.isNotBlank() } ?: "Nema komentara od sekretara."
+                } else {
+                    uiState.explanationSecretary
+                }
+
                 Text(
-                    text = "Napomena (Obavezno prilikom odbijanja)",
+                    text = if (isProcessed) "Napomena sekretara" else "Napomena (Obavezno prilikom odbijanja)",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.Gray
                 )
+
                 OutlinedTextField(
-                    value = uiState.explanationSecretary,
+                    value = displayText,
                     onValueChange = onExplanationChange,
-                    isError = showValidationError && uiState.explanationSecretary.trim().isEmpty(),
-                    placeholder = {
+                    isError = !isProcessed && showValidationError && uiState.explanationSecretary.trim().isEmpty(),                    placeholder = {
                         Text(
                             "Npr. Provjereno, dani se slažu sa evidencijom...",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray
                         )
                     },
+                    readOnly = isProcessed,
+                    enabled = !isProcessed,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -213,7 +234,9 @@ fun SecretaryValidateContent(
                         unfocusedBorderColor = Color.LightGray,
                         focusedBorderColor = primaryColor,
                         errorBorderColor = Color(0xFFC62828),
-                        errorCursorColor = Color(0xFFC62828)
+                        errorCursorColor = Color(0xFFC62828),
+                        disabledTextColor = Color.DarkGray,
+                        disabledBorderColor = Color.LightGray
                     ),
                     minLines = 3
 

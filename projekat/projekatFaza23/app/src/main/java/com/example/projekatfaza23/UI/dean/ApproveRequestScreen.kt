@@ -109,7 +109,23 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
                     color = Color.Gray,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                EmployeeCommentBox(selectedRequest?.explanation ?: "")
+                EmployeeCommentBox(
+                    selectedRequest?.explanation?.takeIf { it.isNotBlank() } ?: "Nema komentara zaposlenika."
+                )            }
+
+            if(selectedRequest.status!= RequestSatus.Pending) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    //komentar sekretara
+                    Text(
+                        text = "Napomena od sekretara",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    EmployeeCommentBox(
+                        selectedRequest?.explanationSecretary?.takeIf { it.isNotBlank() } ?: "Nema komentara sekretara."
+                    )
+                }
             }
 
             //odluka dekana
