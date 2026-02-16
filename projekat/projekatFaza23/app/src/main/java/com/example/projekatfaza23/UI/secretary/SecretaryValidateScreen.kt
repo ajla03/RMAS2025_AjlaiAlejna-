@@ -104,15 +104,29 @@ fun SecretaryValidateContent(
     val daysInSelectedOption = if (selectedRange != null)
         calculateDurationInt(selectedRange.start, selectedRange.end) else 0
 
+    var showValidationError by remember { mutableStateOf(false) }
+
     val displayStats = uiState.stats?.copy(
         pendingDays = daysInSelectedOption,
         remainingDays = (uiState.stats.totalDays - uiState.stats.usedDays)
     )
 
     val (statusColor, statusText, statusContainerColor) = when (request.status) {
-        RequestSatus.Approved -> Triple(Color(0xFF2E7D32), "ZAHTJEV JE ODOBREN", Color(0xFFE8F5E9)) // Zelena
-        RequestSatus.Denied -> Triple(Color(0xFFC62828), "ZAHTJEV JE ODBIJEN", Color(0xFFFFEBEE))   // Crvena
-        RequestSatus.PendingDean -> Triple(Color(0xFF1976D2), "ČEKA ODOBRENJE DEKANA", Color(0xFFE3F2FD))
+        RequestSatus.Approved -> Triple(
+            Color(0xFF2E7D32),
+            "ZAHTJEV JE ODOBREN",
+            Color(0xFFE8F5E9)
+        ) // Zelena
+        RequestSatus.Denied -> Triple(
+            Color(0xFFC62828),
+            "ZAHTJEV JE ODBIJEN",
+            Color(0xFFFFEBEE)
+        )   // Crvena
+        RequestSatus.PendingDean -> Triple(
+            Color(0xFF1976D2),
+            "ČEKA ODOBRENJE DEKANA",
+            Color(0xFFE3F2FD)
+        )
 
         else -> Triple(Color.Gray, "STATUS NEPOZNAT", Color.LightGray)
     }
@@ -126,9 +140,15 @@ fun SecretaryValidateContent(
             }
         },
         bottomBar = {
-            if(request.status  == RequestSatus.Pending) {
+            if (request.status == RequestSatus.Pending) {
                 SecretaryBottomBar(
-                    onReject = onReject,
+                    onReject = {
+                        if (uiState.explanationSecretary.trim().isEmpty()) {
+                            showValidationError = true
+                        } else {
+                            onReject()
+                        }
+                    },
                     onForward = {
                         if (selectedRange != null) {
                             onForward(selectedRange)
@@ -164,19 +184,20 @@ fun SecretaryValidateContent(
                 style = MaterialTheme.typography.labelLarge,
                 color = Color.Gray
             )
-            if(displayStats!=null)
+            if (displayStats != null)
                 StatsValidationCard(displayStats)
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
                 Text(
-                    text = "Napomena (Opcionalno)",
+                    text = "Napomena (Obavezno prilikom odbijanja)",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.Gray
                 )
-
                 OutlinedTextField(
                     value = uiState.explanationSecretary,
                     onValueChange = onExplanationChange,
+                    isError = showValidationError && uiState.explanationSecretary.trim().isEmpty(),
                     placeholder = {
                         Text(
                             "Npr. Provjereno, dani se slažu sa evidencijom...",
@@ -190,9 +211,12 @@ fun SecretaryValidateContent(
                         unfocusedContainerColor = Color.White,
                         focusedContainerColor = Color.White,
                         unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = primaryColor
+                        focusedBorderColor = primaryColor,
+                        errorBorderColor = Color(0xFFC62828),
+                        errorCursorColor = Color(0xFFC62828)
                     ),
                     minLines = 3
+
                 )
             }
 
@@ -212,7 +236,34 @@ fun SecretaryValidateContent(
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
         }
+    }
+    if (showValidationError) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showValidationError = false },
+            title = {
+                Text(
+                    text = "Nedostaje napomena",
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFD32F2F)
+                )
+            },
+            text = {
+                Text("Da biste odbili zahtjev, morate unijeti razlog u polje 'Napomena'.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showValidationError = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                ) {
+                    Text("U redu")
+                }
+            },
+            containerColor = Color.White
+        )
     }
 }
 @Composable
@@ -234,7 +285,7 @@ fun SecretaryBottomBar(onReject: () -> Unit, onForward: () -> Unit){
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD32F2F) ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Vrati na doradu", fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, fontSize = 12.sp)
+                Text("Odbij", fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, fontSize = 12.sp)
             }
 
 
