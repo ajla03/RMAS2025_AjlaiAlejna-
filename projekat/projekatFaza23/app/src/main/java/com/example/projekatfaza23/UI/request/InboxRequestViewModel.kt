@@ -6,6 +6,9 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.projekatfaza23.UI.home.LeaveUiState
 import com.example.projekatfaza23.UI.home.Status
 import com.example.projekatfaza23.data.auth.UserManager
@@ -18,6 +21,8 @@ import com.example.projekatfaza23.model.LeaveDates
 import com.example.projekatfaza23.model.LeaveRepository
 import com.example.projekatfaza23.model.LeaveRepositoryI
 import com.example.projekatfaza23.model.LeaveRequest
+import com.example.projekatfaza23.model.RequestSatus
+import com.example.projekatfaza23.worker.LeaveReminderWorker
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +32,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 class InboxRequestViewModel(application: Application): AndroidViewModel(application) {
     private val leaveDao = AppDatabase.getInstance(application).leaveDao()
@@ -124,7 +130,7 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             launch {
-                    //_repository.syncRequestsWithFirestore(email)
+                //_repository.syncRequestsWithFirestore(email)
                 _repository.startRealtimeSync(email)
                     .catch { e -> Log.e("RealTimeSync", "Sync error: ${e.message}") }
                     .collect()
@@ -133,14 +139,19 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
                 .catch { error ->
                     _uiState.update { it.copy(isLoading = false, isError = true) }
                 }.collect { novaLista ->
-                _uiState.update {
-                    currentState ->
-                    currentState.copy(
-                        requestHistory = novaLista.sortedByDescending { it.createdAt },
-                        isLoading = false
-                    )
+
+                    novaLista.forEach { request ->
+                        scheduleRemainderForLeave(request)
+                    }
+
+                    _uiState.update {
+                            currentState ->
+                        currentState.copy(
+                            requestHistory = novaLista.sortedByDescending { it.createdAt },
+                            isLoading = false
+                        )
+                    }
                 }
-            }
         }
     }
 
@@ -170,7 +181,7 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
 
         _uiState.update { currentState ->
             val newDateRange = LeaveDates(start = Timestamp(java.util.Date(from)),
-                                          end = Timestamp(java.util.Date(to)))
+                end = Timestamp(java.util.Date(to)))
 
             val oldList = currentState.currentRequest.leave_dates  ?: emptyList<LeaveDates>()
             val updatedList = oldList + newDateRange
@@ -179,7 +190,7 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
                 currentRequest = currentState.currentRequest.copy(
                     leave_dates = updatedList
                 )
-          )
+            )
         }
     }
 
@@ -263,5 +274,42 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
                 }
             }
         }
+    }
+
+    private fun scheduleRemainderForLeave(request: LeaveRequest){
+        if(request.status != RequestSatus.Approved) return
+
+        val endDate = request.leave_dates?.firstOrNull()?.end?.toDate() ?: return
+
+        val endDateMillis = endDate.time
+        val now = System.currentTimeMillis()
+
+        // podesavamo da notifikacija iskoci 1 dan prije kraja odsustva
+
+        val twoDaysInMillis = 1L * 24 * 60 * 60 * 1000
+        val remainderTime = endDateMillis - twoDaysInMillis
+        var delay = remainderTime - now
+
+        if (delay <= 0) {
+            val timeUntilEnd = endDateMillis - now
+            if (timeUntilEnd > 0) {
+                delay = 5000L
+            }
+        }
+        if(delay > 0){
+            val workRequest = OneTimeWorkRequestBuilder<LeaveReminderWorker>()
+                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                .build()
+
+            WorkManager.getInstance(getApplication()).enqueueUniqueWork(
+                "reminder_${request.id}",
+                ExistingWorkPolicy.KEEP,
+                workRequest
+            )
+            Log.d("WorkManager", "Uspješno zakazana notifikacija za zahtjev ${request.id}")
+        }else{
+            Log.d("WorkManager", "Odmor je već prošao, ne zakazujemo notifikaciju za ${request.id}")
+        }
+
     }
 }
