@@ -1,6 +1,5 @@
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import android.content.Context
 import android.net.Uri
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
@@ -10,7 +9,7 @@ object FirebaseStorageService {
 
     private val storage = FirebaseStorage.getInstance()
 
-    suspend fun uploadFile(context: Context, uri: Uri, fileName: String): Result<String> {
+    suspend fun uploadFile(uri: Uri, fileName: String): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
                 val uniqueName = "${UUID.randomUUID()}_${fileName}"

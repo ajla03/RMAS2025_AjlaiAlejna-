@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projekatfaza23.UI.dean.AttachmentCard
 import com.example.projekatfaza23.UI.dean.EmployeeCommentBox
 import com.example.projekatfaza23.UI.dean.RequestDetailsCard
 import com.example.projekatfaza23.UI.dean.UserProfileHeader
@@ -171,6 +172,7 @@ fun SecretaryValidateContent(
             UserProfileHeader(request.userEmail, null)
             Divider(color = Color.LightGray.copy(0.5f), thickness = 1.dp)
 
+            if(request.status == RequestSatus.Pending){
             request.leave_dates?.filterNotNull()?.let { dates ->
                 DateOptionSelector(
                     options = dates,
@@ -178,7 +180,30 @@ fun SecretaryValidateContent(
                     onOptionSelected = { newIndex -> selectedOptionIndex = newIndex }
                 )
             }
+            }else{
+                request.leave_dates?.filterNotNull()?.let { dates ->
+                    DateOptionSelector(
+                        options = dates,
+                        selectedIndex = selectedOptionIndex,
+                        onOptionSelected = { }
+                    )
+                }
+            }
             RequestDetailsCard(request)
+
+            if (!request.file_info?.uri.isNullOrBlank()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Priloženi dokument",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.Gray
+                    )
+                    AttachmentCard(
+                        fileName = request.file_info?.file_name ?: "Dokument",
+                        fileUrl = request.file_info!!.uri!!
+                    )
+                }
+            }
 
             //komentar zaposlenika
             Text(

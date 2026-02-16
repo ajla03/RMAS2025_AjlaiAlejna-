@@ -99,7 +99,7 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
                 if(!localFileUriString.isNullOrEmpty()){
                     val localUri = Uri.parse(localFileUriString)
                     val fileName = requestToSend.file_info?.file_name ?: "attachment"
-                    val uploadResult = FirebaseStorageService.uploadFile(getApplication(), localUri, fileName)
+                    val uploadResult = FirebaseStorageService.uploadFile(localUri, fileName)
 
                     if (uploadResult.isSuccess) {
                         val downloadUrl = uploadResult.getOrNull()
