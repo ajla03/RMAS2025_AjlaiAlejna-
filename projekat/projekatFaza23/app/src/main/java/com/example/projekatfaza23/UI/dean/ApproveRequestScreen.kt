@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -43,7 +44,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -87,6 +90,8 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
     val request = selectedRequest!!
     val isProcessed = request.status != RequestSatus.PendingDean
 
+    var showValidationError by remember { mutableStateOf(false) }
+
 
     Scaffold(
         containerColor = Color(0xFFF5F7FA),
@@ -96,8 +101,27 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
             RequestHeader("Pregled zahtjeva", navigateHome = navigateHome)
         }},
         bottomBar = {
-            if(!isProcessed)
-                BottomBar(request, {viewModel.approveRequest(request)}, {viewModel.denyRequest(request)} ,navigateHome) }){ paddingValues ->
+            if (!isProcessed)
+                BottomBar(
+                    request = request,
+                    onApproved = {
+                        viewModel.approveRequest(request)
+                        navigateHome()
+                    },
+                    onDenied = {
+                        val explanation = request.explanationDean ?: ""
+                        if (explanation.trim().isEmpty()) {
+                            showValidationError = true
+                        } else {
+                            viewModel.denyRequest(request)
+                            navigateHome()
+                        }
+                    },
+                    onBack = navigateHome
+                )
+
+        }
+    ){ paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)
             .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState()),
@@ -152,15 +176,18 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
 
             //odluka dekana
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
+                Text(
                 text = "Odluka dekana",
                 style = MaterialTheme.typography.labelLarge,
                 color = Color.Gray,
                 modifier = Modifier.padding(bottom = 8.dp)
-            )
+                )
 
-            OutlinedTextField(
-                value = selectedRequest?.explanationDean ?: "",
+                val explanationText = selectedRequest.explanationDean ?: ""
+
+                OutlinedTextField(
+                value = explanationText,
+                isError = !isProcessed && showValidationError && explanationText.trim().isEmpty(),
                 onValueChange = { newText ->
                     viewModel.setExplanationDean(newText)
                 },
@@ -171,7 +198,9 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
                     unfocusedContainerColor = Color.White,
                     focusedContainerColor = Color.White,
                     unfocusedBorderColor = Color.LightGray,
-                    focusedBorderColor = primaryColor
+                    focusedBorderColor = primaryColor,
+                    errorBorderColor = Color(0xFFC62828),
+                    errorCursorColor = Color(0xFFC62828)
                 ),
                 minLines = 4,
                 readOnly = isProcessed,
@@ -190,7 +219,30 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
 
             Spacer(modifier = Modifier.height(24.dp))
         }
-
+    }
+    if (showValidationError) {
+        AlertDialog(
+            onDismissRequest = { showValidationError = false },
+            title = {
+                Text(
+                    text = "Nedostaje obrazloženje",
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFD32F2F)
+                )
+            },
+            text = {
+                Text("Da biste odbili zahtjev, morate unijeti razlog u polje 'Odluka dekana'.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showValidationError = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                ) {
+                    Text("U redu")
+                }
+            },
+            containerColor = Color.White
+        )
     }
 }
 
@@ -284,8 +336,7 @@ fun BottomBar(request: LeaveRequest, onApproved: (request: LeaveRequest) -> Unit
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ){
             OutlinedButton(
-                onClick = {  onDenied(request)
-                             onBack() },
+                onClick = {  onDenied(request) },
                 modifier = Modifier.weight(1f).height(52.dp),
                 border = BorderStroke(1.5.dp, Color(0xFFD32F2F).copy(alpha = 0.8f)),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD32F2F)),
@@ -293,8 +344,7 @@ fun BottomBar(request: LeaveRequest, onApproved: (request: LeaveRequest) -> Unit
                 ) { Text("Odbij", fontWeight = FontWeight.Bold) }
 
             Button(
-                onClick = { onApproved(request)
-                            onBack() },
+                onClick = { onApproved(request)},
                 modifier = Modifier.weight(1f).height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = primaryColor ),
