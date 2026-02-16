@@ -177,12 +177,14 @@ fun NewRequestContent(
             TopAppBarSection()
             RequestHeader("New Request", navigateHome)
 
-        }}){ padding ->
+        }})
+    { padding ->
         Column(modifier = Modifier
             .padding(padding)
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp)){
+            .padding(20.dp)
+        ){
 
             RequestTypeSelector(
                 selectedType = uiState.currentRequest.type,

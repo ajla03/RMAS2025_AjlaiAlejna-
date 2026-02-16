@@ -70,7 +70,11 @@ import java.util.Locale
 fun SecretaryValidateScreen(viewModel: SecretaryViewModel, navigateHome: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    val employees = uiState.employees
+    val imageUrl = employees.find({it.email == uiState.selectedRequest?.userEmail})?.imageUrl
+
     SecretaryValidateContent(
+        imageUrl = imageUrl,
         uiState = uiState,
         navigateHome = navigateHome,
         onReject = {
@@ -87,6 +91,7 @@ fun SecretaryValidateScreen(viewModel: SecretaryViewModel, navigateHome: () -> U
 }
 @Composable
 fun SecretaryValidateContent(
+    imageUrl: String?,
     uiState: SecretaryUIState,
     navigateHome: () -> Unit,
     onReject: () -> Unit,
@@ -169,7 +174,7 @@ fun SecretaryValidateContent(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            UserProfileHeader(request.userEmail, null)
+            UserProfileHeader(request.userEmail, imageUrl)
             Divider(color = Color.LightGray.copy(0.5f), thickness = 1.dp)
 
             if(request.status == RequestSatus.Pending){
@@ -583,6 +588,7 @@ fun SecretaryValidatePreview() {
     )
 
     SecretaryValidateContent(
+        imageUrl = null,
         uiState = mockState,
         navigateHome = {},
         onReject = {},

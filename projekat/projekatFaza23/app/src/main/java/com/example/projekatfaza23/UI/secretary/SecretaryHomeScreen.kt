@@ -56,6 +56,7 @@ import com.example.projekatfaza23.UI.dean.primaryColor
 import com.example.projekatfaza23.UI.dean.timeStampToString
 import com.example.projekatfaza23.UI.home.TopAppBarSection
 import com.example.projekatfaza23.data.auth.UserManager
+import com.example.projekatfaza23.data.db.UserEntity
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 import java.text.SimpleDateFormat
@@ -76,7 +77,9 @@ fun SecretaryHomeScreen(
     val user = UserManager.currentUser.collectAsState().value
     var showProfileDialog by remember { mutableStateOf(false) }
 
+    val employees = uiState.employees
     SecretaryHomeScreenContent(
+        employees = employees,
         isLoading = uiState.isLoading,
         pendingRequests = pendingRequests,
         onRequestClick = { request: LeaveRequest ->
@@ -107,6 +110,7 @@ fun SecretaryHomeScreen(
 
 @Composable
 fun SecretaryHomeScreenContent(
+    employees: List<UserEntity>,
     isLoading: Boolean,
     onTodayLeaveCount : Int,
     pendingRequests: List<LeaveRequest>,
@@ -170,7 +174,9 @@ fun SecretaryHomeScreenContent(
                         }
                     } else {
                         items(pendingRequests) { request ->
+                            val profile =  employees.find { it.email == request.userEmail }
                             SecretaryRequestItem(
+                                imageUrl = profile?.imageUrl,
                                 request = request,
                                 onClick = { onRequestClick(request) }
                             )
@@ -291,7 +297,7 @@ fun DashboardStatCard(
 }
 
 @Composable
-fun SecretaryRequestItem(request: LeaveRequest, onClick: () -> Unit) {
+fun SecretaryRequestItem(imageUrl: String?, request: LeaveRequest, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -304,17 +310,16 @@ fun SecretaryRequestItem(request: LeaveRequest, onClick: () -> Unit) {
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(getAvatarColor(request.userEmail).copy(alpha = 0.1f))
+            Surface(
+                shape = CircleShape,
+                color = primaryColor.copy(alpha = 0.1f),
+                modifier = Modifier.size(48.dp)
             ) {
-                Text(
-                    text = extractInitials(request.userEmail),
-                    color = getAvatarColor(request.userEmail),
-                    fontWeight = FontWeight.Bold
+                DeanProfileAvatar(
+                    imageUrl = imageUrl,
+                    email = request.userEmail,
+                    modifier = Modifier.size(48.dp),
+                    fontSize = 16.sp
                 )
             }
 
@@ -415,6 +420,7 @@ fun SecretaryHomeScreenPreview() {
         )
 
         SecretaryHomeScreenContent(
+            employees = emptyList(),
             isLoading = false,
             pendingRequests = mockPending,
             onTodayLeaveCount = 3,
