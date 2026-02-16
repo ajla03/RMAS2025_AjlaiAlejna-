@@ -191,7 +191,7 @@ fun DeanDirectoryContent(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 TextField(
                     value = searchQuery,
@@ -514,6 +514,8 @@ fun EmployeeDetailSheet(employee: UserEntity) {
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Surface(
             color = bgColor,
