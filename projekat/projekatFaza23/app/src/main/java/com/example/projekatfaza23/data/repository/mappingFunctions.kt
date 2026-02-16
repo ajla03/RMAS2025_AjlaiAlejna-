@@ -30,7 +30,7 @@ fun LeaveRequest.toEntity() : LeaveRequestEntity {
         },
         createdAt = this.createdAt?.seconds?.times(1000),
         fileInfo = this.file_info?.let {
-            FileInfoSimple(it.file_name, it.file_type, it.uri)
+            FileInfoSimple(it.file_name, it.file_type, it.uri!!)
         }
     )
 }

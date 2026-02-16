@@ -77,7 +77,7 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
             _uiState.update { it.copy(isError = true, errorMsg = "User not logged in!") }
             return
         }
-        val requestToSend = _uiState.value.currentRequest
+        var requestToSend = _uiState.value.currentRequest
 
         viewModelScope.launch {
             if(requestToSend.type.isEmpty() || requestToSend.leave_dates?.firstOrNull()?.start == null || requestToSend?.leave_dates?.firstOrNull()?.end ==null) {
@@ -93,6 +93,36 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
                 return@launch
             }else {
                 _uiState.update { it.copy(isLoading = true, isSuccess = false, isError = false) }
+
+                val localFileUriString = requestToSend.file_info?.uri
+
+                if(!localFileUriString.isNullOrEmpty()){
+                    val localUri = Uri.parse(localFileUriString)
+                    val fileName = requestToSend.file_info?.file_name ?: "attachment"
+                    val uploadResult = FirebaseStorageService.uploadFile(getApplication(), localUri, fileName)
+
+                    if (uploadResult.isSuccess) {
+                        val downloadUrl = uploadResult.getOrNull()
+
+                        requestToSend = requestToSend.copy(
+                            file_info = requestToSend.file_info?.copy(
+                                uri = downloadUrl // http link
+                            )
+                        )
+                    } else {
+                        // upload nije uspio
+                        val exception = uploadResult.exceptionOrNull()
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isError = true,
+                                errorMsg = "Greška pri uploadu fajla: ${exception?.message}"
+                            )
+                        }
+                        return@launch
+                    }
+
+                }
 
                 val success = _repository.submitNewRequest(requestToSend, email)
 
