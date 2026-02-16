@@ -73,6 +73,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.projekatfaza23.UI.home.Status
 import kotlinx.coroutines.launch
 import java.lang.StrictMath.abs
 
@@ -91,18 +92,16 @@ fun getAvatarColor(email: String): Color {
     return avatarColors[index]
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
-fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
-
+fun DeanDirectoryScreen(
+    viewModel: DeanViewModel,
+    navigateHome: () -> Unit
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    var selectedEmployee by remember { mutableStateOf<UserEntity?>(null) }
-    val focusManager = LocalFocusManager.current
-    val sheetState = rememberModalBottomSheetState()
-
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
     val pdfLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/pdf")
     ) { uri ->
@@ -113,125 +112,138 @@ fun DeanDirectoryScreen(viewModel : DeanViewModel,navigateHome: () -> Unit){
         }
     }
 
-    BackHandler{
+    val onBackAction = {
         viewModel.resetEmployeeSearchQuery()
         navigateHome()
     }
 
-    Scaffold (
+    BackHandler {
+        onBackAction()
+    }
+
+    DeanDirectoryContent(
+        employees = uiState.displayedEmployees,
+        searchQuery = uiState.employeeSearchQuery,
+        onSearchChange = { viewModel.updateEmployeeSearch(it) },
+        onExportPdfClick = { pdfLauncher.launch("Zaposleni_Lista.pdf") },
+        onBackClick = onBackAction
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DeanDirectoryContent(
+    employees: List<UserEntity>,
+    searchQuery: String,
+    onSearchChange: (String) -> Unit,
+    onExportPdfClick: () -> Unit,
+    onBackClick: () -> Unit
+) {
+
+    var selectedEmployee by remember { mutableStateOf<UserEntity?>(null) }
+    val focusManager = LocalFocusManager.current
+    val sheetState = rememberModalBottomSheetState()
+
+
+    Scaffold(
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) {
-            detectTapGestures(onTap = {
-                focusManager.clearFocus()
-            })
-        },
-        topBar =  {TopAppBarSection()},
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                })
+            },
+        topBar = { TopAppBarSection() },
         containerColor = Color(0xFFF5F7FA),
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { pdfLauncher.launch("Zaposleni_Lista.pdf") },
+                onClick = { onExportPdfClick() },
                 containerColor = Color(0xFF2D3E50),
                 contentColor = Color.White
             ) {
                 Icon(Icons.Default.PictureAsPdf, contentDescription = "Export PDF")
             }
         },
-     ){ paddingValues ->
+    ) { paddingValues ->
         Column(
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier
+                .padding(paddingValues)
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ){
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically){
-
-                BackIcon({
-                    viewModel.resetEmployeeSearchQuery()
-                    navigateHome()
-                })
-                Spacer(modifier = Modifier.width(12.dp))
-
-
-                Text(
-                    text = "Direktorij",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-
-                )
-
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(20.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    BackIcon({ onBackClick() })
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Text(
+                        text = "Direktorij",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF004D61)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 TextField(
-                    value = uiState.employeeSearchQuery,
-                    onValueChange = { newValue -> viewModel.updateEmployeeSearch(newValue)},
-                    placeholder = {Text("Pretraži zaposlene...", color = Color.Gray)},
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)},
-                    modifier = Modifier.weight(1f).height(56.dp),
+                    value = searchQuery,
+                    onValueChange = { newValue -> onSearchChange(newValue) },
+                    placeholder = { Text("Pretraži zaposlene...", color = Color.Gray) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
                     shape = RoundedCornerShape(50),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        disabledContainerColor = Color.White,
+                        focusedContainerColor = Color(0xFFF5F7FA),
+                        unfocusedContainerColor = Color(0xFFF5F7FA),
+                        disabledContainerColor = Color(0xFFF5F7FA),
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent
                     ),
                     singleLine = true
                 )
-
-
-                /* Zakomentarisan filter button - nemamo po cemu filtrirati trenutno */
-                //Spacer(modifier = Modifier.width(12.dp))
-                //FilterButtonCircle({})
             }
-            //lista
-            Surface(
-                modifier = Modifier.fillMaxSize().padding(top = 14.dp),
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                color = Color.White,
-                shadowElevation = 4.dp
-            ){
-                if(uiState.displayedEmployees.isEmpty()){
-                    Box(modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center){
-                        Text("Nema rezultata. ", color = Color.Gray)
-                    }
+
+            if (employees.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Nema rezultata.", color = Color.Gray)
                 }
+            } else {
                 LazyColumn(
-                    contentPadding = PaddingValues(top = 10.dp, start = 10.dp, end = 10.dp, bottom = 16.dp)                    ) {
-                    itemsIndexed(uiState.displayedEmployees) { index, employee ->
+                    contentPadding = PaddingValues(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 80.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    itemsIndexed(employees) { index, employee ->
                         EmployeeItem(employee, {
                             selectedEmployee = employee
                             focusManager.clearFocus()
                         })
-
-
                     }
                 }
-
             }
-
-            if(selectedEmployee!=null){
-                ModalBottomSheet(
-                    onDismissRequest = {
-                        selectedEmployee = null
-                    },
-                    sheetState = sheetState,
-                    containerColor =  Color.White
-                ) {
-                    EmployeeDetailSheet(selectedEmployee!!)
-                }
-            }
-
         }
 
+        if (selectedEmployee != null) {
+            ModalBottomSheet(
+                onDismissRequest = { selectedEmployee = null },
+                sheetState = sheetState,
+                containerColor = Color.White
+            ) {
+                EmployeeDetailSheet(selectedEmployee!!)
+            }
+        }
     }
 }
 
@@ -424,6 +436,7 @@ fun VacationStatusCard(used: Int, total: Int) {
     }
 }
 
+// bio filter kod search bara , ali ne znam po cemu bi se ovdje filtriralo
 @Composable
 fun FilterButtonCircle(onClick:() -> Unit){
     Surface(
@@ -452,6 +465,20 @@ fun EmployeeDetailSheet(employee: UserEntity) {
             .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        val (textColor, bgColor) = when (employee.userStatus) {
+            Status.AtWork.name-> Pair(Color(0xFF2E7D32), Color(0xFFE3F1E5))
+            Status.PaidLeave.name -> Pair(Color(0xFF1976D2), Color(0xFFCFD9E1))
+            Status.AnnualLeave.name -> Pair(Color(0xFFEF6C00), Color(0xFFF1E7D9))
+            Status.Away.name -> Pair(Color(0xFFD72525), Color(0xFFF1E5E6))
+            else -> Pair(Color.Gray, Color(0xFFEEEEEE))
+        }
+
+        val currentStatusEnum = try {
+            Status.valueOf(employee.userStatus)
+        } catch (_: IllegalArgumentException) {
+            Status.AtWork
+        }
 
         val initials = (employee.firstName.take(1) + employee.lastName.take(1)).uppercase()
 
@@ -488,12 +515,26 @@ fun EmployeeDetailSheet(employee: UserEntity) {
             fontWeight = FontWeight.Bold
         )
 
-        Text(
-            text = employee.userStatus,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (employee.userStatus == "AtWork") Color(0xFF4CAF50) else Color.Gray,
-            fontWeight = FontWeight.Medium
-        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Surface(
+            color = bgColor,
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(modifier = Modifier.size(6.dp).background(textColor, CircleShape))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = currentStatusEnum.statusString,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = textColor,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -515,8 +556,36 @@ fun EmployeeDetailSheet(employee: UserEntity) {
 }
 
 
-@Preview
+@Preview(showBackground = true)
 @Composable
-fun PreviewDirectory() {
-        DeanDirectoryScreen(viewModel(), {})
+fun PreviewDirectoryContent() {
+    val mockEmployees = listOf(
+        UserEntity(
+            firstName = "Alejna",
+            lastName = "Hodžić",
+            email = "alejna@example.com",
+            role = "Software Engineer",
+            userStatus = "AtWork",
+            usedDays = 5,
+            totalDays = 25,
+            imageUrl = null
+        ),
+        UserEntity(
+            firstName = "Amar",
+            lastName = "Bulić",
+            email = "amar@example.com",
+            role = "Dizajner",
+            userStatus = "AnnualLeave",
+            usedDays = 15,
+            totalDays = 20,
+            imageUrl = null
+        )
+    )
+     DeanDirectoryContent(
+            employees = mockEmployees,
+            searchQuery = "",
+            onSearchChange = {},
+            onExportPdfClick = {},
+            onBackClick = {}
+        )
 }
