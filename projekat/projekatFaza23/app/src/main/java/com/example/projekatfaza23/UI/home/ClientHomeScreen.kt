@@ -150,6 +150,8 @@ fun ClientHomeScreenContent(
     currStatus: Status,
     onProfPicClick : () -> Unit
 ){
+    var selectedRequest by remember { mutableStateOf<LeaveRequest?>(null) }
+
     Scaffold(
         containerColor = Color(0xFFF5F7FA),
         topBar = {
@@ -207,11 +209,22 @@ fun ClientHomeScreenContent(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(items = requests, key = { it.id }) { request ->
-                        RequestItemCard(request)
+                        RequestItemCard(
+                            request = request,
+                            modifier = Modifier.clickable{
+                                selectedRequest = request
+                            }
+                            )
                     }
                 }
             }
         }
+    }
+    if (selectedRequest != null) {
+        RequestPreview (
+            request = selectedRequest!!,
+            onDismiss = { selectedRequest = null }
+        )
     }
 }
 
@@ -409,7 +422,7 @@ fun getIconForRequestType(typeString: String): ImageVector {
 }
 
 @Composable
-fun RequestItemCard(request: LeaveRequest) {
+fun RequestItemCard(request: LeaveRequest, modifier: Modifier) {
 
     val (statusColor, statusText) = when (request.status) {
         RequestSatus.Approved -> Pair(SuccessColor, "Odobreno")
@@ -432,7 +445,7 @@ fun RequestItemCard(request: LeaveRequest) {
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+        modifier = modifier.fillMaxWidth().padding(bottom = 8.dp)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
