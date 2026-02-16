@@ -73,6 +73,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.projekatfaza23.UI.home.Status
 import kotlinx.coroutines.launch
 import java.lang.StrictMath.abs
 
@@ -453,6 +454,20 @@ fun EmployeeDetailSheet(employee: UserEntity) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
+        val (textColor, bgColor) = when (employee.userStatus) {
+            Status.AtWork.name-> Pair(Color(0xFF2E7D32), Color(0xFFE3F1E5))
+            Status.PaidLeave.name -> Pair(Color(0xFF1976D2), Color(0xFFCFD9E1))
+            Status.AnnualLeave.name -> Pair(Color(0xFFEF6C00), Color(0xFFF1E7D9))
+            Status.Away.name -> Pair(Color(0xFFD72525), Color(0xFFF1E5E6))
+            else -> Pair(Color.Gray, Color(0xFFEEEEEE))
+        }
+
+        val currentStatusEnum = try {
+            Status.valueOf(employee.userStatus)
+        } catch (e: IllegalArgumentException) {
+            Status.AtWork
+        }
+
         val initials = (employee.firstName.take(1) + employee.lastName.take(1)).uppercase()
 
         if (!employee.imageUrl.isNullOrBlank()) {
@@ -488,12 +503,24 @@ fun EmployeeDetailSheet(employee: UserEntity) {
             fontWeight = FontWeight.Bold
         )
 
-        Text(
-            text = employee.userStatus,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (employee.userStatus == "AtWork") Color(0xFF4CAF50) else Color.Gray,
-            fontWeight = FontWeight.Medium
-        )
+        Surface(
+            color = bgColor,
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(modifier = Modifier.size(6.dp).background(textColor, CircleShape))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = currentStatusEnum.statusString,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = textColor,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
