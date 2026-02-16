@@ -19,7 +19,7 @@ data class LeaveRequestEntity(
 
     val status: String,
 
-    val leaveDates: List<LeaveDates?>?,
+    val leaveDates: List<LeaveDateLDB?>?,
 
     @Embedded(prefix = "file_")
     val fileInfo: FileInfoSimple?,
@@ -30,4 +30,9 @@ data class FileInfoSimple(
     val fileName: String,
     val fileType: String,
     val fileUri: String
+)
+
+data class LeaveDateLDB(
+    val startMs: Long? = null,
+    val endMs: Long? = null
 )

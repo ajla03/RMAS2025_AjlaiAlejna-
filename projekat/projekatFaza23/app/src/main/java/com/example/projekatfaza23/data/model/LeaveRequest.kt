@@ -2,6 +2,7 @@ package com.example.projekatfaza23.model
 
 import android.net.Uri
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.PropertyName
 
 enum class RequestSatus{
     Pending,
@@ -19,9 +20,14 @@ data class LeaveRequest(
     val explanationSecretary : String = "",
     val userEmail: String = "",
 
-    val leave_dates: List<LeaveDates?>? = null,
+    @get:PropertyName("leave_dates")
+    @set:PropertyName("leave_dates")
+    var leave_dates: List<LeaveDates?>? = null,
 
-    val file_info: FileInfo? = null,
+    @get:PropertyName("file_info")
+    @set:PropertyName("file_info")
+    var file_info: FileInfo? = null,
+
     val createdAt: Timestamp? = null
 )
 

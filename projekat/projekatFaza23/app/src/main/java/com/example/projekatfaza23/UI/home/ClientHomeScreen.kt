@@ -471,7 +471,7 @@ fun RequestItemCard(request: LeaveRequest, modifier: Modifier) {
                 )
 
                 val dateText = if (request.leave_dates?.isNotEmpty() == true) {
-                    "${formatTimestampToDate(request.leave_dates.first()?.start)} - ${formatTimestampToDate(request.leave_dates.first()?.end)}"
+                    "${formatTimestampToDate(request?.leave_dates?.first()?.start)} - ${formatTimestampToDate(request?.leave_dates?.first()?.end)}"
                 } else "Datum nije definisan."
 
                 Text(

@@ -105,7 +105,11 @@ fun RequestPreview(
                                 .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = "Odobreno", tint = Color(0xFF4CAF50))
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = "Odobreno",
+                                tint = Color(0xFF4CAF50)
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = formatDatesForDisplay(approvedDate.start, approvedDate.end),
@@ -114,6 +118,7 @@ fun RequestPreview(
                                 color = Color(0xFF2E7D32)
                             )
                         }
+                    }
                     } else {
                         //TODO
                         request.leave_dates?.forEach { dateRange ->
@@ -167,7 +172,7 @@ fun RequestPreview(
                     }
                     Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color.LightGray)
 
-                    if (request.file_info != null && request.file_info.file_name.isNotEmpty()) {
+                    if (request.file_info != null && request?.file_info?.file_name?.isNotEmpty() ?: false) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -179,7 +184,7 @@ fun RequestPreview(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = request.file_info.file_name,
+                                text = request?.file_info?.file_name ?: "",
                                 fontSize = 14.sp,
                                 color = Color.Blue
                             )
@@ -212,4 +217,3 @@ fun RequestPreview(
             }
         }
     }
-}

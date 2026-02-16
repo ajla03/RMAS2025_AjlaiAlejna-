@@ -71,7 +71,7 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
         val requestToSend = _uiState.value.currentRequest
 
         viewModelScope.launch {
-            if(requestToSend.type.isEmpty() || requestToSend.leave_dates?.firstOrNull()?.start == null || requestToSend.leave_dates.firstOrNull()?.end ==null) {
+            if(requestToSend.type.isEmpty() || requestToSend.leave_dates?.firstOrNull()?.start == null || requestToSend?.leave_dates?.firstOrNull()?.end ==null) {
                 _uiState.update {
                     it.copy(
                         isSuccess = false,

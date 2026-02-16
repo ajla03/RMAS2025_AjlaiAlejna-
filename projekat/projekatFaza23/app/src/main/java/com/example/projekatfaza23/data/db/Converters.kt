@@ -9,13 +9,17 @@ class Converters {
     private val gson = Gson()
 
     @TypeConverter
-    fun fromLeaveDatesList(value: List<LeaveDates>?) : String {
+    fun fromLeaveDatesList(value: List<LeaveDateLDB>?) : String {
         return gson.toJson(value)
     }
 
     @TypeConverter
-    fun toLeaveDatesList(value: String): List<LeaveDates?>? {
-        val listType = object : TypeToken<List<LeaveDates?>>() {}.type
-        return gson.fromJson(value, listType)
+    fun toLeaveDatesList(value: String): List<LeaveDateLDB?>? {
+        val listType = object : TypeToken<List<LeaveDateLDB?>>() {}.type
+        return try {
+            gson.fromJson(value, listType)
+        } catch (e: Exception){
+            null
+        }
     }
 }
