@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.data.db.AppDatabase
 import com.example.projekatfaza23.data.db.UserEntity
+import com.example.projekatfaza23.data.repository.UserRepository
 import com.example.projekatfaza23.model.LeaveRepository
 import com.example.projekatfaza23.model.LeaveRepositoryI
 import com.example.projekatfaza23.model.LeaveRequest
@@ -29,6 +30,8 @@ import java.util.Calendar
 
 class DeanViewModel(application: Application): AndroidViewModel(application) {
     private val leaveDao = AppDatabase.getInstance(application).leaveDao()
+    private val userRepository = UserRepository(leaveDao)
+
     private val _repository : LeaveRepositoryI = LeaveRepository(leaveDao)
     private val _uiState = MutableStateFlow(DeanUIState(isLoading = true))
     val uiState: StateFlow<DeanUIState> = _uiState.asStateFlow()
@@ -172,7 +175,29 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
     }
     fun approveRequest(request: LeaveRequest){
         viewModelScope.launch {
-            _repository.updateReqeust(request.id, RequestSatus.Approved,request.explanationDean)
+            val requestEmail = request.userEmail
+            var durationInDays = 0
+            val startDate = request.leave_dates?.firstOrNull()?.start?.toDate()
+            val endDate = request.leave_dates?.firstOrNull()?.end?.toDate()
+            if(startDate != null && endDate != null) {
+                val diffInMillis = endDate.time - startDate.time
+
+                durationInDays = (diffInMillis / (1000 * 60 * 60 * 24)).toInt() + 1
+            }
+
+            if(durationInDays > 0) {
+                _repository.updateReqeust(request.id, RequestSatus.Approved,request.explanationDean)
+
+                val success = userRepository.updateLeaveDays(requestEmail, durationInDays)
+
+                if (success) {
+                    Log.d("DeanViewModel", "Uspješno smanjen broj dana korisniku.")
+                } else {
+                    Log.e("DeanViewModel", "Greška: dani nisu smanjeni.")
+                }
+            } else{
+                Log.e("DeanViewModel", "Greška: Izračunati broj dana je 0 ili manji.")
+            }
         }
         resetSelectedRequest()
     }
@@ -180,6 +205,7 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
     fun denyRequest(request: LeaveRequest){
         viewModelScope.launch {
             _repository.updateReqeust(request.id, RequestSatus.Denied, request.explanationDean)
+
         }
         resetSelectedRequest()
     }

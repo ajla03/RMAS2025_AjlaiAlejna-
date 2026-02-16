@@ -60,7 +60,6 @@ import java.util.Locale
 val primaryColor = Color(0xFF004D61)
 
 
-/* TODO - make prettier screen, adjust spacing */ 
 @Composable
 fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
 
