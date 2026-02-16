@@ -19,7 +19,9 @@ import kotlinx.coroutines.launch
 fun getUserRoleRoute(email : String?): Screen {
     return when {
         email == "ayla62553@gmail.com" -> Screen.DeanHome
+        email == "hodzic.alejna@gmail.com" -> Screen.DeanHome
         email == "avonkoztuz@gmail.com" -> Screen.SecretaryHomeScreen
+        email == "hr.app.untz@gmail.com" -> Screen.SecretaryHomeScreen
         else -> Screen.Home
     }
 }

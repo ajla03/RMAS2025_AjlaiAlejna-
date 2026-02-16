@@ -13,6 +13,10 @@ data class LeaveRequestEntity(
     val userEmail: String,
     val type: String,
     val explanation: String?,
+
+    val explanationDean: String?,
+    val explanationSecretary: String?,
+
     val status: String,
 
     val leaveDates: List<LeaveDates?>?,

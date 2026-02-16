@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [UserEntity::class, LeaveRequestEntity::class], version = 3)
+@Database(entities = [UserEntity::class, LeaveRequestEntity::class], version = 4)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun leaveDao() : LeaveDao
