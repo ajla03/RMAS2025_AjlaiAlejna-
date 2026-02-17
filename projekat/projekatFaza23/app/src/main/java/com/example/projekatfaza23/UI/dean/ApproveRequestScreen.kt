@@ -60,6 +60,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projekatfaza23.UI.home.TopAppBarSection
 import com.example.projekatfaza23.UI.request.RequestHeader
+import com.example.projekatfaza23.UI.request.validationHelpers
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 import com.google.firebase.Timestamp
@@ -258,6 +259,13 @@ fun RequestDetailsCard(request: LeaveRequest){
     val dates = request.leave_dates?.firstOrNull()
     val startDateString = dates?.start?.let { timeStampToString(it) } ?: "-"
     val endDateString = dates?.end?.let { timeStampToString(it) } ?: "-"
+
+    val workDaysCount = if (dates?.start != null && dates.end != null) {
+        validationHelpers.countWorkDays(dates.start, dates.end)
+    } else {
+        0
+    }
+
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(16.dp),
@@ -285,7 +293,7 @@ fun RequestDetailsCard(request: LeaveRequest){
                 }
 
                 Text(
-                    text = calculateDaysBetween(dates?.start, dates?.end),
+                    text = "$workDaysCount dana",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold
                 )

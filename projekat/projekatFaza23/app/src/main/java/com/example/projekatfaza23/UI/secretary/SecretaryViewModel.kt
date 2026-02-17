@@ -5,6 +5,7 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projekatfaza23.UI.request.validationHelpers
 import com.example.projekatfaza23.data.db.AppDatabase
 import com.example.projekatfaza23.model.LeaveDates
 import com.example.projekatfaza23.model.LeaveRepository
@@ -106,7 +107,11 @@ class SecretaryViewModel(application: Application) : AndroidViewModel(applicatio
         val usedDays = user.usedDays
 
         val pendingDays = currentRequest.leave_dates?.sumOf { dateRange ->
-            calculateDurationInDays(dateRange?.start, dateRange?.end)
+            if (dateRange?.start != null && dateRange.end != null) {
+                validationHelpers.countWorkDays(dateRange.start, dateRange.end)
+            } else {
+                0
+            }
         } ?: 0
 
         val remainingDays = totalDays - usedDays
@@ -141,17 +146,6 @@ class SecretaryViewModel(application: Application) : AndroidViewModel(applicatio
             } == true
         }
         return activeRequests.map { it.userEmail }.distinct().size
-    }
-    private fun calculateDurationInDays(start: Timestamp?, end: Timestamp?): Int {
-        if (start == null || end == null) return 0
-
-        val startMillis = start.toDate().time
-        val endMillis = end.toDate().time
-
-        val diff = endMillis - startMillis
-        val days = (diff / (1000 * 60 * 60 * 24)).toInt() + 1
-
-        return if (days > 0) days else 0
     }
 
     private fun refreshSelectedEmployee() {

@@ -57,6 +57,7 @@ import com.example.projekatfaza23.UI.dean.calculateDaysBetween
 import com.example.projekatfaza23.UI.dean.primaryColor
 import com.example.projekatfaza23.UI.home.TopAppBarSection
 import com.example.projekatfaza23.UI.request.RequestHeader
+import com.example.projekatfaza23.UI.request.validationHelpers
 import com.example.projekatfaza23.model.LeaveDates
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
@@ -108,8 +109,9 @@ fun SecretaryValidateContent(
     }
     var selectedOptionIndex by remember { mutableStateOf(0) }
     val selectedRange = request.leave_dates?.getOrNull(selectedOptionIndex)
-    val daysInSelectedOption = if (selectedRange != null)
-        calculateDurationInt(selectedRange.start, selectedRange.end) else 0
+    val daysInSelectedOption = if (selectedRange?.start != null && selectedRange?.end != null)
+        validationHelpers.countWorkDays(selectedRange.start, selectedRange.end)
+    else 0
 
     var showValidationError by remember { mutableStateOf(false) }
 
@@ -379,7 +381,11 @@ fun DateOptionSelector(
 
 
             options.forEachIndexed { index, dateRange ->
-                val daysCount = calculateDaysBetween(dateRange.start, dateRange.end)
+                val daysCount = if (dateRange.start != null && dateRange.end != null)
+                validationHelpers.countWorkDays(dateRange.start, dateRange.end)
+             else
+                0
+
                 val isSelected = index == selectedIndex
                 val dateString = formatDatesForDisplay(dateRange.start, dateRange.end)
 
