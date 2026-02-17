@@ -127,7 +127,13 @@ fun AppNavigation (navController : NavHostController) {
                     }
                 },
                 onNavigateToValidate = {navController.navigate(Screen.SecretaryValidateScreen)},
-                onNavigateToHistory = {navController.navigate(Screen.SecretaryHistoryScreen)})
+                onNavigateToHistory = {navController.navigate(Screen.SecretaryHistoryScreen)},
+                onSwitchRole = {
+                    navController.navigate(Screen.Home) {
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
 
         composable<Screen.SecretaryValidateScreen>{

@@ -68,7 +68,8 @@ fun SecretaryHomeScreen(
     viewModel: SecretaryViewModel,
     onLogoutClicked: () -> Unit,
     onNavigateToValidate: () -> Unit,
-    onNavigateToHistory: () ->  Unit = {}
+    onNavigateToHistory: () ->  Unit = {},
+    onSwitchRole: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -104,7 +105,7 @@ fun SecretaryHomeScreen(
                 onLogoutClicked()
             },
             role = "Sekretar",
-            onSwitchRole = {}
+            onSwitchRole = onSwitchRole
         )
     }
 }
