@@ -110,7 +110,7 @@ Aplikacija je namijenjena za digitalizaciju i upravljanje zahtjevima zaposlenika
 > na UI, samo u pozadini. Dodala sam novi tip za spremanje podataka vezanih
 > za fajlove koji se mogu ucitati kao dokaz na zahtjev za odsustvo.
 
-> **Support za API pozive**
+> **Support za API pozive**  
 > Dodan OkHttpKlijent, RetrofitInstance, GoogleAPIInterface,
 > repozitorij za google podatke i pomocna funkcija za OkHttpClient.
 > Slicno zadaci3, na kraju nije iskoristeno ni za sta, jer smo podatak
@@ -121,6 +121,35 @@ Aplikacija je namijenjena za digitalizaciju i upravljanje zahtjevima zaposlenika
 > Kod ostaje za potencijalne upotrebe kasnije. Ako se ne bude koristio biti ce 
 > izbrisan.
 > 
+
+> **Implementacija lokalne Room baze podataka**  
+> Dodani entiteti i izmjenjena prethodna baza podataka zbog perzistencije podataka na uredjaju.
+> Definirani su entiteti koji odgovaraju strukturi potrebnoj za rad aplikacije bez veze sa internetom.
+
+> **Ponovna implementacija repozitorija**   
+> Spremanje (pisanje) u lokalnu i bazu podataka na firestore. Ostvareni pristup je offline-first.
+> Repozitorij je veza izmedju lokalne baze i Firestore-a. 
+> Podaci se najprije upisuju u lokalnu bazu, te se asinhrono sinhronizuju sa serverom.
+> Omoguceno je real time azuriranje podataka u aplikaciji (citanje izmjena na firestore) pomocu snapshot listenera.
+
+> **Implementacija profile menija**   
+> Omogucen je logout za korisnika (sigunro brisanje kredencijala iz user managera), te izmjena stanja status labele koja prikazuje dostupnost klijenta/profesora.
+> Na meniju se vide i ostali dostupni podaci poput slike profila (ako je javna), ime, prezime te mail!
+
+> **Prikay podataka procitanih iz baze**
+> Dosta koda je bilo hardkodirano, nakon implementacije lokalne baze taj kod je izmjenjen sa dnamickim podacima iz baze koji se azuriraju u real time!
+
+> **Prikaz preview kartice zahtjeva**
+> Omogucen prikaz podataka o zahtjevu! Podaci se dobiju iz baze podataka te se prikazuju shodno statusu zahtjeva.
+
+> **Implementacija funkcionalnosti validacije slanja zahtjeva**
+> Vikendi se ne broje pri proracunu dana odsustva!  
+> Nije moguce birati dane iz proslosti!
+> Short notice najave godisnjeg odmora obavjestavaju korisnika da zahtjev mozda nece biti prihvacen.
+
+> **Promjena uloge Dekan <-> Profesor, Sekretar <-> Zaposlenik (Dinamicka uloga)** 
+> Obzirom da postoji poreba da i dekan i sekretar mogu poslati zahtjeve za odsustvo, omoguceno im je biranje uloge u kojoj zele da koriste aplikaciju, te prelaz izmedju uloga!
+> Opcije se prikazuju klikom na profilnu sliku!
 
 
 ---

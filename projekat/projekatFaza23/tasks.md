@@ -67,3 +67,33 @@
 
 > 11. dodana offline database support koristeci 
 > firebase 
+
+> Implementacija lokalne Room baze podataka 
+
+> Ponovna implementacija repozitorija  
+> Spremanje (pisanje) u lokalnu i bazu podataka na firestore. Ostvareni pristup je offline-first.
+> Podaci se najprije upisuju u lokalnu bazu, te se asinhrono sinhronizuju sa serverom.
+> Real time azuriranje podataka u aplikaciji
+
+> Implementacija profile menija  
+> logout za korisnika,
+> izmjena stanja status labele 
+> slike profila (ukoliko je javna), ime, prezime te mail!
+
+> Prikaz podataka procitanih iz baze
+> dnamicki se dohvataju podaci iz baze koji se azuriraju u real time!
+
+> Preview kartice zahtjeva
+> Prikaz podataka o zahtjevu! 
+
+> Validacije prije slanja zahtjeva
+> Vikendi se ne broje pri proracunu dana odsustva!  
+> Nije moguce birati dane iz proslosti!
+> Short notice najave godisnjeg odmora obavjestavaju korisnika da zahtjev mozda nece biti prihvacen.
+
+> Dinamicka uloga
+> Dekanu i sekretaru je omoguceno biranje uloge u kojoj zele da koriste aplikaciju, te prelaz izmedju uloga!
+> Opcije se prikazuju klikom na profilnu sliku!
+
+
+

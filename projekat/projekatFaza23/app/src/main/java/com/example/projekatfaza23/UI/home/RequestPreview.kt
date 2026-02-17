@@ -138,7 +138,7 @@ fun RequestPreview(
 
                     if (request.explanation.isNotEmpty()) {
                         Text(
-                            text = "Pbojašnjenje razloga odsustva:",
+                            text = "Pojašnjenje razloga odsustva:",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
