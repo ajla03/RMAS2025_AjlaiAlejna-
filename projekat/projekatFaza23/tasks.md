@@ -1,41 +1,36 @@
 ## Evidencija funkcionalnosti projekta
 
 ---
+#### Ajla Bulić:
 
-### Ajla Bulic:
-> 1. kreirala inicijalne ekrane:
->   - `ClientHomeScreen`
->   - `LeaveRequestViewModel`
->   - `FakeLeaveRepository`
+> **Rad na ekranima za Zaposlenika (Employee)**
+> * Napravila sam početne ekrane (`ClientHomeScreen`) i `NewRequestScreen`.
+> * Dodala sam filtriranje zahtjeva pomoću padajućeg menija (`DropDownMenu`).
+> * Napravila funkcionalnost za biranje datuma i dodavanje fajlova uz zahtjev.
+> * Ubacila animacije za greške (npr. ako se izabere pogrešan datum) i ograničenja za tipove odsustva.
+> * Sredila izgled Login ekrana i dodala popup za profil i odjavu.
 
-> 2. dodala `DropDownMenu` za filtriranje zahtjeva na HomeScreen
->    - funkcija za fltriranje u `LeaveRequestViewModel`
+> **Baza podataka**
+> * Kreirala `LeaveRepository` i povezala aplikaciju sa **Firebase Firestore** bazom.
+> * Napravila `RequestType` (enum) da se tačno zna koji su tipovi odsustva (plaćeno/neplaćeno) i koliko dana je dozvoljeno.
+> * Sredila `ViewModel`-e (`LeaveRequestViewModel`, `InboxRequestViewModel`) da pravilno upravljaju podacima.
+> * Povezala **Firebase Storage** tako da se dokumenti koje korisnik pošalje stvarno čuvaju na serveru i mogu se otvoriti putem linka.
 
-> 3. dodala `NewRequestScreen`
->   - dodana nova polja u data `class LeaveRequest`
->   - dodane nove funkcionalnosti u `LeaceRequestViewModel` za handling polja za opis, datume i tip zahtjeva
->   - dodano polje `currentRequest` u `LeaveUiState`
+> **Dio za Dekana i Sekretara**
+> * **Dekan:**
+>   * Napravila ekrane za Dekana (`DeanHomeScreen`, `DeanDirectoryScreen`, `ApproveRequestScreen`).
+>   * Dodala navigaciju (Bottom Bar) i filtriranje zahtjeva po imenu i datumu.
+>   * Napravila da Dekan može vidjeti dokumente, odobriti ili odbiti zahtjev.
+>   * **PDF Export:** Napravila funkcionalnost da Dekan može spasiti listu zaposlenih u PDF formatu.
+> * **Sekretar:**
+>   * Napravila ekrane za Sekretara gdje on prvi pregleda zahtjeve.
+>   * Dodala navigaciju (Bottom Bar) i filtriranje zahtjeva po imenu.
+>   * Dodala opciju da Sekretar može promijeniti/korigovati datume odsustva prije nego što ih pošalje Dekanu.
 
-> 4. dodana Composable funkcija za date pickig i attaching files
-> u `NewRequestScreen`
-
-> 5. dodan Repository `LeaveRepository`
->   - prepravljen `InboxRequestViewModel`
->   - dodana veza na Firebase Firestore
-
-> 6. dodana funkcionalnost dodavanja fileova u request
->   - potrebna prepravka u sljedecoj fazi (ovo je minimalna implementacija da button radi sta je predvidjeno)
-
-> 7. izmjena login screena i new request screena
-
-> 8. dodana ogranicenja na tip i datume kod zahtjeva
->   - dodana animacija za error
-
-> 9. bugfixes
-
-> 10. dodana `enum class RequestType(val displayName : String, val maxDays : Int)` za tipove mogucih zahtjeva za odustvo, placenih i neplacenih. `maxDays` se odnosi na zakonski predviden broj dana za placeno odsustvo. 
-
----
+> **Dodatne funkcionalnosti**
+> * **Historija zahtjeva:** Napravila `HistoryScreen` gdje Dekan i Sekretar mogu vidjeti stare, završene zahtjeve.
+> * **Notifikacije:** Implementirala `WorkManager` koji šalje notifikacije (podsjetnike) korisniku pred kraj odmora.
+> * **Tok statusa:** Sredila logiku kako se status mijenja: prvo je `Pending`, pa kad sekretar pregleda ide u `Reviewed`, i na kraju Dekan stavlja `Approved`.
 
 ### Alejna Hodzic:
 > 1. organizacija projekta:
