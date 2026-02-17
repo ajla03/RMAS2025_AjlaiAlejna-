@@ -1,5 +1,9 @@
 package com.example.projekatfaza23.UI.home
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.lazy.items
@@ -75,12 +79,16 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import com.example.projekatfaza23.UI.dean.getMockRequests
 import com.example.projekatfaza23.UI.request.RequestType
 import com.example.projekatfaza23.UI.profile.UserMenu
+import java.util.jar.Manifest
 
 val SuccessColor = Color(0xFF2E7D32)
 val WarningColor = Color(0xFFEF6C00)
@@ -100,6 +108,26 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel,
     val blurRadius by animateDpAsState(targetValue = if (isMenuOpen) 12.dp else 0.dp)
 
 
+    // odobravanje notifikacija
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+        }
+    )
+    LaunchedEffect(Unit) {
+        // ako je android verzija 13 ili noviji.... ( post notifikacija tek u androidu 13)
+        // na ostalim automatski radi
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permissionCheck = ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            )
+            if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
     Box(modifier = Modifier.fillMaxSize()) {
 
 
