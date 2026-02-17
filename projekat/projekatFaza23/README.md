@@ -239,3 +239,16 @@ Aplikacija je razvijena u najnovijem okruženju. Za uspješno kompajliranje i po
 5.  **Run:** Pokrenite aplikaciju.
 
 ---
+🧪 Testni Podaci 
+
+Aplikacija koristi **Role-Based Access Control**. Sistem prepoznaje ulogu korisnika na osnovu email adrese s kojom se prijavi putem Google Sign-In opcije.
+
+Kako biste testirali specifične funkcionalnosti (Dekan/Sekretar), molimo koristite sljedeće email adrese:
+
+| Uloga | Funkcionalnosti | Testni Email (Login) |
+| :--- | :--- | :--- |
+| **Zaposlenik** (Employee) | Kreiranje zahtjeva, upload dokaza, pregled statusa. | *Bilo koji gmail nalog* |
+| **Sekretar** (Secretary) | Pregled svih zahtjeva, validacija dokumentacije, slanje Dekanu. | *email sekretara* |
+| **Dekan** (Dean) | Finalno odobravanje, PDF export, odbijanje zahtjeva. | *email dekana*  |
+
+
