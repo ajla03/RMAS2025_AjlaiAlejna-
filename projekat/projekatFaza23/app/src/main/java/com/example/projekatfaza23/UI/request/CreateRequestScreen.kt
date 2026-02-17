@@ -82,12 +82,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SelectableDates
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.projekatfaza23.UI.home.formatTimestampToDate
 import com.example.projekatfaza23.model.LeaveDates
+import java.util.Calendar
 
 enum class RequestType(val displayName: String, val maxDays: Int) {
     // Godisnji odmor
@@ -358,11 +360,59 @@ fun getFileName(context: Context, uri: Uri): String?{
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateRangePickerPopup(onDismiss: () -> Unit, onDatesSelected: (Long?, Long?) -> Unit){
-    val state = rememberDateRangePickerState() //cuva  selectedStartDateMillis i EndDateMillis
+    val context = LocalContext.current
+
+    val dateValidator = object : SelectableDates {
+        override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+            val today = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+
+            return utcTimeMillis > today
+        }
+
+        override fun isSelectableYear(year: Int): Boolean {
+            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+            return year >= currentYear
+        }
+    }
+
+    val state = rememberDateRangePickerState(selectableDates = dateValidator) //cuva  selectedStartDateMillis i EndDateMillis
 
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = {
+            val start = state.selectedStartDateMillis
+            val end = state.selectedEndDateMillis
+
+            if (start == null || end == null) {
+                Toast.makeText(
+                    context,
+                    "Odaberite i početni i krajnji datum.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@TextButton
+            }
+
+            val today = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+
+            if (start < today) {
+                Toast.makeText(
+                    context,
+                    "Ne možete selektovati datume iz prošlosti!",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@TextButton
+            }
+
             onDatesSelected(state.selectedStartDateMillis, state.selectedEndDateMillis)
             onDismiss() //zatvara popup
         }){Text("OK")}},
