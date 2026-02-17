@@ -239,7 +239,7 @@ Aplikacija je razvijena u najnovijem okruženju. Za uspješno kompajliranje i po
 5.  **Run:** Pokrenite aplikaciju.
 
 ---
-🧪 Testni Podaci 
+### 🧪 Testni Podaci 
 
 Aplikacija koristi **Role-Based Access Control**. Sistem prepoznaje ulogu korisnika na osnovu email adrese s kojom se prijavi putem Google Sign-In opcije.
 
