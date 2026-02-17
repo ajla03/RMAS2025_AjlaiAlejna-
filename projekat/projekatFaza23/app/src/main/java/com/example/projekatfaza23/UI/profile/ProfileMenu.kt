@@ -33,6 +33,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -71,7 +72,9 @@ fun UserMenu(
     currStatus: Status,
     onStatusChange: (Status) -> Unit,
     onDismiss: () -> Unit,
-    navigateLogout: () -> Unit
+    navigateLogout: () -> Unit,
+    role: String? = null,
+    oSwitchRole: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val borerBrush = Brush.sweepGradient(listOf(cyan, purple, cyan))
@@ -132,7 +135,53 @@ fun UserMenu(
                     color = Color.LightGray.copy(alpha = 0.7f)
                 )
 
-                Spacer(modifier = Modifier.height(44.dp))
+                if (role != null) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Surface(
+                        color = Color.White.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(50),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
+                        modifier = Modifier.height(40.dp).fillMaxWidth(0.8f) // Malo uže od punog ekrana
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                color = cyan,
+                                shape = RoundedCornerShape(50),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(40.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = if (role == "Dekan") "Profesor" else "Zaposlenik",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { oSwitchRole() }
+                                    .fillMaxHeight()
+                            ) {
+                                Text(
+                                    text = role,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = "Postavi status:",

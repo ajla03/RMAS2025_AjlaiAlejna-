@@ -18,6 +18,7 @@ import com.example.projekatfaza23.UI.secretary.SecretaryHistoryScreen
 import com.example.projekatfaza23.UI.secretary.SecretaryHomeScreen
 import com.example.projekatfaza23.UI.secretary.SecretaryValidateScreen
 import com.example.projekatfaza23.UI.secretary.SecretaryViewModel
+import com.example.projekatfaza23.data.auth.UserManager
 
 @Composable
 fun AppNavigation (navController : NavHostController) {
@@ -52,7 +53,20 @@ fun AppNavigation (navController : NavHostController) {
                     }
                     launchSingleTop = true
                     }
-                })
+                },
+                onSwitchRole = {
+                    val email = UserManager.currentUser.value?.email
+                    if (email == "ayla62553@gmail.com" || email == "hodzic.alejna@gmail.com") {
+                        navController.navigate(Screen.DeanHome) {
+                            popUpTo(Screen.Home) { inclusive = true }
+                        }
+                    } else if (email == "avonkoztuz@gmail.com" || email == "hr.app.untz@gmail.com") {
+                        navController.navigate(Screen.SecretaryHomeScreen) {
+                            popUpTo(Screen.Home) { inclusive = true }
+                        }
+                    }
+                }
+                )
         }
 
         composable<Screen.CreateRequest> {

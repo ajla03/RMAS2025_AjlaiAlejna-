@@ -97,12 +97,22 @@ val TextDark = Color(0xFF1A1C1E)
 @Composable
 fun ClientHomeScreen(viewModel: InboxRequestViewModel,
                      createNewRequest : () -> Unit,
-                     navigateLogout: () -> Unit) {
+                     navigateLogout: () -> Unit,
+                     onSwitchRole: () -> Unit
+                     ) {
 
     val uiState by viewModel.uiState.collectAsState()
     val currentFilter by viewModel.currentFilter.collectAsState()
     val requests = viewModel.getFilteredRequests()
     val user = UserManager.currentUser.collectAsState().value
+
+    val role = remember(user?.email) {
+        when (user?.email) {
+            "ayla62553@gmail.com", "hodzic.alejna@gmail.com" -> "Dekan"
+            "avonkoztuz@gmail.com", "hr.app.untz@gmail.com" -> "Sekretar"
+            else -> null
+        }
+    }
 
     var isMenuOpen by remember { mutableStateOf(false) }
     val blurRadius by animateDpAsState(targetValue = if (isMenuOpen) 12.dp else 0.dp)
@@ -156,7 +166,12 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel,
             currStatus = uiState.status,
             onStatusChange = {newStat -> viewModel.updateStatus(newStat)},
             onDismiss = {isMenuOpen = false},
-            navigateLogout = navigateLogout
+            navigateLogout = navigateLogout,
+            role = role,
+            oSwitchRole = {
+                isMenuOpen = false
+                onSwitchRole()
+            }
         )
 
     }
