@@ -60,6 +60,7 @@ import java.util.Locale
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
@@ -142,7 +143,8 @@ fun NewRequestScreen(navigateHome: () -> Unit, viewModel: InboxRequestViewModel 
         onExplanationChange = { viewModel.onExplanationChange(it) },
         sendRequest = { viewModel.sendRequest() },
         onFileSelected = {uri, name -> viewModel.onFileAttached(uri, name)},
-        resetSuccessState = { viewModel.resetSuccessState() }
+        resetSuccessState = { viewModel.resetSuccessState() },
+        onClearError = { viewModel.clearError() }
     )
 
 }
@@ -157,9 +159,17 @@ fun NewRequestContent(
     onFileSelected: (Uri?, String) -> Unit,
     onExplanationChange: (String) -> Unit,
     sendRequest: () -> Unit,
-    resetSuccessState: () -> Unit
+    resetSuccessState: () -> Unit,
+    onClearError: () -> Unit
 ){
     val context = LocalContext.current
+
+    LaunchedEffect(uiState.isError) {
+        if(uiState.isError && !uiState.errorMsg.isNullOrEmpty()){
+            Toast.makeText(context, uiState.errorMsg, Toast.LENGTH_LONG).show()
+        }
+    }
+
     val filePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { //kreiramo launcher  za file picker
         uri : Uri? ->
         uri?.let {
@@ -202,7 +212,10 @@ fun NewRequestContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedButton(
-                onClick = { showDatePicker = true },
+                onClick = {
+                    onClearError()
+                    showDatePicker = true
+                          },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, Color(0xFF004D61))
@@ -231,7 +244,8 @@ fun NewRequestContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp),
+                    //.height(80.dp),
+                    .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.animation.AnimatedVisibility(
@@ -259,15 +273,19 @@ fun NewRequestContent(
             }
             Button(
                 onClick = {
-                    android.util.Log.d("PROVJERA", "KLIKNUT JE SEND!")
                     sendRequest()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(55.dp),
-                enabled = !uiState.isLoading || uiState.isError,
                 shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF004D61), contentColor = Color.White)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF004D61),
+                    contentColor = Color.White
+                ),
+                enabled = !uiState.isLoading &&
+                        !uiState.isError &&
+                        (uiState.currentRequest.leave_dates?.isNotEmpty() == true),
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
@@ -525,6 +543,7 @@ fun NewRequestPreview(){
       sendRequest = {},
       resetSuccessState = {},
       onRemoveDate = {},
-      onFileSelected = {_, _ -> }
+      onFileSelected = {_, _ -> },
+      onClearError = {}
   )
 }

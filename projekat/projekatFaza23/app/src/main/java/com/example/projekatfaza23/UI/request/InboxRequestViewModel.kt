@@ -145,9 +145,9 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
     }
 
 
-    private fun calculateWorkingDays(){}
-
-    fun clearError(){}
+    fun clearError() {
+        _uiState.update { it.copy(isError = false, errorMsg = null) }
+    }
 
     fun onTypeChange(newType: String){
         _uiState.update { currentState ->
@@ -167,6 +167,18 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
 
     fun onDatesSelected(from: Long?, to: Long?) {
         if(from == null || to == null ) return
+
+        val startTimestamp = Timestamp(java.util.Date(from))
+        val endTimestamp = Timestamp(java.util.Date(to))
+        val workDaysCnt = validationHelpers.countWorkDays(startTimestamp, endTimestamp)
+
+        if (workDaysCnt > _uiState.value.remainingLeaveDays) {
+            _uiState.update { it.copy(
+                isError = true,
+                errorMsg = "Na raspolaganju imate ${uiState.value.remainingLeaveDays} dana. Nije moguce odabrati vise dana!"
+            ) }
+            return
+        }
 
         _uiState.update { currentState ->
             val newDateRange = LeaveDates(start = Timestamp(java.util.Date(from)),
@@ -250,7 +262,6 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
                 if (email != null) {
                     userRepo.getUser(email).collect { userEntity ->
                         userEntity?.let { user ->
-
                             _uiState.update { currState ->
                                 currState.copy(
                                     totalDays = user.totalDays,
