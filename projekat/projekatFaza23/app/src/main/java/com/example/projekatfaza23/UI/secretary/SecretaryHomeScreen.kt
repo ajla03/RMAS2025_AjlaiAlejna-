@@ -103,7 +103,8 @@ fun SecretaryHomeScreen(
                 showProfileDialog = false
                 onLogoutClicked()
             },
-            role = "Sekretar"
+            role = "Sekretar",
+            onSwitchRole = {}
         )
     }
 }

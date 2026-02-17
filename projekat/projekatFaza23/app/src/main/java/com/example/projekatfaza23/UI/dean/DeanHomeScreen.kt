@@ -80,7 +80,8 @@ fun DeanHomeScreen(
     navigateRequest: () -> Unit,
     onLogoutClick: () -> Unit,
     onNavigateToHistory: () -> Unit = {},
-    onNavigateToDirectory : () -> Unit
+    onNavigateToDirectory : () -> Unit,
+    onSwitchRole: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val user = UserManager.currentUser.collectAsState().value
@@ -98,7 +99,8 @@ fun DeanHomeScreen(
         onLogoutClick = onLogoutClick,
         onSetSelectedRequest = { viewModel.setSelectedRequest(it) },
         onNavigateToHistory = onNavigateToHistory,
-        onNavigateToDirectory = onNavigateToDirectory
+        onNavigateToDirectory = onNavigateToDirectory,
+        onSwitchRole = onSwitchRole
     )
 }
 
@@ -116,7 +118,8 @@ fun DeanHomeScreenContent(
     onLogoutClick: () -> Unit,
     onSetSelectedRequest: (LeaveRequest) -> Unit,
     onNavigateToHistory: () -> Unit,
-    onNavigateToDirectory: () -> Unit = {}
+    onNavigateToDirectory: () -> Unit = {},
+    onSwitchRole: () -> Unit
 ) {
 /*
      mozda cemo trebati ako se podaci budu fetchali sa interneta kada kliknemo na request
@@ -201,7 +204,11 @@ fun DeanHomeScreenContent(
                     showProfileDialog = false
                     onLogoutClick()
                 },
-                role = "Dekan"
+                role = "Dekan",
+                onSwitchRole = {
+                    showProfileDialog = false
+                    onSwitchRole()
+                }
             )
         }
     }
@@ -330,7 +337,9 @@ fun ProfileDialog(onDismiss: () -> Unit,
                       deanName : String,
                       deanEmail: String ,
                       imageUrl: String?,
-                      role: String){
+                      role: String,
+                  onSwitchRole: () -> Unit
+){
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Card(
             colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -364,12 +373,48 @@ fun ProfileDialog(onDismiss: () -> Unit,
                     color = Color.Gray
                 )
 
-                Text(
-                    text = "Uloga: $role",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF1E2A47),
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Surface(
+                    color = Color(0xFFF5F7FA),
+                    shape = RoundedCornerShape(50),
+                    modifier = Modifier.height(40.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onSwitchRole() }
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Text(
+                                text =  if (role == "Dekan") "Profesor" else "Zaposlenik",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        Surface(
+                            color = Color(0xFF004D61),
+                            shape = RoundedCornerShape(50),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = role,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -469,7 +514,8 @@ fun HRAppPreview() {
             navigateRequest = {},
             onLogoutClick = {},
             onSetSelectedRequest = {},
-            onNavigateToHistory = {}
+            onNavigateToHistory = {},
+            onSwitchRole = {}
         )
 }
 

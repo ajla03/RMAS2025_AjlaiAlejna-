@@ -73,7 +73,13 @@ fun AppNavigation (navController : NavHostController) {
                         launchSingleTop = true
                     }
                 },
-                onNavigateToHistory = {navController.navigate(Screen.DeanHistoryScreen)})
+                onNavigateToHistory = {navController.navigate(Screen.DeanHistoryScreen)},
+                onSwitchRole = {
+                    navController.navigate(Screen.Home) {
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
 
         composable<Screen.DeanDirectory> {
