@@ -39,5 +39,5 @@ data class LeaveDates(
 data class FileInfo(
     val file_name: String = "",
     val file_type: String = "",
-    val uri: String = ""
+    val uri: String? = ""
 )

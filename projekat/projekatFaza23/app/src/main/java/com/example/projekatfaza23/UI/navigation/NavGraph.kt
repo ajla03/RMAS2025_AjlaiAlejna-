@@ -76,15 +76,32 @@ fun AppNavigation (navController : NavHostController) {
                 onNavigateToHistory = {navController.navigate(Screen.DeanHistoryScreen)})
         }
 
-        composable<Screen.DeanDirectory>{
-            DeanDirectoryScreen(viewModel = sharedDeanViewModel, navigateHome = {navController.popBackStack()})
+        composable<Screen.DeanDirectory> {
+            DeanDirectoryScreen(
+                viewModel = sharedDeanViewModel,
+                navigateHome = {
+                    navController.navigate(Screen.DeanHome) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                })
         }
 
         composable<Screen.DeanHistoryScreen> {
             DeanHistoryScreen(
                 sharedDeanViewModel,
-                onNavigateToHome = { navController.popBackStack() },
-                navigateRequest = {navController.navigate(Screen.ApproveRequestScreen)},
+                onNavigateToHome = {
+                    navController.navigate(Screen.DeanHome) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },                navigateRequest = {navController.navigate(Screen.ApproveRequestScreen)},
                 onNavigateToDirectory = {navController.navigate(Screen.DeanDirectory)}
             )
         }
@@ -114,7 +131,15 @@ fun AppNavigation (navController : NavHostController) {
         composable<Screen.SecretaryHistoryScreen> {
             SecretaryHistoryScreen(
                 sharedSecretaryViewModel,
-                onNavigateToHome = { navController.popBackStack() },
+                onNavigateToHome = {
+                    navController.navigate(Screen.SecretaryHomeScreen) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
                 onNavigateToRequest = {navController.navigate(Screen.SecretaryValidateScreen)})
         }
 

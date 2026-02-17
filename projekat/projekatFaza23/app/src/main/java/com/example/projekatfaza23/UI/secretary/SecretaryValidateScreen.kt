@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projekatfaza23.UI.dean.AttachmentCard
+import com.example.projekatfaza23.UI.dean.EmployeeCommentBox
 import com.example.projekatfaza23.UI.dean.RequestDetailsCard
 import com.example.projekatfaza23.UI.dean.UserProfileHeader
 import com.example.projekatfaza23.UI.dean.calculateDaysBetween
@@ -68,7 +70,11 @@ import java.util.Locale
 fun SecretaryValidateScreen(viewModel: SecretaryViewModel, navigateHome: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    val employees = uiState.employees
+    val imageUrl = employees.find({it.email == uiState.selectedRequest?.userEmail})?.imageUrl
+
     SecretaryValidateContent(
+        imageUrl = imageUrl,
         uiState = uiState,
         navigateHome = navigateHome,
         onReject = {
@@ -85,6 +91,7 @@ fun SecretaryValidateScreen(viewModel: SecretaryViewModel, navigateHome: () -> U
 }
 @Composable
 fun SecretaryValidateContent(
+    imageUrl: String?,
     uiState: SecretaryUIState,
     navigateHome: () -> Unit,
     onReject: () -> Unit,
@@ -104,15 +111,29 @@ fun SecretaryValidateContent(
     val daysInSelectedOption = if (selectedRange != null)
         calculateDurationInt(selectedRange.start, selectedRange.end) else 0
 
+    var showValidationError by remember { mutableStateOf(false) }
+
     val displayStats = uiState.stats?.copy(
         pendingDays = daysInSelectedOption,
         remainingDays = (uiState.stats.totalDays - uiState.stats.usedDays)
     )
 
     val (statusColor, statusText, statusContainerColor) = when (request.status) {
-        RequestSatus.Approved -> Triple(Color(0xFF2E7D32), "ZAHTJEV JE ODOBREN", Color(0xFFE8F5E9)) // Zelena
-        RequestSatus.Denied -> Triple(Color(0xFFC62828), "ZAHTJEV JE ODBIJEN", Color(0xFFFFEBEE))   // Crvena
-        RequestSatus.PendingDean -> Triple(Color(0xFF1976D2), "ČEKA ODOBRENJE DEKANA", Color(0xFFE3F2FD))
+        RequestSatus.Approved -> Triple(
+            Color(0xFF2E7D32),
+            "ZAHTJEV JE ODOBREN",
+            Color(0xFFE8F5E9)
+        ) // Zelena
+        RequestSatus.Denied -> Triple(
+            Color(0xFFC62828),
+            "ZAHTJEV JE ODBIJEN",
+            Color(0xFFFFEBEE)
+        )   // Crvena
+        RequestSatus.PendingDean -> Triple(
+            Color(0xFF1976D2),
+            "ČEKA ODOBRENJE DEKANA",
+            Color(0xFFE3F2FD)
+        )
 
         else -> Triple(Color.Gray, "STATUS NEPOZNAT", Color.LightGray)
     }
@@ -126,9 +147,15 @@ fun SecretaryValidateContent(
             }
         },
         bottomBar = {
-            if(request.status  == RequestSatus.Pending) {
+            if (request.status == RequestSatus.Pending) {
                 SecretaryBottomBar(
-                    onReject = onReject,
+                    onReject = {
+                        if (uiState.explanationSecretary.trim().isEmpty()) {
+                            showValidationError = true
+                        } else {
+                            onReject()
+                        }
+                    },
                     onForward = {
                         if (selectedRange != null) {
                             onForward(selectedRange)
@@ -147,9 +174,10 @@ fun SecretaryValidateContent(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            UserProfileHeader(request.userEmail, null)
+            UserProfileHeader(request.userEmail, imageUrl)
             Divider(color = Color.LightGray.copy(0.5f), thickness = 1.dp)
 
+            if(request.status == RequestSatus.Pending){
             request.leave_dates?.filterNotNull()?.let { dates ->
                 DateOptionSelector(
                     options = dates,
@@ -157,42 +185,91 @@ fun SecretaryValidateContent(
                     onOptionSelected = { newIndex -> selectedOptionIndex = newIndex }
                 )
             }
+            }else{
+                request.leave_dates?.filterNotNull()?.let { dates ->
+                    DateOptionSelector(
+                        options = dates,
+                        selectedIndex = selectedOptionIndex,
+                        onOptionSelected = { }
+                    )
+                }
+            }
             RequestDetailsCard(request)
+
+            if (!request.file_info?.uri.isNullOrBlank()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Priloženi dokument",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.Gray
+                    )
+                    AttachmentCard(
+                        fileName = request.file_info?.file_name ?: "Dokument",
+                        fileUrl = request.file_info!!.uri!!
+                    )
+                }
+            }
+
+            //komentar zaposlenika
+            Text(
+                    text = "Razlog / Napomena",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.Gray,
+            )
+            EmployeeCommentBox(
+                request?.explanation?.takeIf { it.isNotBlank() } ?: "Nema komentara zaposlenika."
+            )
 
             Text(
                 text = "Provjera stanja dana",
                 style = MaterialTheme.typography.labelLarge,
                 color = Color.Gray
             )
-            if(displayStats!=null)
+            if (displayStats != null)
                 StatsValidationCard(displayStats)
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                val isProcessed = request.status != RequestSatus.Pending
+
+                val displayText = if (isProcessed) {
+                    uiState.explanationSecretary.takeIf { it.isNotBlank() } ?: "Nema komentara od sekretara."
+                } else {
+                    uiState.explanationSecretary
+                }
+
                 Text(
-                    text = "Napomena (Opcionalno)",
+                    text = if (isProcessed) "Napomena sekretara" else "Napomena (Obavezno prilikom odbijanja)",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.Gray
                 )
 
                 OutlinedTextField(
-                    value = uiState.explanationSecretary,
+                    value = displayText,
                     onValueChange = onExplanationChange,
-                    placeholder = {
+                    isError = !isProcessed && showValidationError && uiState.explanationSecretary.trim().isEmpty(),                    placeholder = {
                         Text(
                             "Npr. Provjereno, dani se slažu sa evidencijom...",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray
                         )
                     },
+                    readOnly = isProcessed,
+                    enabled = !isProcessed,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedContainerColor = Color.White,
                         focusedContainerColor = Color.White,
                         unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = primaryColor
+                        focusedBorderColor = primaryColor,
+                        errorBorderColor = Color(0xFFC62828),
+                        errorCursorColor = Color(0xFFC62828),
+                        disabledTextColor = Color.DarkGray,
+                        disabledBorderColor = Color.LightGray
                     ),
                     minLines = 3
+
                 )
             }
 
@@ -212,7 +289,34 @@ fun SecretaryValidateContent(
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
         }
+    }
+    if (showValidationError) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showValidationError = false },
+            title = {
+                Text(
+                    text = "Nedostaje napomena",
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFD32F2F)
+                )
+            },
+            text = {
+                Text("Da biste odbili zahtjev, morate unijeti razlog u polje 'Napomena'.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showValidationError = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                ) {
+                    Text("U redu")
+                }
+            },
+            containerColor = Color.White
+        )
     }
 }
 @Composable
@@ -234,7 +338,7 @@ fun SecretaryBottomBar(onReject: () -> Unit, onForward: () -> Unit){
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD32F2F) ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Vrati na doradu", fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, fontSize = 12.sp)
+                Text("Odbij", fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, fontSize = 12.sp)
             }
 
 
@@ -484,6 +588,7 @@ fun SecretaryValidatePreview() {
     )
 
     SecretaryValidateContent(
+        imageUrl = null,
         uiState = mockState,
         navigateHome = {},
         onReject = {},

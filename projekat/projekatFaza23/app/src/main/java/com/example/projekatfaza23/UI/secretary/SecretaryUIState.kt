@@ -31,5 +31,5 @@ data class UserVacationStats(
 )
 
 enum class HistoryFilter {
-    ALL, APPROVED, DENIED
+    ALL, APPROVED, DENIED, PENDING_DEAN
 }

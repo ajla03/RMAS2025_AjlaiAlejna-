@@ -80,6 +80,39 @@ class UserRepository(private val leaveDao : LeaveDao) {
 
     fun getUser(email: String): Flow<UserEntity?> = leaveDao.getUser(email)
 
+
+    suspend fun updateLeaveDays(userEmail: String, daysApproved: Int): Boolean{
+        return try{
+         val querySnapshot = firestore.collection("user_info")
+             .whereEqualTo("email", userEmail)
+             .get()
+             .await()
+
+            if(!querySnapshot.isEmpty){
+                val document = querySnapshot.documents[0]
+                val currentTotalDays = document.getLong("totalDays")?.toInt() ?: 0
+                val currentUsedDays = document.getLong("usedDays")?.toInt() ?: 0
+
+                val newTotalDays = currentTotalDays - daysApproved
+                val newUsedDays = currentUsedDays + daysApproved
+
+                firestore.collection("user_info")
+                    .document(document.id)
+                    .update(
+                        mapOf(
+                            "totalDays" to newTotalDays,
+                            "usedDays" to newUsedDays
+                        )
+                    ).await()
+                true
+            }else {
+                false
+            }
+        }catch (e : Exception){
+            Log.e("User Repository", "Greska pri smanjenju dana: ${e.message}")
+            false
+        }
+    }
     fun realTimeUserSync(email: String) : Flow<Unit> = callbackFlow {
         val query = firestore.collection("user_info")
             .whereEqualTo("email", email)

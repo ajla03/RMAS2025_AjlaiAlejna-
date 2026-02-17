@@ -1,5 +1,7 @@
 package com.example.projekatfaza23.UI.dean
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -22,6 +24,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -39,11 +44,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,13 +63,14 @@ import com.example.projekatfaza23.UI.request.RequestHeader
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 import com.google.firebase.Timestamp
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 val primaryColor = Color(0xFF004D61)
 
 
-/* TODO - make prettier screen, adjust spacing */ 
 @Composable
 fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
 
@@ -80,6 +90,8 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
     val request = selectedRequest!!
     val isProcessed = request.status != RequestSatus.PendingDean
 
+    var showValidationError by remember { mutableStateOf(false) }
+
 
     Scaffold(
         containerColor = Color(0xFFF5F7FA),
@@ -89,8 +101,27 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
             RequestHeader("Pregled zahtjeva", navigateHome = navigateHome)
         }},
         bottomBar = {
-            if(!isProcessed)
-                BottomBar(request, {viewModel.approveRequest(request)}, {viewModel.denyRequest(request)} ,navigateHome) }){ paddingValues ->
+            if (!isProcessed)
+                BottomBar(
+                    request = request,
+                    onApproved = {
+                        viewModel.approveRequest(request)
+                        navigateHome()
+                    },
+                    onDenied = {
+                        val explanation = request.explanationDean ?: ""
+                        if (explanation.trim().isEmpty()) {
+                            showValidationError = true
+                        } else {
+                            viewModel.denyRequest(request)
+                            navigateHome()
+                        }
+                    },
+                    onBack = navigateHome
+                )
+
+        }
+    ){ paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)
             .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState()),
@@ -102,6 +133,20 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
 
             RequestDetailsCard(request = request)
 
+            if (!request.file_info?.uri.isNullOrBlank()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Priloženi dokument",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.Gray
+                    )
+                    AttachmentCard(
+                        fileName = request.file_info?.file_name ?: "Dokument",
+                        fileUrl = request.file_info!!.uri!!
+                    )
+                }
+            }
+
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)){
                 //komentar zaposlenika
                 Text(
@@ -110,20 +155,39 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
                     color = Color.Gray,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                EmployeeCommentBox(selectedRequest?.explanation ?: "")
+                EmployeeCommentBox(
+                    selectedRequest?.explanation?.takeIf { it.isNotBlank() } ?: "Nema komentara zaposlenika."
+                )            }
+
+            if(selectedRequest.status!= RequestSatus.Pending) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    //komentar sekretara
+                    Text(
+                        text = "Napomena od sekretara",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    EmployeeCommentBox(
+                        selectedRequest?.explanationSecretary?.takeIf { it.isNotBlank() } ?: "Nema komentara sekretara."
+                    )
+                }
             }
 
             //odluka dekana
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
+                Text(
                 text = "Odluka dekana",
                 style = MaterialTheme.typography.labelLarge,
                 color = Color.Gray,
                 modifier = Modifier.padding(bottom = 8.dp)
-            )
+                )
 
-            OutlinedTextField(
-                value = selectedRequest?.explanationDean ?: "",
+                val explanationText = selectedRequest.explanationDean ?: ""
+
+                OutlinedTextField(
+                value = explanationText,
+                isError = !isProcessed && showValidationError && explanationText.trim().isEmpty(),
                 onValueChange = { newText ->
                     viewModel.setExplanationDean(newText)
                 },
@@ -134,7 +198,9 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
                     unfocusedContainerColor = Color.White,
                     focusedContainerColor = Color.White,
                     unfocusedBorderColor = Color.LightGray,
-                    focusedBorderColor = primaryColor
+                    focusedBorderColor = primaryColor,
+                    errorBorderColor = Color(0xFFC62828),
+                    errorCursorColor = Color(0xFFC62828)
                 ),
                 minLines = 4,
                 readOnly = isProcessed,
@@ -153,7 +219,30 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
 
             Spacer(modifier = Modifier.height(24.dp))
         }
-
+    }
+    if (showValidationError) {
+        AlertDialog(
+            onDismissRequest = { showValidationError = false },
+            title = {
+                Text(
+                    text = "Nedostaje obrazloženje",
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFD32F2F)
+                )
+            },
+            text = {
+                Text("Da biste odbili zahtjev, morate unijeti razlog u polje 'Odluka dekana'.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showValidationError = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                ) {
+                    Text("U redu")
+                }
+            },
+            containerColor = Color.White
+        )
     }
 }
 
@@ -247,8 +336,7 @@ fun BottomBar(request: LeaveRequest, onApproved: (request: LeaveRequest) -> Unit
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ){
             OutlinedButton(
-                onClick = {  onDenied(request)
-                             onBack() },
+                onClick = {  onDenied(request) },
                 modifier = Modifier.weight(1f).height(52.dp),
                 border = BorderStroke(1.5.dp, Color(0xFFD32F2F).copy(alpha = 0.8f)),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD32F2F)),
@@ -256,8 +344,7 @@ fun BottomBar(request: LeaveRequest, onApproved: (request: LeaveRequest) -> Unit
                 ) { Text("Odbij", fontWeight = FontWeight.Bold) }
 
             Button(
-                onClick = { onApproved(request)
-                            onBack() },
+                onClick = { onApproved(request)},
                 modifier = Modifier.weight(1f).height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = primaryColor ),
@@ -371,7 +458,64 @@ fun DateColumn(label: String, date : String){
     }
 }
 
+@Composable
+fun AttachmentCard(fileName: String,  fileUrl: String){
+    val context = LocalContext.current
 
+    Card(
+        onClick = {openFile(context, fileUrl)},
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, primaryColor.copy(alpha = 0.2f)),
+        modifier = Modifier.fillMaxWidth()
+    ){
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                color = primaryColor.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Description,
+                    contentDescription = null,
+                    tint = primaryColor,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = fileName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "Kliknite da otvorite dokument",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
+            }
+            Icon(
+                imageVector = Icons.Default.FileDownload,
+                contentDescription = "Download",
+                tint = Color.Gray,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+fun openFile(context: android.content.Context, url:String){
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    context.startActivity(intent)
+}
 
 @Preview(showBackground = true)
 @Composable

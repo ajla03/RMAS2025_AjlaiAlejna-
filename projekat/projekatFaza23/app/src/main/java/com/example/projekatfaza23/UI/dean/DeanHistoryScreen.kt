@@ -77,7 +77,7 @@ fun DeanHistoryScreen(
         onNavigateToHome()
     }
 
-    val historyRequests = uiState.displayRequests.filter { it.status != RequestSatus.PendingDean }
+    val historyRequests = uiState.displayRequests.filter { it.status != RequestSatus.PendingDean }.sortedByDescending { it.createdAt }
 
     DeanHistoryScreenContent(
         isLoading = uiState.isLoading,

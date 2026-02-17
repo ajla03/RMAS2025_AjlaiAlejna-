@@ -2,6 +2,7 @@ package com.example.projekatfaza23.UI.login
 
 import android.content.Context
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -65,7 +66,7 @@ fun LoginScreen(viewModel : LoginViewModel = viewModel(), onLoginSuccess : (Scre
 @Composable
 fun LoginContent(uiState: LoginUIState, onLoginClick : () -> Unit){
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F7FA))) {
             TopAppBarSection()
         Column(
             modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),

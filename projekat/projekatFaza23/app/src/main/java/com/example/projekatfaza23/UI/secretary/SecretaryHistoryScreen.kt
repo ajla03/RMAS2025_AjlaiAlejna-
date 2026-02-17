@@ -3,6 +3,7 @@ package com.example.projekatfaza23.UI.secretary
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -38,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.projekatfaza23.UI.dean.extractNameFromEmail
 import com.example.projekatfaza23.UI.dean.primaryColor
 import com.example.projekatfaza23.UI.home.TopAppBarSection
+import com.example.projekatfaza23.data.db.UserEntity
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 
@@ -50,7 +53,7 @@ fun SecretaryHistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val processedRequests = uiState.allRequests.filter{ it.status!= RequestSatus.Pending }
+    val processedRequests = uiState.allRequests.filter{ it.status!= RequestSatus.Pending }.sortedByDescending { it.createdAt }
 
     val filteredRequests = processedRequests.filter { request ->
         val matchesSearch = if (uiState.historySearchQuery.isBlank()) {
@@ -64,10 +67,12 @@ fun SecretaryHistoryScreen(
             HistoryFilter.ALL -> true
             HistoryFilter.APPROVED -> request.status == RequestSatus.Approved
             HistoryFilter.DENIED -> request.status == RequestSatus.Denied
+            HistoryFilter.PENDING_DEAN -> request.status == RequestSatus.PendingDean
         }
 
         matchesSearch && matchesStatus
     }
+    val employees = uiState.employees
 
     BackHandler {
         viewModel.resetHistoryFilters()
@@ -75,6 +80,7 @@ fun SecretaryHistoryScreen(
     }
 
     SecretaryHistoryScreenContent(
+        employees = employees,
         isLoading = uiState.isLoading,
         processedRequests = filteredRequests,
         searchQuery = uiState.historySearchQuery,
@@ -98,6 +104,7 @@ fun SecretaryHistoryScreen(
 
 @Composable
 fun SecretaryHistoryScreenContent(
+    employees : List<UserEntity>,
     isLoading: Boolean,
     processedRequests: List<LeaveRequest>,
     searchQuery: String,
@@ -163,7 +170,8 @@ fun SecretaryHistoryScreenContent(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         HistoryFilterChip(
@@ -181,6 +189,11 @@ fun SecretaryHistoryScreenContent(
                             selected = selectedFilter == HistoryFilter.DENIED,
                             onClick = { onFilterSelected(HistoryFilter.DENIED) }
                         )
+                        HistoryFilterChip(
+                            text = "Na čekanju",
+                            selected = selectedFilter == HistoryFilter.PENDING_DEAN,
+                            onClick = { onFilterSelected(HistoryFilter.PENDING_DEAN) }
+                        )
                     }
                 }
 
@@ -192,7 +205,9 @@ fun SecretaryHistoryScreenContent(
                         item { EmptyStateMessage(isHistory = true) }
                     } else {
                         items(processedRequests) { request ->
+                            val userProfile = employees.find { it.email == request.userEmail }
                             SecretaryRequestItem(
+                                imageUrl = userProfile?.imageUrl,
                                 request = request,
                                 onClick = { onRequestClick(request) })
                         }
@@ -231,6 +246,7 @@ fun HistoryFilterChip(text: String, selected:  Boolean, onClick : ()-> Unit){
 @Composable
 fun SecretaryHistoryScreenPreview() {
     SecretaryHistoryScreenContent(
+        employees = emptyList(),
         isLoading = false,
         processedRequests = listOf(
             LeaveRequest(userEmail = "odobreno@fit.ba", status = RequestSatus.Approved),
