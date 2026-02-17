@@ -41,4 +41,26 @@ object validationHelpers {
 
         return workDays
     }
+
+    fun isShortNotice(startDate: Timestamp) : Boolean {
+        val today = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        val startCalendar = Calendar.getInstance().apply {
+            time = startDate.toDate()
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        val sevenDaysAhead = today.clone() as Calendar
+        sevenDaysAhead.add(Calendar.DAY_OF_MONTH, 7)
+
+        return startCalendar.before(sevenDaysAhead)
+    }
 }

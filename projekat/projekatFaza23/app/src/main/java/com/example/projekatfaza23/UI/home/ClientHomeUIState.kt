@@ -17,6 +17,7 @@ data class LeaveUiState(
     val remainingLeaveDays : Int = totalDays - usedDays,
     val requestHistory: List<LeaveRequest> = emptyList(),
     val currentRequest: LeaveRequest = LeaveRequest(),
+    val showWarningShortNotice: Boolean = false,
     val isLoading: Boolean = false,
     val isSuccess : Boolean = false,
     val isError: Boolean = false,

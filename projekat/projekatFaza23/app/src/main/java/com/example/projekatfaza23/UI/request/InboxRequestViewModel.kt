@@ -224,6 +224,22 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
             return
         }
 
+        if (_uiState.value.currentRequest.type == "Godišnji odmor" && validationHelpers.isShortNotice(startTimestamp)) {
+            _uiState.update { currentState ->
+                val newDateRange = LeaveDates(start = startTimestamp, end = endTimestamp)
+                val oldList = currentState.currentRequest.leave_dates ?: emptyList()
+                val updatedList = oldList + newDateRange
+
+                currentState.copy(
+                    currentRequest = currentState.currentRequest.copy(leave_dates = updatedList),
+                    showWarningShortNotice = true,
+                    isError = false,
+                    errorMsg = null
+                )
+            }
+            return
+        }
+
         _uiState.update { currentState ->
             val newDateRange = LeaveDates(start = Timestamp(java.util.Date(from)),
                 end = Timestamp(java.util.Date(to)))
@@ -362,5 +378,9 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
             Log.d("WorkManager", "Odmor je već prošao, ne zakazujemo notifikaciju za ${request.id}")
         }
 
+    }
+
+    fun dismissShortNoticeWarning() {
+        _uiState.update { it.copy(showWarningShortNotice = false) }
     }
 }

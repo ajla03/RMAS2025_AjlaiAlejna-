@@ -76,11 +76,15 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SelectableDates
 import androidx.compose.ui.Alignment
@@ -146,7 +150,8 @@ fun NewRequestScreen(navigateHome: () -> Unit, viewModel: InboxRequestViewModel 
         sendRequest = { viewModel.sendRequest() },
         onFileSelected = {uri, name -> viewModel.onFileAttached(uri, name)},
         resetSuccessState = { viewModel.resetSuccessState() },
-        onClearError = { viewModel.clearError() }
+        onClearError = { viewModel.clearError() },
+        onDismissWarning = { viewModel.dismissShortNoticeWarning() }
     )
 
 }
@@ -162,7 +167,8 @@ fun NewRequestContent(
     onExplanationChange: (String) -> Unit,
     sendRequest: () -> Unit,
     resetSuccessState: () -> Unit,
-    onClearError: () -> Unit
+    onClearError: () -> Unit,
+    onDismissWarning : () -> Unit
 ){
     val context = LocalContext.current
 
@@ -310,6 +316,11 @@ fun NewRequestContent(
             }
 
 
+            if (uiState.showWarningShortNotice) {
+                ShortNoticeWarningDialog(
+                    onDismiss = onDismissWarning
+                )
+            }
 
         }
     }
@@ -584,6 +595,74 @@ fun CombinedDateList(
     }
 }
 
+@Composable
+fun ShortNoticeWarningDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        shape = RoundedCornerShape(16.dp),
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = null,
+                tint = Color(0xFFE65100),
+                modifier = Modifier.size(48.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "Kratak rok najave godišnjeg odmora",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Odabrali ste godišnji odmor u narednih 7 dana.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Warning,
+                            null,
+                            tint = Color(0xFFE65100),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            "Godišnji odmor bi trebalo najaviti bar 7 dana unaprijed.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFFE65100),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("Usljed kratkog roka najave godišnjeg odmora, ovaj zahtjev može biti odbijen.")
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF004D61))
+            ) {
+                Text("OK", fontWeight = FontWeight.Bold)
+            }
+        }
+    )
+}
+
 @Preview(showBackground = true)
 @Composable
 fun NewRequestPreview(){
@@ -596,6 +675,7 @@ fun NewRequestPreview(){
       resetSuccessState = {},
       onRemoveDate = {},
       onFileSelected = {_, _ -> },
-      onClearError = {}
+      onClearError = {},
+      onDismissWarning = {}
   )
 }
