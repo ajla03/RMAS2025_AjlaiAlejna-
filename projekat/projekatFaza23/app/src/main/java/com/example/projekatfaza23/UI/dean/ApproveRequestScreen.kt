@@ -364,12 +364,6 @@ fun BottomBar(request: LeaveRequest, onApproved: (request: LeaveRequest) -> Unit
     }
 }
 
-fun calculateDaysBetween(start: Timestamp?, end: Timestamp?): String {
-    if (start == null || end == null) return "0 dana"
-    val diffInMillis = end.toDate().time - start.toDate().time
-    val days = (diffInMillis / (1000 * 60 * 60 * 24)).toInt() + 1
-    return "$days dana"
-}
 fun extractNameFromEmail(email: String):String{
     if (!email.contains("@")) return email
 
