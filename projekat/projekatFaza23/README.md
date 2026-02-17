@@ -10,13 +10,21 @@ Studenti:
 
 ---
 
-### Opis aplikacije
+### 📱 Opis aplikacije
 
-Aplikacija je namjenjena za upravljanje zahtjevima zaposlenika za godisnji odmor ili placeno odsustvo. 
+Aplikacija je namijenjena za digitalizaciju i upravljanje zahtjevima zaposlenika za godišnji odmor ili plaćeno odsustvo. Sistem podržava tri tipa korisnika sa različitim pravima pristupa (Role-Based Access Control):
 
-Zaposlenik pored podnosenja zahtjeva moze vidjeti i koliko dana raspolozivih za odsustvo mu je ostalo.
-
-HR sluzbenik moze obradjivati zahtjeve i voditi evidenciju, a dekan daje konacno odobrenje za zahtjeve!
+1.  **Zaposlenik (Employee):**
+    * Podnosi zahtjeve za odsustvo.
+    * Ima uvid u broj preostalih dana odmora.
+    * Prati status svojih zahtjeva (Na čekanju / Odobreno / Odbijeno).
+2.  **Sekretar (Secretary):**
+    * Prva linija obrade zahtjeva.
+    * Pregleda pristigle zahtjeve svih zaposlenika.
+    * Filtrira zahtjeve i prosljeđuje validne zahtjeve Dekanu.
+3.  **Dekan (Dean):**
+    * Ima ovlasti za konačno odobrenje ili odbijanje zahtjeva.
+    * Vidi samo zahtjeve koji su prošli provjeru sekretara.
 
 ---
 
@@ -114,50 +122,42 @@ HR sluzbenik moze obradjivati zahtjeve i voditi evidenciju, a dekan daje konacno
 > izbrisan.
 > 
 
+
+---
 #### Ajla:
-> **Repository**
-> 
->  Inicijalno je implementiran `FakeLeaveRepository` koji predstavlja fake tj. dummy podatke koji se koriste ako
-> nema nista na Firebase serveru ili lokalno ( lokalna baza jos nije implementirana ). Ovi dummy podaci su super
->  sluzili da se prati tok dolaska podataka sa servera ( ako se poslao request, automatski se vise dummy podaci
-> ne prikazuju nego se prikazuju podaci sa servera ).
-> 
-> Nakon toga, implementiran je `LeaveRepository` koji sluzi kao Single Source of Truth, kojeg view model koristi da
->  dobije podatke koji mu trebaju. LeaveRepository drzi instancu na Firebase Firestore koja mu sluzi za dohvatanje
-> podataka sa Firestore-a. Posto se koristi Flow podataka, podaci se azuriraju In Real Time.
-> 
->
-> **Firebase Firestore**
->
-> Za dohvatanje podataka u firebase kolekciji `leave_requests` koristi se i relevantan `userEmail` sa kojim je asociran
-> trenutni ulogovani korisnik aplikacije. To omogucava da korisnik dobije samo svoje requeste sa Firestore-a. S druge
-> strane, dekan koji bi ih odobravao bi imao pristup svim zahtjevima na Firestore-u.
-> 
-> Kao sto sam i navela, ako je ne moguce pristupiti podacima na serveru, ili ce se prikazati oni koji su sacuvani
-> lokalno (nakon implementacije Room-a) ili aktivna offline Firestore podrska.
->
-> **Dodavanje file-ova u request**
->
-> Da bi se omogucila funkcionalnost dodavanja file-ova u Request dodata su nova polja u LeaveRequest data class,
->  a ticu se imena file-a, tipa file-a i uri-ja.
->
-> Fajl se dohvata pomocu filePickerLaunchera pozivom funkcije launch koja otvara sistemski file picker za biranje
-> fileova. Nema ogranicenja na tip file-a koji mozemo izabrati ( za sad ), a to se postiglo pozivom launch("*/*") gdje
-> je "*/*" argument koji znaci "dozvoli bilo koju vrstu fajla".
->
-> `getfileName` funkcija sluzi da na osnovu Uri objekta kojeg vrati sistemski file picker, pokusa dobiti metapodatke
-> fajla. Ako je `uri.scheme == "content"` u tom slucaju se koristi ContentResolver da se procita ime fajla, a to se
-> vrsi preko cursora.
->
-> Ako se ime fajla ne moze dobiti preko ContentProvidera funkcija prelazi na rezervni nacin. U tom slucaju, uzima se
-> putanja iz URI-ja.
->
-> **Napomena**
->
->  Posto na Firebase saljemo lokalni uri a ne javni url implementacija je nepotpuna. Da bi korisnik na
-> drugoj strani imao pristup fajlu, fajl ce se morati uploadati na Firebase Storage i onda na Firebase poslati javni
-> url fajla. Implementacija je uradena radi kompletiranja funkcionalnosti slanja zahtjeva i dodavanja file-ova.
-> 
+
+> **Implementacija Rola (Dekan & Sekretar)**
+> Implementirana je logika koja na osnovu ulogovanog korisnika (emaila) renderuje drugačiji UI:
+> * **Sekretar Dashboard:** Implementiran ekran koji povlači *sve* zahtjeve iz kolekcije `requests` koji su u statusu `PENDING`. Dodana logika za "Provjeru" koja mijenja status zahtjeva u `PENDING DEAN`.
+> * **Dekan Dashboard:** Ekran koji prikazuje samo zahtjeve sa statusom `PENDING DEAN`. Implementirane akcije `Approve` (finalno odobrenje, umanjuje dane odmora) i `Reject`.
+
+> **Upravljanje statusima zahtjeva**
+> Kreirana logika za tranziciju stanja zahtjeva kroz sistem:
+> `CREATED` -> `PENDING` (kod Sekretara) -> `PENDING DEAN` (kod Dekana) -> `APPROVED` / `REJECTED`.
+> Svaka promjena statusa se atomično zapisuje u Firestore kako bi se osigurao integritet podataka.
+
+> **UI/UX za liste zahtjeva**
+> Dizajnirane kartice za prikaz zahtjeva (Request Cards) koje se  prilagođavaju ovisno o tome ko ih gleda (npr. Dekan vidi dugmad "Odobri/Odbij", dok Zaposlenik vidi samo status "Na čekanju").
+
+> **Validacija i Poslovna logika**
+> Dodane provjere prilikom kreiranja zahtjeva (npr. korisnik ne može tražiti više dana nego što ima na raspolaganju). Implementirano oduzimanje dana od ukupnog fonda sati nakon što Dekan odobri zahtjev.
+
+> **Firebase Storage & Upravljanje Dokumentima**
+> Implementirana kompletna integracija sa **Firebase Storage** servisom za upload dokaza (npr. doznake za bolovanje):
+> * Prilikom slanja zahtjeva, fajl se automatski uploaduje na Storage.
+> * Sistem generiše **javni URL** (download link) koji se povezuje sa zahtjevom u bazi.
+> * Omogućen pristup ovim dokumentima isključivo **Dekanu i Sekretaru**, koji direktno iz aplikacije mogu otvoriti link i pregledati priloženi dokaz prije odobravanja.
+
+> **PDF Export Funkcionalnost**
+> Implementirana administrativna funkcionalnost za **Dekana**:
+> * Mogućnost generisanja službenog **PDF dokumenta** (Lista zaposlenih) na osnovu odobrenih podataka.
+> * PDF fajl se generiše lokalno i spreman je za dijeljenje ili arhiviranje.
+
+> **Background Processing & Notifications (WorkManager)**
+> Implementiran sistem za automatsko obavještavanje korisnika putem **Android WorkManager-a**:
+> * Kreiran `LeaveReminderWorker` (nasljeđuje `CoroutineWorker`) koji radi u pozadini neovisno o životnom ciklusu aplikacije.
+> * Koristi se `PeriodicWorkRequest` sa pametnim proračunom `initialDelay`-a kako bi se notifikacija zakazala tačno 24 sata prije isteka odsustva.
+> * Implementirani **Notification Channels** za podršku na Android O+ verzijama, sa visokim prioritetom prikaza kako bi korisnik sigurno vidio podsjetnik za povratak na posao.
 ---
 
 ### Opis arhitekture aplikacije
@@ -195,11 +195,60 @@ com.example.projekatfaza23
 │   ├── login/                # LoginScreen.kt, LoginViewModel.kt i LoginUIState.kt
 │   ├── home/                 # ClientHomeScreen.kt, ClilentHomeUIState.kt i util.kt
 │   ├── request/              # CreateRequestScreen.kt, InboxRequestViewModel.kt
+|   ├── dean/                 # Svi ekrani za dekana...
+|   ├── secretary/            # Svi ekrani za sekretara... 
+|   ├── profile/              # ProfileMenu.kt
 │   └── navigation/           # NavGraph.kt, Screen.kt  
 ├── data/                     # Sloj podataka 
 │   ├── api/                  # AuthInterceptor.kt, GoogleApiInterface.kt, ...
 │   ├── auth/                 # GoogleAuth.kt, UserManager.kt, UserProfile.kt 
+|   ├── db/                   # LeaveDao...
 │   ├── repository/           # LeaveRepository, GoogleProfileRepository 
 │   └── model/                # FakeLeaveRepository.kt, LeaveRepository.kt
+├──  worker/                  # LeaveReminderWorker.kt 
 ├── ui/theme/                 ...
 └── MainActivity.kt
+
+```
+---
+
+## Upute za pokretanje
+
+Aplikacija je razvijena u **Android Studio** okruženju koristeći **Kotlin** i **Jetpack Compose**. Za pokretanje je potrebna aktivna internet konekcija (zbog Firebase servisa).
+
+### 📋 Preduslovi
+
+Aplikacija je razvijena u najnovijem okruženju. Za uspješno kompajliranje i pokretanje, potrebne su sljedeće specifikacije:
+
+* **Android Studio:** Narwhal | 2025.1.1 (ili novija).
+* **Jezik:** Kotlin 2.0.21.
+* **Java Verzija:** Java 11 (Projekt je konfigurisan sa `jvmTarget = "11"`).
+* **Min SDK:** API Level 24 (Android 7.0 Nougat).
+* **Target SDK:** API Level 36.
+
+### ⚙️ Instalacija
+1.  **Klonirajte repozitorij:**
+    ```bash
+    git clone https://github.com/ajla03/RMAS2025_AjlaiAlejna-.git
+    ```
+2.  **Otvorite projekt:** Pokrenite Android Studio i odaberite `Open Project`, te navigirajte do kloniranog foldera.
+3.  **Firebase Konfiguracija:**
+    * Osigurajte da se fajl `google-services.json` nalazi u `app/` direktoriju projekta.
+    * *Napomena: Ako testirate na emulatoru, osigurajte da emulator ima instalirane Google Play Servise.*
+4.  **Build:** Pustite da Gradle završi sinhronizaciju (Sync) i preuzimanje zavisnosti.
+5.  **Run:** Pokrenite aplikaciju.
+
+---
+### 🧪 Testni Podaci 
+
+Aplikacija koristi **Role-Based Access Control**. Sistem prepoznaje ulogu korisnika na osnovu email adrese s kojom se prijavi putem Google Sign-In opcije.
+
+Kako biste testirali specifične funkcionalnosti (Dekan/Sekretar), molimo koristite sljedeće email adrese:
+
+| Uloga | Funkcionalnosti | Testni Email (Login) |
+| :--- | :--- | :--- |
+| **Zaposlenik** (Employee) | Kreiranje zahtjeva, upload dokaza, pregled statusa. | *Bilo koji gmail nalog* |
+| **Sekretar** (Secretary) | Pregled svih zahtjeva, validacija dokumentacije, slanje Dekanu. | *email sekretara* |
+| **Dekan** (Dean) | Finalno odobravanje, PDF export, odbijanje zahtjeva. | *email dekana*  |
+
+
