@@ -15,5 +15,5 @@ data class UserEntity(
     val totalDays: Int = 20,
     val usedDays: Int,
     val userStatus: String,
-    val role: String = Status.AtWork.name
+    val role: String = Role.Professor.name
 )
