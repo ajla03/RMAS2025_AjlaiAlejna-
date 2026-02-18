@@ -33,6 +33,7 @@ interface LeaveRepositoryI {
     suspend fun syncRequestsWithFirestore(userEmail: String)
     fun startRealtimeSync(userEmail: String): Flow<Unit>
     suspend fun updateEmployeeStatus(email: String, newStatus: String) : Boolean
+    suspend fun cancelRequest(id: String)
 }
 
 class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
@@ -270,6 +271,29 @@ class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
             true
         } catch (e: Exception) {
             false
+        }
+    }
+
+    override suspend fun cancelRequest(id: String){
+        try {
+            leaveDao.cancelRequest(id)
+            val querySnapshot = firestore.collection("leave_request")
+                .whereEqualTo("id", id)
+                .get()
+                .await()
+
+            if(!querySnapshot.isEmpty) {
+                for (doc in querySnapshot.documents) {
+                    firestore.collection("user_info")
+                        .document(doc.id)
+                        .delete()
+                        .await()
+                }
+            } else {
+                Log.d("cancelRequest", "failed")
+            }
+        } catch (e: Exception) {
+
         }
     }
 

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.Button
@@ -43,7 +44,8 @@ import com.example.projekatfaza23.model.RequestSatus
 @Composable
 fun RequestPreview(
     request: LeaveRequest,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onCancelRequest: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -55,7 +57,8 @@ fun RequestPreview(
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(20.dp)
-            ){
+            )
+            {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -197,7 +200,10 @@ fun RequestPreview(
                             onClick = {
                                 //TODO: Implement PDF download
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = primaryColor, contentColor = Color.White),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = primaryColor,
+                                contentColor = Color.White
+                            ),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -214,6 +220,31 @@ fun RequestPreview(
                         }
                     }
                 }
+                if(request.status == RequestSatus.Pending) {
+                    Button(
+                       onClick = {
+                           onCancelRequest()
+                       },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF6B0B06),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(10.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Cancel,
+                            contentDescription = "Cancel request",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            "Otkaži zahtjev",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
+
         }
     }

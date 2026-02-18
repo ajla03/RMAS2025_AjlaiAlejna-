@@ -69,7 +69,7 @@ import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-val primaryColor = Color(0xFF004D61)
+val primaryColor = Color(0xFF01546B)
 
 
 @Composable

@@ -32,7 +32,10 @@ interface LeaveDao {
 
     @Query("UPDATE users SET userStatus = :newStatus WHERE email = :email")
     suspend fun updateUserStatus(email: String, newStatus: String)
+//
+//    @Query("SELECT userStatus FROM users WHERE email = :email")
+//    suspend fun getUserStatus(email: String, newStatus: String)
 
-    @Query("SELECT userStatus FROM users WHERE email = :email")
-    suspend fun getUserStatus(email: String, newStatus: String)
+    @Query("DELETE FROM leave_request WHERE id = :id")
+    suspend fun cancelRequest(id: String)
 }

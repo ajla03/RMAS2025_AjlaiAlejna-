@@ -314,6 +314,22 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
         }
     }
 
+    fun cancelRequest(id: String){
+        if(id == null){
+            _uiState.update {
+                it.copy(
+                    isError = true,
+                    errorMsg = "Zahtjev ne postoji"
+                )
+                return
+            }
+        }
+
+        viewModelScope.launch {
+            _repository.cancelRequest(id)
+        }
+    }
+
     private fun monitorUserData() {
         viewModelScope.launch {
             UserManager.currentUser.collect { userProfile ->

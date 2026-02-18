@@ -153,7 +153,8 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel,
                 onCreateRequest = createNewRequest,
                 isMenuOpen = isMenuOpen,
                 onProfPicClick = {isMenuOpen = true},
-                currStatus = uiState.status
+                currStatus = uiState.status,
+                onCancelRequest = {viewModel.cancelRequest(uiState.currentRequest.id)}
             )
         }
 
@@ -171,7 +172,7 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel,
             oSwitchRole = {
                 isMenuOpen = false
                 onSwitchRole()
-            }
+            },
         )
 
     }
@@ -191,7 +192,8 @@ fun ClientHomeScreenContent(
     onCreateRequest: () -> Unit,
     isMenuOpen : Boolean,
     currStatus: Status,
-    onProfPicClick : () -> Unit
+    onProfPicClick : () -> Unit,
+    onCancelRequest: () -> Unit
 ){
     var selectedRequest by remember { mutableStateOf<LeaveRequest?>(null) }
 
@@ -266,7 +268,8 @@ fun ClientHomeScreenContent(
     if (selectedRequest != null) {
         RequestPreview (
             request = selectedRequest!!,
-            onDismiss = { selectedRequest = null }
+            onDismiss = { selectedRequest = null },
+            onCancelRequest = onCancelRequest
         )
     }
 }
@@ -590,7 +593,8 @@ fun ClientHomePreviewNew() {
             onCreateRequest = {},
             isMenuOpen = false,
             currStatus = Status.AtWork,
-            onProfPicClick = {}
+            onProfPicClick = {},
+            onCancelRequest = {}
         )
     }
 }
