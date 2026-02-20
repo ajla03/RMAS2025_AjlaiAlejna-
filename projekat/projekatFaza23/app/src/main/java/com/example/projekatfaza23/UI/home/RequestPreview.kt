@@ -1,5 +1,8 @@
 package com.example.projekatfaza23.UI.home
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,16 +33,18 @@ import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.projekatfaza23.UI.dean.AttachmentCard
-import com.example.projekatfaza23.UI.dean.primaryColor
+import com.example.projekatfaza23.UI.dean.exportLeaveRequestToPdf
 import com.example.projekatfaza23.UI.secretary.StatusBadge
 import com.example.projekatfaza23.UI.secretary.formatDatesForDisplay
 import com.example.projekatfaza23.model.FileInfo
@@ -47,13 +52,27 @@ import com.example.projekatfaza23.model.LeaveDates
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 import com.google.firebase.Timestamp
+import kotlinx.coroutines.launch
 
 @Composable
 fun RequestPreview(
     request: LeaveRequest,
     onDismiss: () -> Unit,
-    onExportToPdf: (LeaveRequest) -> Unit
 ) {
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    val pdfLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri: Uri? ->
+        if (uri != null) {
+            coroutineScope.launch {
+                exportLeaveRequestToPdf(context, uri, request)
+            }
+        }
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -216,7 +235,7 @@ fun RequestPreview(
                     }
 
                     Button(
-                        onClick = { onExportToPdf(request) },
+                        onClick = { pdfLauncher.launch("Zahtjev_${request.id}.pdf") },
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
@@ -267,6 +286,5 @@ fun CardInfoPreview(){
     )
     RequestPreview(mojLeaveRequest,
         {},
-        {_ -> }
     )
 }

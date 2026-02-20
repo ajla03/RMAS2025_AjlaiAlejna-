@@ -11,8 +11,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.graphics.Paint
 import android.widget.Toast
+import com.example.projekatfaza23.model.LeaveRequest
+import com.example.projekatfaza23.model.RequestSatus
 
 import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Locale
+
 suspend fun exportEmployeesToPdf(
     context: Context,
     uri: Uri,
@@ -136,3 +141,119 @@ suspend fun exportEmployeesToPdf(
         }
     }
 }
+
+suspend fun exportLeaveRequestToPdf(
+    context: Context,
+    uri: Uri,
+    request: LeaveRequest
+) {
+    withContext(Dispatchers.IO) {
+        val pdfDocument = PdfDocument()
+
+        val titlePaint = Paint().apply {
+            textSize = 24f
+            textAlign = Paint.Align.CENTER
+            isFakeBoldText = true
+            color = android.graphics.Color.BLACK
+        }
+
+        val boldPaint = Paint().apply {
+            textSize = 14f
+            isFakeBoldText = true
+            color = android.graphics.Color.DKGRAY
+        }
+
+        val textPaint = TextPaint().apply {
+            textSize = 14f
+            color = android.graphics.Color.BLACK
+            isAntiAlias = true
+        }
+
+        val linePaint = Paint().apply {
+            color = android.graphics.Color.LTGRAY
+            strokeWidth = 1f
+        }
+
+        val pageWidth = 595
+        val pageHeight = 842
+        val margin = 40f
+
+        var pageNumber = 1
+        var myPageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
+        var page = pdfDocument.startPage(myPageInfo)
+        var canvas = page.canvas
+
+        var y = 60f
+
+        canvas.drawText("Zahtjev za odsustvo", pageWidth / 2f, y, titlePaint)
+        y += 30f
+        canvas.drawLine(margin, y, pageWidth - margin, y, linePaint)
+        y += 30f
+
+        val sdfDate = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+        val sdfDateTime = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+        canvas.drawText(request.id, margin + 120f, y, textPaint)
+        y += 25f
+
+        canvas.drawText("Korisnik:", margin, y, boldPaint)
+        canvas.drawText(request.userEmail, margin + 120f, y, textPaint)
+        y += 25f
+
+        canvas.drawText("Tip odsustva:", margin, y, boldPaint)
+        canvas.drawText(request.type, margin + 120f, y, textPaint)
+        y += 25f
+
+        canvas.drawText("Status:", margin, y, boldPaint)
+        canvas.drawText(request.status.naBosanskom(), margin + 120f, y, textPaint)
+        y += 25f
+
+        val createdAtStr = request.createdAt?.toDate()?.let { sdfDateTime.format(it) } ?: "Nepoznato"
+        canvas.drawText("Datum podnošenja:", margin, y, boldPaint)
+        canvas.drawText(createdAtStr, margin + 140f, y, textPaint)
+        y += 35f
+
+        canvas.drawLine(margin, y, pageWidth - margin, y, linePaint)
+        y += 30f
+
+        canvas.drawText("Traženi datumi:", margin, y, boldPaint)
+        y += 20f
+        request.leave_dates?.forEach { dateRange ->
+            if (dateRange != null) {
+                val startStr = dateRange.start?.toDate()?.let { sdfDate.format(it) } ?: ""
+                val endStr = dateRange.end?.toDate()?.let { sdfDate.format(it) } ?: ""
+                canvas.drawText("• $startStr - $endStr", margin + 10f, y, textPaint)
+                y += 20f
+            }
+        }
+        pdfDocument.finishPage(page)
+
+        try {
+            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                pdfDocument.writeTo(outputStream)
+            }
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "PDF uspješno sačuvan!", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Greška pri čuvanju PDF-a", Toast.LENGTH_SHORT).show()
+            }
+        } finally {
+            pdfDocument.close()
+        }
+
+    }
+}
+
+
+fun RequestSatus.naBosanskom(): String {
+    return when (this) {
+        RequestSatus.Pending -> "Na čekanju (Sekretar)"
+        RequestSatus.PendingDean -> "Na čekanju (Dekan)"
+        RequestSatus.Approved -> "Odobreno"
+        RequestSatus.Denied -> "Odbijeno"
+    }
+}
+
+

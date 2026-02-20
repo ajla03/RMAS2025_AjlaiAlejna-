@@ -85,6 +85,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.example.projekatfaza23.UI.dean.exportLeaveRequestToPdf
 import com.example.projekatfaza23.UI.dean.getMockRequests
 import com.example.projekatfaza23.UI.request.RequestType
 import com.example.projekatfaza23.UI.profile.UserMenu
@@ -267,7 +268,6 @@ fun ClientHomeScreenContent(
         RequestPreview (
             request = selectedRequest!!,
             onDismiss = { selectedRequest = null },
-            {selectedRequest -> }
         )
     }
 }
