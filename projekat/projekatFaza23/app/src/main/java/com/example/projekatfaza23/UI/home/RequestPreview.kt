@@ -24,6 +24,7 @@ import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,14 +32,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.projekatfaza23.UI.dean.AttachmentCard
 import com.example.projekatfaza23.UI.dean.primaryColor
 import com.example.projekatfaza23.UI.secretary.StatusBadge
 import com.example.projekatfaza23.UI.secretary.formatDatesForDisplay
+import com.example.projekatfaza23.model.FileInfo
+import com.example.projekatfaza23.model.LeaveDates
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
+import com.google.firebase.Timestamp
 
 @Composable
 fun RequestPreview(
@@ -172,48 +178,50 @@ fun RequestPreview(
                     }
                     Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color.LightGray)
 
-                    if (request.file_info != null && request?.file_info?.file_name?.isNotEmpty() ?: false) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.AttachFile,
-                                contentDescription = "Attachment",
-                                tint = Color.Gray,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = request?.file_info?.file_name ?: "",
-                                fontSize = 14.sp,
-                                color = Color.Blue
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
+                    if (!request.file_info?.uri.isNullOrBlank()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "Priloženi dokument",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color.Gray
+                        )
+                        AttachmentCard(
+                            fileName = request.file_info?.file_name ?: "Dokument",
+                            fileUrl = request.file_info!!.uri!!
+                        )
                     }
-
-                    if (request.status == RequestSatus.Approved) {
-                        Button(
-                            onClick = {
-                                //TODO: Implement PDF download
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = primaryColor, contentColor = Color.White),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                Icons.Default.PictureAsPdf,
-                                contentDescription = "PDF",
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                "Preuzmi zahtjev (PDF)",
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                }
                 }
             }
         }
     }
+
+@Composable
+@Preview(showBackground = true)
+fun CardInfoPreview(){
+    val mojLeaveRequest = LeaveRequest(
+        id = "REQ_12345",
+        status = RequestSatus.Approved,
+        type = "Godišnji odmor",
+        explanation = "Idem na more.",
+        explanationDean = "Odobreno od strane dekana.",
+        explanationSecretary = "Dokumentacija uredna.",
+        userEmail = "student@example.com",
+
+        leave_dates = listOf(
+            LeaveDates(
+                start = Timestamp.now(),
+                end = Timestamp.now()
+            )
+        ),
+
+        file_info = FileInfo(
+            file_name = "potvrda.pdf",
+            file_type = "application/pdf",
+            uri = "https://firebasestorage.googleapis.com/..."
+        ),
+
+        createdAt = Timestamp.now()
+    )
+    RequestPreview(mojLeaveRequest,{})
+}
