@@ -266,7 +266,8 @@ fun ClientHomeScreenContent(
     if (selectedRequest != null) {
         RequestPreview (
             request = selectedRequest!!,
-            onDismiss = { selectedRequest = null }
+            onDismiss = { selectedRequest = null },
+            {selectedRequest -> }
         )
     }
 }

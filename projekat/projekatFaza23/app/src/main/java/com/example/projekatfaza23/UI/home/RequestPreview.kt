@@ -25,8 +25,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,7 +51,8 @@ import com.google.firebase.Timestamp
 @Composable
 fun RequestPreview(
     request: LeaveRequest,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onExportToPdf: (LeaveRequest) -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -191,6 +194,45 @@ fun RequestPreview(
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(18.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .height(48.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color.Gray),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color.White,
+                            contentColor = Color.Gray
+                        )
+                    ) {
+                        Text("Zatvori", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+
+                    Button(
+                        onClick = { onExportToPdf(request) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E2A47)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PictureAsPdf,
+                            contentDescription = "PDF ikona",
+                            modifier = Modifier.size(18.dp),
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Preuzmi PDF", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
                 }
             }
         }
@@ -223,5 +265,8 @@ fun CardInfoPreview(){
 
         createdAt = Timestamp.now()
     )
-    RequestPreview(mojLeaveRequest,{})
+    RequestPreview(mojLeaveRequest,
+        {},
+        {_ -> }
+    )
 }
