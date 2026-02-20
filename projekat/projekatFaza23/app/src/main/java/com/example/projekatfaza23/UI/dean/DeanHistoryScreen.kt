@@ -262,6 +262,10 @@ fun FilterBottomSheetContent(
     onApply: () -> Unit
 ) {
 
+    var tempName by remember { mutableStateOf(currentName) }
+    var tempStart by remember { mutableStateOf(currentStartMillis) }
+    var tempEnd by remember { mutableStateOf(currentEndMillis) }
+
     Column(
         modifier = Modifier.fillMaxWidth()
             .padding(horizontal = 24.dp)
@@ -283,9 +287,12 @@ fun FilterBottomSheetContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         DateRangeFilterField(
-            startMillis = currentStartMillis,
-            endMillis = currentEndMillis,
-            onDateSelected = onDateRangeChange
+            startMillis = tempStart,
+            endMillis = tempEnd,
+            onDateSelected = { start, end ->
+                tempStart = start
+                tempEnd = end
+            }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -293,8 +300,8 @@ fun FilterBottomSheetContent(
         Text("Ime", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
-            value = currentName,
-            onValueChange = onNameChange,
+            value = tempName,
+            onValueChange = { tempName = it },
             placeholder = { Text("Ime Prezime") },
             singleLine = true,
             leadingIcon = {
@@ -313,7 +320,13 @@ fun FilterBottomSheetContent(
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = onApply,
+            onClick = {
+                    if(currentEndMillis!=tempEnd || currentStartMillis!=tempStart)
+                          onDateRangeChange(tempStart, tempEnd)
+                    if(currentName!=tempName)
+                      onNameChange(tempName)
+                    onApply()
+                      },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E2A47)),
             shape = RoundedCornerShape(12.dp)
