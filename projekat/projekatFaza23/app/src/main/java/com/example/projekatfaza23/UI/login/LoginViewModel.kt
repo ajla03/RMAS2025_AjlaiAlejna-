@@ -14,17 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.projekatfaza23.UI.Role
 
-
-fun getUserRoleRoute(email : String?): Screen {
-    return when {
-        email == "ayla62553@gmail.com" -> Screen.DeanHome
-        email == "hodzic.alejna@gmail.com" -> Screen.DeanHome
-        email == "avonkoztuz@gmail.com" -> Screen.SecretaryHomeScreen
-        email == "hr.app.untz@gmail.com" -> Screen.SecretaryHomeScreen
-        else -> Screen.Home
-    }
-}
 
 class  LoginViewModel (
     application: Application
@@ -45,11 +36,17 @@ class  LoginViewModel (
                 val profile = authService.GoogleSignIn(activityContext)
 
                 if (profile != null) {
-                    val success = userRepository.syncUserAfterLogin(profile)
+                    val userRole = userRepository.syncUserAfterLogin(profile)
 
-                    if(success){
+                    if(userRole != null){
                         UserManager.saveUser(profile)
-                        val destination = getUserRoleRoute(profile.email)
+                        
+                        val destination = when (userRole) {
+                            Role.Dean.name -> Screen.DeanHome
+                            Role.Secretary.name -> Screen.SecretaryHomeScreen
+                            else -> Screen.Home
+                        }
+                        
                         _uiState.value = _uiState.value.copy(isLoading = false)
                         navigateHome(destination)
                     } else {

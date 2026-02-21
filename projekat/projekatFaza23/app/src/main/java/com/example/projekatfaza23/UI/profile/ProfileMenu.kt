@@ -55,6 +55,7 @@ import coil.compose.AsyncImage
 import com.example.projekatfaza23.R
 import com.example.projekatfaza23.UI.dean.primaryColor
 import com.example.projekatfaza23.UI.home.Status
+import com.example.projekatfaza23.UI.Role
 
 val cyan = Color(0xFF00E5FF)
 val purple = Color(0xFFD500F9)
@@ -135,7 +136,7 @@ fun UserMenu(
                     color = Color.LightGray.copy(alpha = 0.7f)
                 )
 
-                if (role != null) {
+                if (role != null && role != Role.Professor.name) {
                     Spacer(modifier = Modifier.height(24.dp))
                     Surface(
                         color = Color.White.copy(alpha = 0.1f),

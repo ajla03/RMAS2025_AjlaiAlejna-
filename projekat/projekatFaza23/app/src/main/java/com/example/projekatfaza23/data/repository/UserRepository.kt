@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 class UserRepository(private val leaveDao : LeaveDao) {
     private val firestore = FirebaseFirestore.getInstance()
 
-    suspend fun syncUserAfterLogin(googleProfile: UserProfile) : Boolean {
+    suspend fun syncUserAfterLogin(googleProfile: UserProfile) : String? {
         return try {
 
             val firestoreUser = firestore.collection("user_info")
@@ -31,7 +31,7 @@ class UserRepository(private val leaveDao : LeaveDao) {
             val userStatus: String
 
             if(firestoreUser.isEmpty) {
-                role = if (googleProfile.email == "hr.app.untz@google.com") Role.Dean.name else Role.Professor.name
+                role = Role.Professor.name
                 totalDays = 20
                 usedDays = 0
                 userStatus = Status.AtWork.name
@@ -53,8 +53,7 @@ class UserRepository(private val leaveDao : LeaveDao) {
             } else {
                 val user = firestoreUser.documents[0]
 
-                role = user.getString("role")
-                    ?: (if (googleProfile.email == "hr.app.untz@google.com") Role.Dean.name else Role.Professor.name)
+                role = user.getString("role") ?: Role.Professor.name
                 totalDays = user.getLong("totalDays")?.toInt() ?: 20
                 usedDays = user.getLong("usedDays")?.toInt() ?: 0
                 userStatus = user.getString("employeeStatus") ?: Status.AtWork.name
@@ -71,10 +70,11 @@ class UserRepository(private val leaveDao : LeaveDao) {
             )
 
             leaveDao.insertUser(entity)
-            true
+            googleProfile.role = role
+            role
         } catch (e: Exception) {
             Log.e("Sync", "Error: ${e.message}")
-            false
+            null
         }
     }
 

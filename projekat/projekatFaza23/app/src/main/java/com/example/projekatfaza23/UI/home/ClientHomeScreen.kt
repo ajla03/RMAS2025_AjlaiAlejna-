@@ -107,13 +107,7 @@ fun ClientHomeScreen(viewModel: InboxRequestViewModel,
     val requests = viewModel.getFilteredRequests()
     val user = UserManager.currentUser.collectAsState().value
 
-    val role = remember(user?.email) {
-        when (user?.email) {
-            "ayla62553@gmail.com", "hodzic.alejna@gmail.com" -> "Dekan"
-            "avonkoztuz@gmail.com", "hr.app.untz@gmail.com" -> "Sekretar"
-            else -> null
-        }
-    }
+    val role = user?.role ?: "Professor"
 
     var isMenuOpen by remember { mutableStateOf(false) }
     val blurRadius by animateDpAsState(targetValue = if (isMenuOpen) 12.dp else 0.dp)

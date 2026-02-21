@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.projekatfaza23.UI.Role
 import com.example.projekatfaza23.UI.dean.ApproveRequestScreen
 import com.example.projekatfaza23.UI.dean.DeanDirectoryScreen
 import com.example.projekatfaza23.UI.dean.DeanHistoryScreen
@@ -19,6 +20,7 @@ import com.example.projekatfaza23.UI.secretary.SecretaryHomeScreen
 import com.example.projekatfaza23.UI.secretary.SecretaryValidateScreen
 import com.example.projekatfaza23.UI.secretary.SecretaryViewModel
 import com.example.projekatfaza23.data.auth.UserManager
+import com.google.firebase.firestore.auth.User
 
 @Composable
 fun AppNavigation (navController : NavHostController) {
@@ -55,12 +57,11 @@ fun AppNavigation (navController : NavHostController) {
                     }
                 },
                 onSwitchRole = {
-                    val email = UserManager.currentUser.value?.email
-                    if (email == "ayla62553@gmail.com" || email == "hodzic.alejna@gmail.com") {
+                    if (UserManager.currentUser.value?.role == Role.Dean.name) {
                         navController.navigate(Screen.DeanHome) {
                             popUpTo(Screen.Home) { inclusive = true }
                         }
-                    } else if (email == "avonkoztuz@gmail.com" || email == "hr.app.untz@gmail.com") {
+                    } else if (UserManager.currentUser.value?.role == Role.Secretary.name) {
                         navController.navigate(Screen.SecretaryHomeScreen) {
                             popUpTo(Screen.Home) { inclusive = true }
                         }
