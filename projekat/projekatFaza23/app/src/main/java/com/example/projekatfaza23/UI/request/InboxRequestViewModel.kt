@@ -349,7 +349,6 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
             }
         }
     }
-}
 
     private fun scheduleRemainderForLeave(request: LeaveRequest){
         if(request.status != RequestSatus.Approved) return
