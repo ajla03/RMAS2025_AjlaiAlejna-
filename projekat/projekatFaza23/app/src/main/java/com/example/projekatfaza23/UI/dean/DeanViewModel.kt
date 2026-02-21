@@ -142,7 +142,7 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
         }
 
         val isFilterActive = state.searchQuery.isNotBlank() ||
-                state.dateRange.first != null
+                state.dateRange.first != null || state.currentRequestType.isNotBlank()
 
         return state.copy(
             displayRequests = filtered,
@@ -259,7 +259,8 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
             val newState = currentState.copy(
                 filterStatus = "All",
                 dateRange = null to null,
-                searchQuery = ""
+                searchQuery = "",
+                currentRequestType = ""
             )
             applyFilters(newState)
         }

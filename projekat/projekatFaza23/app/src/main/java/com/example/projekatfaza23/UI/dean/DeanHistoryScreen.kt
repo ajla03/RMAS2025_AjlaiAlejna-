@@ -132,7 +132,6 @@ fun DeanHistoryScreenContent(
 ) {
     var showFilterSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
-    var isMenuOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = { TopAppBarSection() },
@@ -281,6 +280,7 @@ fun FilterBottomSheetContent(
     var tempStart by remember { mutableStateOf(currentStartMillis) }
     var tempEnd by remember { mutableStateOf(currentEndMillis) }
     var showTypeMenu by remember { mutableStateOf(false) }
+    var tempType by remember { mutableStateOf(currentRequestType) }
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -336,10 +336,10 @@ fun FilterBottomSheetContent(
         Spacer(modifier = Modifier.height(32.dp))
 
         RequestTypeSelectorDean(
-            selectedType = currentRequestType,
+            selectedType = tempType,
             isExpanded = showTypeMenu,
             onExpandChange = {showTypeMenu = it},
-            onTypeSelected = {onTypeChange(it)}
+            onTypeSelected = { tempType = it }
         )
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -350,6 +350,8 @@ fun FilterBottomSheetContent(
                           onDateRangeChange(tempStart, tempEnd)
                     if(currentName!=tempName)
                       onNameChange(tempName)
+                    if( currentRequestType != tempType )
+                        onTypeChange(tempType)
                     onApply()
                       },
             modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -371,7 +373,7 @@ fun RequestTypeSelectorDean(
     onExpandChange: (Boolean) -> Unit,
     onTypeSelected: (String) -> Unit
 ){
-    val textToShow = if (selectedType.isNotEmpty()) selectedType else "Type of Request"
+    val textToShow = if (selectedType.isNotEmpty()) selectedType else "Tip zahtjeva"
     Box(modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center){
         OutlinedCard (onClick = {onExpandChange(true)},
@@ -393,12 +395,6 @@ fun RequestTypeSelectorDean(
         DropdownMenu(expanded = isExpanded,
             onDismissRequest = {onExpandChange(false)},
             modifier = Modifier.fillMaxWidth(0.8f).height(280.dp)) {
-
-            DropdownMenuItem (text = {Text("Svi")},
-                onClick = {
-                    onTypeSelected("")
-                    onExpandChange(false)
-                })
 
             RequestType.allOptions.forEach { type ->
                 DropdownMenuItem(text = {Text(type)},
