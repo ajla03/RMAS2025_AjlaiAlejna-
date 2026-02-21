@@ -48,6 +48,9 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
     private val _currentFilter = MutableStateFlow("All")
     val currentFilter : StateFlow<String> = _currentFilter.asStateFlow()
     private var currentUserEmail: String? = null
+    private var userDataJob: Job? = null
+    private var leaveDataJob: Job? = null
+    private var realtimeSyncJob: Job? = null
 
 
     init {
@@ -55,19 +58,35 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
             UserManager.currentUser.collect{ user ->
 
                 if (user != null && user.email != null){
+
+                    userDataJob?.cancel()
+                    leaveDataJob?.cancel()
+                    realtimeSyncJob?.cancel()
+
+                    _uiState.value = LeaveUiState()
                     currentUserEmail = user.email
 
-                        launch {
-                            userRepo.realTimeUserSync(user.email).collect()
-                        }
+                    realtimeSyncJob = launch {
+                        userRepo.realTimeUserSync(user.email).collect()                    }
 
+                    leaveDataJob = launch {
                         loadUserLeaveData(user.email)
+                    }
+
+                    userDataJob = launch {
+                        monitorUserData(user.email)
+                    }
+
+                } else {
+                    userDataJob?.cancel()
+                    leaveDataJob?.cancel()
+                    realtimeSyncJob?.cancel()
+                    _uiState.value = LeaveUiState()
+                    currentUserEmail = null
                 }
             }
         }
-        monitorUserData()
     }
-
 
     fun setFilter(filter: String) {
         _currentFilter.value = filter
@@ -317,27 +336,20 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
         }
     }
 
-    private fun monitorUserData() {
-        viewModelScope.launch {
-            UserManager.currentUser.collect { userProfile ->
-                val email = userProfile?.email
-
-                if (email != null) {
-                    userRepo.getUser(email).collect { userEntity ->
-                        userEntity?.let { user ->
-                            _uiState.update { currState ->
-                                currState.copy(
-                                    totalDays = user.totalDays,
-                                    usedDays = user.usedDays,
-                                    remainingLeaveDays = user.totalDays - user.usedDays
-                                )
-                            }
-                        }
-                    }
+    private suspend fun monitorUserData(email: String) {
+        userRepo.getUser(email).collect { userEntity ->
+            userEntity?.let { user ->
+                _uiState.update { currState ->
+                    currState.copy(
+                        totalDays = user.totalDays,
+                        usedDays = user.usedDays,
+                        remainingLeaveDays = user.totalDays - user.usedDays
+                    )
                 }
             }
         }
     }
+}
 
     private fun scheduleRemainderForLeave(request: LeaveRequest){
         if(request.status != RequestSatus.Approved) return
