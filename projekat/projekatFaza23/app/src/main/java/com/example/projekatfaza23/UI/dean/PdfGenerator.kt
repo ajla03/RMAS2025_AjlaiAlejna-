@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.graphics.Paint
 import android.widget.Toast
+import com.example.projekatfaza23.data.auth.UserManager
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 
@@ -145,7 +146,7 @@ suspend fun exportEmployeesToPdf(
 suspend fun exportLeaveRequestToPdf(
     context: Context,
     uri: Uri,
-    request: LeaveRequest
+    request: LeaveRequest,
 ) {
     withContext(Dispatchers.IO) {
         val pdfDocument = PdfDocument()
@@ -174,6 +175,13 @@ suspend fun exportLeaveRequestToPdf(
             strokeWidth = 1f
         }
 
+        val signaturePaint = Paint().apply {
+            textSize = 14f
+            color = android.graphics.Color.BLACK
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+
         val pageWidth = 595
         val pageHeight = 842
         val margin = 40f
@@ -192,6 +200,8 @@ suspend fun exportLeaveRequestToPdf(
 
         val sdfDate = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
         val sdfDateTime = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+
+        canvas.drawText("ID zahtjeva:", margin, y, boldPaint)
         canvas.drawText(request.id, margin + 120f, y, textPaint)
         y += 25f
 
@@ -207,11 +217,6 @@ suspend fun exportLeaveRequestToPdf(
         canvas.drawText(request.status.naBosanskom(), margin + 120f, y, textPaint)
         y += 25f
 
-        val createdAtStr = request.createdAt?.toDate()?.let { sdfDateTime.format(it) } ?: "Nepoznato"
-        canvas.drawText("Datum podnošenja:", margin, y, boldPaint)
-        canvas.drawText(createdAtStr, margin + 140f, y, textPaint)
-        y += 35f
-
         canvas.drawLine(margin, y, pageWidth - margin, y, linePaint)
         y += 30f
 
@@ -225,6 +230,76 @@ suspend fun exportLeaveRequestToPdf(
                 y += 20f
             }
         }
+
+
+        // obrazlozenje iz explanation
+        y += 10f
+        canvas.drawLine(margin, y, pageWidth - margin, y, linePaint)
+        y += 30f
+
+        canvas.drawText("Obrazloženje:", margin, y, boldPaint)
+        y += 20f
+
+        val explanationText = request.explanation ?: "Nema navedenog obrazloženja."
+        val explanationWidth = (pageWidth - 2 * margin).toInt()
+        val explanationLayout = StaticLayout.Builder.obtain(
+            explanationText,
+            0,
+            explanationText.length,
+            textPaint,
+            explanationWidth
+        )
+            .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+            .setLineSpacing(1.0f, 1.0f)
+            .setIncludePad(false)
+            .build()
+
+        if (y + explanationLayout.height > pageHeight - margin) {
+            pdfDocument.finishPage(page)
+            pageNumber++
+            myPageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
+            page = pdfDocument.startPage(myPageInfo)
+            canvas = page.canvas
+            y = 60f
+        }
+
+        canvas.save()
+        canvas.translate(margin, y)
+        explanationLayout.draw(canvas)
+        canvas.restore()
+
+        y += explanationLayout.height + 20f
+
+        y += 80f
+        if (y + 50f > pageHeight - margin) {
+            pdfDocument.finishPage(page)
+            pageNumber++
+            myPageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
+            page = pdfDocument.startPage(myPageInfo)
+            canvas = page.canvas
+            y = 100f
+        }
+
+        val stampDateStr = request.createdAt?.toDate()?.let { sdfDate.format(it) } ?: ""
+        val locationDateText = if (stampDateStr.isNotEmpty()) "Tuzla, $stampDateStr" else "Tuzla"
+
+        val signatureWidth = 200f
+        val startX = pageWidth - margin - signatureWidth
+        val darkLinePaint = Paint().apply { color = android.graphics.Color.BLACK; strokeWidth = 1f }
+
+
+        canvas.drawText(locationDateText, margin, y, textPaint)
+
+        val firstName = UserManager.currentUser.value?.name ?: ""
+        val lastName = UserManager.currentUser.value?.lastName ?: ""
+        val fullName = "$firstName $lastName".trim()
+
+        val signatureCenterX = startX + (signatureWidth / 2)
+        canvas.drawText("prof. $fullName", signatureCenterX, y, signaturePaint)
+        y += 20f
+
+        canvas.drawLine(startX, y, pageWidth - margin, y, darkLinePaint)
+
         pdfDocument.finishPage(page)
 
         try {
@@ -249,8 +324,8 @@ suspend fun exportLeaveRequestToPdf(
 
 fun RequestSatus.naBosanskom(): String {
     return when (this) {
-        RequestSatus.Pending -> "Na čekanju (Sekretar)"
-        RequestSatus.PendingDean -> "Na čekanju (Dekan)"
+        RequestSatus.Pending -> "Na čekanju"
+        RequestSatus.PendingDean -> "Na čekanju"
         RequestSatus.Approved -> "Odobreno"
         RequestSatus.Denied -> "Odbijeno"
     }
