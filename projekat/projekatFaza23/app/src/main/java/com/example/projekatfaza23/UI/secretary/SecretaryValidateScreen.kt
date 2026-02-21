@@ -108,6 +108,10 @@ fun SecretaryValidateContent(
     }
     var selectedOptionIndex by remember { mutableStateOf(0) }
     val selectedRange = request.leave_dates?.getOrNull(selectedOptionIndex)
+
+    val isSelectedExpired = validationHelpers.isLeaveDateExpired(selectedRange?.end)
+
+
     val daysInSelectedOption = if (selectedRange?.start != null && selectedRange?.end != null)
         validationHelpers.countWorkDays(selectedRange.start, selectedRange.end)
     else 0
@@ -161,7 +165,9 @@ fun SecretaryValidateContent(
                         if (selectedRange != null) {
                             onForward(selectedRange)
                         }
-                    })
+                    },
+                    isExpired = isSelectedExpired
+                )
             }
         }
     ) { paddingValues ->
@@ -195,7 +201,7 @@ fun SecretaryValidateContent(
                     )
                 }
             }
-            RequestDetailsCard(request)
+            RequestDetailsCard(request, false)
 
             if (!request.file_info?.uri.isNullOrBlank()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -321,7 +327,7 @@ fun SecretaryValidateContent(
     }
 }
 @Composable
-fun SecretaryBottomBar(onReject: () -> Unit, onForward: () -> Unit){
+fun SecretaryBottomBar(onReject: () -> Unit, onForward: () -> Unit, isExpired: Boolean){
     Surface(
         shadowElevation = 16.dp,
         color = Color.White,
@@ -384,6 +390,7 @@ fun DateOptionSelector(
                 validationHelpers.countWorkDays(dateRange.start, dateRange.end)
              else
                 0
+                val isExpired = validationHelpers.isLeaveDateExpired(dateRange.end)
 
                 val isSelected = index == selectedIndex
                 val dateString = formatDatesForDisplay(dateRange.start, dateRange.end)
@@ -391,13 +398,14 @@ fun DateOptionSelector(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onOptionSelected(index) }
+                        .clickable(enabled = !isExpired) { onOptionSelected(index) }
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RadioButton(
                         selected = isSelected,
                         onClick = {onOptionSelected(index) },
+                        enabled = !isExpired,
                         colors = RadioButtonDefaults.colors(selectedColor = primaryColor)
                     )
                     Column(modifier = Modifier.padding(start = 8.dp)) {
@@ -412,6 +420,14 @@ fun DateOptionSelector(
                             fontWeight = if(isSelected) FontWeight.Bold else FontWeight.Normal,
                             color = Color.Black
                         )
+                        if (isExpired) {
+                            Text(
+                                text = "Navedeni priod je istekao",
+                                color = Color.Red,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.weight(1f))
 

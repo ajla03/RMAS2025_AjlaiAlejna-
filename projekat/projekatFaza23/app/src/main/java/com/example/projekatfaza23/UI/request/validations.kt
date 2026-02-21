@@ -3,6 +3,7 @@ package com.example.projekatfaza23.UI.request
 import android.util.Log
 import java.util.Calendar
 import androidx.compose.material3.CenterAlignedTopAppBar
+import com.example.projekatfaza23.model.LeaveRequest
 import com.google.firebase.Timestamp
 
 object validationHelpers {
@@ -62,5 +63,10 @@ object validationHelpers {
         sevenDaysAhead.add(Calendar.DAY_OF_MONTH, 7)
 
         return startCalendar.before(sevenDaysAhead)
+    }
+
+    fun isLeaveDateExpired(date: Timestamp?): Boolean{
+        val endDate = date?.toDate() ?: return false
+        return endDate.time < System.currentTimeMillis()
     }
 }

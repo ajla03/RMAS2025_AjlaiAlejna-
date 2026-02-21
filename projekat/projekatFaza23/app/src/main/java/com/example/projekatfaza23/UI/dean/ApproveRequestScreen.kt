@@ -91,6 +91,8 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
     val request = selectedRequest!!
     val isProcessed = request.status != RequestSatus.PendingDean
 
+    val isExpired = validationHelpers.isLeaveDateExpired( request.leave_dates?.firstOrNull()?.end)
+
     var showValidationError by remember { mutableStateOf(false) }
 
 
@@ -118,7 +120,8 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
                             navigateHome()
                         }
                     },
-                    onBack = navigateHome
+                    onBack = navigateHome,
+                    isExpired = isExpired
                 )
 
         }
@@ -132,7 +135,7 @@ fun ApproveRequestScreen(viewModel: DeanViewModel, navigateHome: () -> Unit){
             UserProfileHeader(selectedRequest?.userEmail ?: "", imageUrl = requestAuthor?.imageUrl.toString())
             Divider(color = Color.LightGray.copy(0.5f), thickness = 1.dp)
 
-            RequestDetailsCard(request = request)
+            RequestDetailsCard(request = request, isExpired)
 
             if (!request.file_info?.uri.isNullOrBlank()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -254,7 +257,7 @@ fun timeStampToString(tmp : Timestamp):String{
 }
 
 @Composable
-fun RequestDetailsCard(request: LeaveRequest){
+fun RequestDetailsCard(request: LeaveRequest, isExpired: Boolean){
     //kartica sa detaljima zahtjeva
     val dates = request.leave_dates?.firstOrNull()
     val startDateString = dates?.start?.let { timeStampToString(it) } ?: "-"
@@ -324,15 +327,29 @@ fun RequestDetailsCard(request: LeaveRequest){
                 }
 
                 DateColumn("Kraj",endDateString)
-
             }
-        }
+
+            if (isExpired) {
+                Text(
+                    text = "Navedeni datumi u zahtjevu su istekli",
+                    color = Color.Red,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+            }        }
 
     }
 }
 
 @Composable
-fun BottomBar(request: LeaveRequest, onApproved: (request: LeaveRequest) -> Unit, onDenied: (request: LeaveRequest) -> Unit, onBack: () -> Unit){
+fun BottomBar(
+    request: LeaveRequest,
+    onApproved: (request: LeaveRequest) -> Unit,
+    onDenied: (request: LeaveRequest) -> Unit,
+    onBack: () -> Unit,
+    isExpired: Boolean
+    ){
     Surface(
         shadowElevation = 16.dp,
         color = Color.White,
@@ -353,6 +370,7 @@ fun BottomBar(request: LeaveRequest, onApproved: (request: LeaveRequest) -> Unit
 
             Button(
                 onClick = { onApproved(request)},
+                enabled = !isExpired,
                 modifier = Modifier.weight(1f).height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = primaryColor ),
