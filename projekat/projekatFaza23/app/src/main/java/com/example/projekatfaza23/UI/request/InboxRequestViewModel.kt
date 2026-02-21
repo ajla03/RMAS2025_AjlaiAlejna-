@@ -339,11 +339,19 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
     private suspend fun monitorUserData(email: String) {
         userRepo.getUser(email).collect { userEntity ->
             userEntity?.let { user ->
+
+                val userStatus = try {
+                    Status.valueOf(user.userStatus)
+                } catch (e: IllegalArgumentException) {
+                    Status.AtWork
+                }
+
                 _uiState.update { currState ->
                     currState.copy(
                         totalDays = user.totalDays,
                         usedDays = user.usedDays,
-                        remainingLeaveDays = user.totalDays - user.usedDays
+                        remainingLeaveDays = user.totalDays - user.usedDays,
+                        status = userStatus
                     )
                 }
             }
