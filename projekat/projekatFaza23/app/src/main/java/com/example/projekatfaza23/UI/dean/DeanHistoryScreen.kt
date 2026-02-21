@@ -25,17 +25,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -59,6 +63,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.projekatfaza23.UI.home.TopAppBarSection
+import com.example.projekatfaza23.UI.request.RequestType
+import com.example.projekatfaza23.UI.request.RequestTypeSelector
 import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 
@@ -97,7 +103,9 @@ fun DeanHistoryScreen(
             viewModel.resetFilters()
             onNavigateToHome()
         },
-        onNavigateToDirectory = onNavigateToDirectory
+        onNavigateToDirectory = onNavigateToDirectory,
+        currentRequestType = uiState.currentRequestType,
+        onTypeChange = {viewModel.onTypeChange(it)}
     )
 }
 
@@ -118,10 +126,13 @@ fun DeanHistoryScreenContent(
     onUpdateNameFilter: (String) -> Unit,
     onUpdateDateRangeFilter: (Long?, Long?) -> Unit,
     onNavigateToHome: () -> Unit,
-    onNavigateToDirectory: () -> Unit
+    onNavigateToDirectory: () -> Unit,
+    currentRequestType: String,
+    onTypeChange: (String) -> Unit
 ) {
     var showFilterSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
+    var isMenuOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = { TopAppBarSection() },
@@ -224,7 +235,9 @@ fun DeanHistoryScreenContent(
                     currentEndMillis = dateRangeEnd,
                     onNameChange = { onUpdateNameFilter(it) },
                     onDateRangeChange = { start, end -> onUpdateDateRangeFilter(start, end) },
-                    onApply = { showFilterSheet = false }
+                    onApply = { showFilterSheet = false },
+                    currentRequestType = currentRequestType,
+                    onTypeChange = onTypeChange
                 )
             }
         }
@@ -259,12 +272,15 @@ fun FilterBottomSheetContent(
     currentEndMillis: Long?,
     onNameChange: (String) -> Unit,
     onDateRangeChange: (Long?, Long?) -> Unit,
-    onApply: () -> Unit
+    onApply: () -> Unit,
+    currentRequestType: String,
+    onTypeChange: (String) -> Unit
 ) {
 
     var tempName by remember { mutableStateOf(currentName) }
     var tempStart by remember { mutableStateOf(currentStartMillis) }
     var tempEnd by remember { mutableStateOf(currentEndMillis) }
+    var showTypeMenu by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -319,6 +335,15 @@ fun FilterBottomSheetContent(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        RequestTypeSelectorDean(
+            selectedType = currentRequestType,
+            isExpanded = showTypeMenu,
+            onExpandChange = {showTypeMenu = it},
+            onTypeSelected = {onTypeChange(it)}
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+
+
         Button(
             onClick = {
                     if(currentEndMillis!=tempEnd || currentStartMillis!=tempStart)
@@ -335,6 +360,55 @@ fun FilterBottomSheetContent(
         }
 
 
+    }
+}
+
+@Composable
+// function for filtering by request type
+fun RequestTypeSelectorDean(
+    selectedType: String,
+    isExpanded : Boolean,
+    onExpandChange: (Boolean) -> Unit,
+    onTypeSelected: (String) -> Unit
+){
+    val textToShow = if (selectedType.isNotEmpty()) selectedType else "Type of Request"
+    Box(modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center){
+        OutlinedCard (onClick = {onExpandChange(true)},
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp)){
+            Row(modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically){
+
+                Text(textToShow, color = if(textToShow.contains("Type")) Color.Gray else Color.Black)
+                Icon(Icons.Default.KeyboardArrowDown,null)
+
+            }
+        }
+        DropdownMenu(expanded = isExpanded,
+            onDismissRequest = {onExpandChange(false)},
+            modifier = Modifier.fillMaxWidth(0.8f).height(280.dp)) {
+
+            DropdownMenuItem (text = {Text("Svi")},
+                onClick = {
+                    onTypeSelected("")
+                    onExpandChange(false)
+                })
+
+            RequestType.allOptions.forEach { type ->
+                DropdownMenuItem(text = {Text(type)},
+                    onClick = {
+                        onTypeSelected(type)
+                        onExpandChange(false)
+                    })
+
+            }
+        }
     }
 }
 
@@ -502,6 +576,8 @@ fun DeanHistoryScreenPreview() {
             onUpdateNameFilter = {},
             onUpdateDateRangeFilter = { _, _ -> },
             onNavigateToHome = {},
-            onNavigateToDirectory = {}
+            onNavigateToDirectory = {},
+            currentRequestType =  " ",
+            onTypeChange = { _  -> }
         )
 }

@@ -21,5 +21,6 @@ data class DeanUIState(
 
     val employeeSearchQuery: String = "",
 
-    val selectedRequest: LeaveRequest? = null
+    val selectedRequest: LeaveRequest? = null,
+    val currentRequestType: String = ""
 )

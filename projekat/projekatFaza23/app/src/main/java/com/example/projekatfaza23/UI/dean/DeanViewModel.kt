@@ -103,6 +103,12 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
             val matchesStatus = if (state.filterStatus == "All") true
             else req.status.name.equals(state.filterStatus, ignoreCase = true)
 
+            val matchesType =  if(state.currentRequestType.isEmpty()) true
+            else {
+                if (req.type.equals(state.currentRequestType)) true
+                else false
+            }
+
             val matchesName = if (state.searchQuery.isBlank()) true
             else {
                 val query = state.searchQuery.trim()
@@ -132,7 +138,7 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
                 reqStart >= start && reqEnd <= end
             }
 
-            matchesStatus && matchesName && matchesDate
+            matchesStatus && matchesName && matchesDate && matchesType
         }
 
         val isFilterActive = state.searchQuery.isNotBlank() ||
@@ -208,6 +214,14 @@ class DeanViewModel(application: Application): AndroidViewModel(application) {
 
         }
         resetSelectedRequest()
+    }
+
+
+    fun onTypeChange(newType: String){
+        _uiState.update { currentState ->
+            val newState = currentState.copy(currentRequestType = newType)
+            applyFilters(newState)
+        }
     }
 
     fun resetSelectedRequest(){
