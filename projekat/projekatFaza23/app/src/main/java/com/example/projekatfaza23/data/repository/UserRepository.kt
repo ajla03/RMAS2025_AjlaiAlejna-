@@ -89,17 +89,14 @@ class UserRepository(private val leaveDao : LeaveDao) {
              .await()
             if(!querySnapshot.isEmpty){
                 val document = querySnapshot.documents[0]
-                val currentTotalDays = document.getLong("totalDays")?.toInt() ?: 0
                 val currentUsedDays = document.getLong("usedDays")?.toInt() ?: 0
 
-                //val newTotalDays = currentTotalDays - daysApproved
                 val newUsedDays = currentUsedDays + daysApproved
 
                 firestore.collection("user_info")
                     .document(document.id)
                     .update(
                         mapOf(
-                            //"totalDays" to newTotalDays,
                             "usedDays" to newUsedDays
                         )
                     ).await()

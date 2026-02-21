@@ -27,6 +27,7 @@ import com.example.projekatfaza23.model.LeaveRequest
 import com.example.projekatfaza23.model.RequestSatus
 import com.example.projekatfaza23.worker.LeaveReminderWorker
 import com.google.firebase.Timestamp
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,17 +49,19 @@ class InboxRequestViewModel(application: Application): AndroidViewModel(applicat
     val currentFilter : StateFlow<String> = _currentFilter.asStateFlow()
     private var currentUserEmail: String? = null
 
+
     init {
         viewModelScope.launch {
             UserManager.currentUser.collect{ user ->
+
                 if (user != null && user.email != null){
                     currentUserEmail = user.email
 
-                    launch {
-                        userRepo.realTimeUserSync(user.email).collect()
-                    }
+                        launch {
+                            userRepo.realTimeUserSync(user.email).collect()
+                        }
 
-                    loadUserLeaveData(user.email)
+                        loadUserLeaveData(user.email)
                 }
             }
         }
