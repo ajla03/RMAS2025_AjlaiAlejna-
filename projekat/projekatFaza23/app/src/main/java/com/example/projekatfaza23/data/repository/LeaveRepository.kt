@@ -205,7 +205,8 @@ class LeaveRepository(private val leaveDao: LeaveDao) : LeaveRepositoryI {
                     launch {
                         val entities = snapshot.documents.mapNotNull { doc ->
                             doc.toObject(LeaveRequest::class.java)?.copy(id = doc.id)?.toEntity()
-                        }
+                        }.filter { it.userEmail == userEmail }
+
                         leaveDao.insertRequests(entities)
                     }
                 }
